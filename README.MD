@@ -38,8 +38,9 @@ method coverage, and scan-state summaries.
   runtime visibility checks.
 - Cross-process and isolated-process validation to reduce reliance on any
   single signal.
-- Mostly local inspection. Network access is only used when online TEE
-  revocation checks are enabled in Settings.
+- Mostly local inspection. TEE revocation checks use a built-in snapshot by
+  default; network access is only used when optional online refresh is enabled
+  in Settings.
 
 ## Detector Coverage
 
@@ -60,7 +61,7 @@ aggregation, user controls, and device context.
 | ABI | Native probes are available through the NDK layer; several low-level trap paths are primarily `arm64-v8a`. |
 | Device state | Runs without root and is intended for both stock and modified environments. |
 | Coverage | Some checks may degrade to `support`, `unavailable`, or reduced-coverage states when OEM or sandbox rules block access. |
-| Network | Local by default; online access is only used for optional TEE revocation checks. |
+| Network | Local by default; built-in TEE revocation checks always run, and online access is only used for optional revocation feed refresh. |
 
 ## User Interface
 
