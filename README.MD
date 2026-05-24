@@ -166,28 +166,25 @@ DuckDetector is licensed under the [Apache License 2.0](./LICENSE).
 
 ## Contributors
 
-<p align="center">
-  <a href="https://github.com/eltavine"><img src="https://avatars.githubusercontent.com/u/248451253?v=4" width="72" height="72" alt=""></a>
-  <a href="https://github.com/XiaoTong6666"><img src="https://avatars.githubusercontent.com/u/110387028?v=4" width="72" height="72" alt=""></a>
-  <a href="https://github.com/FldBudin"><img src="https://avatars.githubusercontent.com/u/103419694?v=4" width="72" height="72" alt=""></a>
-  <a href="https://github.com/AlexLiuDev233"><img src="https://avatars.githubusercontent.com/u/102930921?v=4" width="72" height="72" alt=""></a>
-  <a href="https://github.com/Searchur"><img src="https://avatars.githubusercontent.com/u/120842622?v=4" width="72" height="72" alt=""></a>
-</p>
-<p align="center">
-  <a href="https://github.com/VictorModi"><img src="https://avatars.githubusercontent.com/u/159055762?v=4" width="72" height="72" alt=""></a>
-  <a href="https://github.com/HSSkyBoy"><img src="https://avatars.githubusercontent.com/u/122550437?v=4" width="72" height="72" alt=""></a>
-  <a href="https://github.com/LingQingBigKing"><img src="https://avatars.githubusercontent.com/u/242912803?v=4" width="72" height="72" alt=""></a>
-  <a href="https://github.com/SQMY-dor"><img src="https://avatars.githubusercontent.com/u/75457662?v=4" width="72" height="72" alt=""></a>
-</p>
-<p align="center">
-  <a href="https://github.com/ZG089"><img src="https://avatars.githubusercontent.com/u/159061718?v=4" width="72" height="72" alt=""></a>
-  <a href="https://github.com/coolzyd9107"><img src="https://avatars.githubusercontent.com/u/35447134?v=4" width="72" height="72" alt=""></a>
-  <a href="https://github.com/wxxsfxyzm"><img src="https://avatars.githubusercontent.com/u/65166044?v=4" width="72" height="72" alt=""></a>
-</p>
-<p align="center">
-  <a href="https://github.com/947409161"><img src="https://avatars.githubusercontent.com/u/127842603?v=4" width="72" height="72" alt=""></a>
-  <a href="https://github.com/MiRinChan"><img src="https://avatars.githubusercontent.com/u/148533509?v=4" width="72" height="72" alt=""></a>
-</p>
+<div align="center">
+  <a href="https://github.com/eltavine"><img src="https://avatars.githubusercontent.com/u/248451253?v=4" width="64" height="64" alt=""></a>&nbsp;&nbsp;
+  <a href="https://github.com/XiaoTong6666"><img src="https://avatars.githubusercontent.com/u/110387028?v=4" width="64" height="64" alt=""></a>&nbsp;&nbsp;
+  <a href="https://github.com/FldBudin"><img src="https://avatars.githubusercontent.com/u/103419694?v=4" width="64" height="64" alt=""></a>&nbsp;&nbsp;
+  <a href="https://github.com/AlexLiuDev233"><img src="https://avatars.githubusercontent.com/u/102930921?v=4" width="64" height="64" alt=""></a>&nbsp;&nbsp;
+  <a href="https://github.com/Searchur"><img src="https://avatars.githubusercontent.com/u/120842622?v=4" width="64" height="64" alt=""></a>
+  <br>
+  <a href="https://github.com/VictorModi"><img src="https://avatars.githubusercontent.com/u/159055762?v=4" width="64" height="64" alt=""></a>&nbsp;&nbsp;
+  <a href="https://github.com/HSSkyBoy"><img src="https://avatars.githubusercontent.com/u/122550437?v=4" width="64" height="64" alt=""></a>&nbsp;&nbsp;
+  <a href="https://github.com/LingQingBigKing"><img src="https://avatars.githubusercontent.com/u/242912803?v=4" width="64" height="64" alt=""></a>&nbsp;&nbsp;
+  <a href="https://github.com/SQMY-dor"><img src="https://avatars.githubusercontent.com/u/75457662?v=4" width="64" height="64" alt=""></a>
+  <br>
+  <a href="https://github.com/ZG089"><img src="https://avatars.githubusercontent.com/u/159061718?v=4" width="64" height="64" alt=""></a>&nbsp;&nbsp;
+  <a href="https://github.com/coolzyd9107"><img src="https://avatars.githubusercontent.com/u/35447134?v=4" width="64" height="64" alt=""></a>&nbsp;&nbsp;
+  <a href="https://github.com/wxxsfxyzm"><img src="https://avatars.githubusercontent.com/u/65166044?v=4" width="64" height="64" alt=""></a>
+  <br>
+  <a href="https://github.com/947409161"><img src="https://avatars.githubusercontent.com/u/127842603?v=4" width="64" height="64" alt=""></a>&nbsp;&nbsp;
+  <a href="https://github.com/MiRinChan"><img src="https://avatars.githubusercontent.com/u/148533509?v=4" width="64" height="64" alt=""></a>
+</div>
 
 [badge-android]: https://img.shields.io/badge/Android-minSdk%2029-3DDC84?logo=android&logoColor=white&style=flat-square
 [badge-build]: https://github.com/eltavine/Duck-Detector-Refactoring/actions/workflows/build.yml/badge.svg?branch=master
