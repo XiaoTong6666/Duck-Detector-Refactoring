@@ -19,10 +19,9 @@ package com.eltavine.duckdetector.features.kernelcheck.data.native
 class KernelCheckNativeBridge {
 
     fun collectSnapshot(
-        systemBuildTime: Long,
     ): KernelCheckNativeSnapshot {
         return runCatching {
-            parse(nativeCollectSnapshot(systemBuildTime))
+            parse(nativeCollectSnapshot())
         }.getOrDefault(KernelCheckNativeSnapshot())
     }
 
@@ -46,7 +45,6 @@ class KernelCheckNativeBridge {
             procCmdline = entries.firstOrNull { it.first == "PROC_CMDLINE" }?.second?.decodeValue()
                 .orEmpty(),
             suspiciousCmdline = entries.firstOrNull { it.first == "CMDLINE" }?.second == "1",
-            buildTimeMismatch = entries.firstOrNull { it.first == "BUILD_TIME" }?.second == "1",
             kptrExposed = entries.firstOrNull { it.first == "KPTR" }?.second == "1",
             findings = entries.filter { it.first == "FINDING" }.map { it.second.decodeValue() },
         )
@@ -57,7 +55,7 @@ class KernelCheckNativeBridge {
             .replace("\\r", "\r")
     }
 
-    private external fun nativeCollectSnapshot(systemBuildTime: Long): String
+    private external fun nativeCollectSnapshot(): String
 
     companion object {
         init {

@@ -21,7 +21,6 @@ data class KernelCheckNativeSnapshot(
     val procVersion: String = "",
     val procCmdline: String = "",
     val suspiciousCmdline: Boolean = false,
-    val buildTimeMismatch: Boolean = false,
     val kptrExposed: Boolean = false,
     val findings: List<String> = emptyList(),
 )

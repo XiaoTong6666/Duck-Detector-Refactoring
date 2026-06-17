@@ -18,9 +18,7 @@
 
 #include <algorithm>
 #include <cctype>
-#include <ctime>
 #include <fcntl.h>
-#include <regex>
 #include <sstream>
 #include <string>
 #include <sys/syscall.h>
@@ -40,7 +38,6 @@ namespace {
         std::string proc_version;
         std::string proc_cmdline;
         bool suspicious_cmdline = false;
-        bool build_time_mismatch = false;
         bool kptr_exposed = false;
         std::vector<std::string> findings;
     };
@@ -61,19 +58,6 @@ namespace {
             {"rootfs=",                                  "Custom rootfs",                  false},
             {"androidboot.slot_suffix=",                 "Slot suffix present",            false},
     };
-
-    int month_to_number(const std::string &month) {
-        static const char *months[] = {
-                "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-        };
-        for (int i = 0; i < 12; ++i) {
-            if (month == months[i]) {
-                return i;
-            }
-        }
-        return -1;
-    }
 
     std::string lowercase_copy(std::string value) {
         for (char &ch: value) {
@@ -179,57 +163,6 @@ namespace {
         }
     }
 
-    void check_build_time(KernelSnapshot &snapshot, jlong system_build_time) {
-        if (snapshot.proc_version.empty() || system_build_time <= 0) {
-            return;
-        }
-
-        const std::regex date_pattern(
-                R"((\w{3})\s+(\w{3})\s+(\d{1,2})\s+(\d{2}):(\d{2}):(\d{2})\s+\w+\s+(\d{4}))");
-        std::smatch match;
-        if (!std::regex_search(snapshot.proc_version, match, date_pattern)) {
-            return;
-        }
-
-        const int month = month_to_number(match[2].str());
-        if (month < 0) {
-            return;
-        }
-
-        std::tm kernel_tm = {};
-        kernel_tm.tm_year = std::stoi(match[7].str()) - 1900;
-        kernel_tm.tm_mon = month;
-        kernel_tm.tm_mday = std::stoi(match[3].str());
-        kernel_tm.tm_hour = std::stoi(match[4].str());
-        kernel_tm.tm_min = std::stoi(match[5].str());
-        kernel_tm.tm_sec = std::stoi(match[6].str());
-
-        const time_t kernel_time = mktime(&kernel_tm);
-        const time_t system_time = static_cast<time_t>(system_build_time / 1000);
-        const double diff_days = difftime(kernel_time, system_time) / (24 * 60 * 60);
-        if (diff_days <= 30 && diff_days >= -365) {
-            snapshot.findings.emplace_back("BUILD_TIME|OK|Build times are consistent");
-            return;
-        }
-
-        snapshot.build_time_mismatch = true;
-
-        char kernel_date[32];
-        char system_date[32];
-        strftime(kernel_date, sizeof(kernel_date), "%Y-%m-%d", &kernel_tm);
-        std::tm *system_tm = localtime(&system_time);
-        if (system_tm == nullptr) {
-            return;
-        }
-        strftime(system_date, sizeof(system_date), "%Y-%m-%d", system_tm);
-
-        std::ostringstream finding;
-        finding << "BUILD_TIME|MISMATCH|Kernel: " << kernel_date
-                << ", System: " << system_date
-                << " (diff: " << static_cast<int>(diff_days) << " days)";
-        snapshot.findings.push_back(finding.str());
-    }
-
     void check_kptr(KernelSnapshot &snapshot) {
         const std::string kallsyms = read_file_via_syscall("/proc/kallsyms", 16384);
         if (kallsyms.empty()) {
@@ -270,11 +203,10 @@ namespace {
         }
     }
 
-    KernelSnapshot collect_snapshot(jlong system_build_time) {
+    KernelSnapshot collect_snapshot() {
         KernelSnapshot snapshot;
         read_proc_files(snapshot);
         check_cmdline(snapshot);
-        check_build_time(snapshot, system_build_time);
         check_kptr(snapshot);
         return snapshot;
     }
@@ -288,17 +220,15 @@ namespace {
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_eltavine_duckdetector_features_kernelcheck_data_native_KernelCheckNativeBridge_nativeCollectSnapshot(
         JNIEnv *env,
-        jobject /* this */,
-        jlong system_build_time
+        jobject /* this */
 ) {
-    const KernelSnapshot snapshot = collect_snapshot(system_build_time);
+    const KernelSnapshot snapshot = collect_snapshot();
 
     std::ostringstream output;
     output << "AVAILABLE=" << (snapshot.available ? "1" : "0") << "\n";
     output << "PROC_VERSION=" << escape_value(snapshot.proc_version) << "\n";
     output << "PROC_CMDLINE=" << escape_value(snapshot.proc_cmdline) << "\n";
     output << "CMDLINE=" << (snapshot.suspicious_cmdline ? "1" : "0") << "\n";
-    output << "BUILD_TIME=" << (snapshot.build_time_mismatch ? "1" : "0") << "\n";
     output << "KPTR=" << (snapshot.kptr_exposed ? "1" : "0") << "\n";
 
     for (const std::string &finding: snapshot.findings) {

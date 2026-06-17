@@ -66,7 +66,6 @@ data class KernelCheckReport(
     val dangerFindings: List<KernelCheckFinding>,
     val infoFindings: List<KernelCheckFinding>,
     val suspiciousCmdline: Boolean,
-    val buildTimeMismatch: Boolean,
     val kptrExposed: Boolean,
     val cvePatchState: KernelCheckCvePatchState,
     val cvePatchDetail: String?,
@@ -116,7 +115,6 @@ data class KernelCheckReport(
 
         private val BOOT_FINDING_IDS = setOf(
             "suspicious_cmdline",
-            "build_time_mismatch",
         )
 
         fun loading(): KernelCheckReport {
@@ -128,7 +126,6 @@ data class KernelCheckReport(
                 dangerFindings = emptyList(),
                 infoFindings = emptyList(),
                 suspiciousCmdline = false,
-                buildTimeMismatch = false,
                 kptrExposed = false,
                 cvePatchState = KernelCheckCvePatchState.INCONCLUSIVE,
                 cvePatchDetail = null,
@@ -148,7 +145,6 @@ data class KernelCheckReport(
                 dangerFindings = emptyList(),
                 infoFindings = emptyList(),
                 suspiciousCmdline = false,
-                buildTimeMismatch = false,
                 kptrExposed = false,
                 cvePatchState = KernelCheckCvePatchState.INCONCLUSIVE,
                 cvePatchDetail = null,

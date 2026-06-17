@@ -80,7 +80,7 @@ class KernelCheckCardModelMapper {
     private fun buildSummary(report: KernelCheckReport): String {
         return when (report.stage) {
             KernelCheckStage.LOADING ->
-                "Kernel naming, boot parameter, build-time, pointer-exposure, and Unicode path-bypass heuristics are collecting local evidence."
+                "Kernel naming, boot parameter, pointer-exposure, and Unicode path-bypass heuristics are collecting local evidence."
 
             KernelCheckStage.FAILED ->
                 report.errorMessage ?: "Kernel Check failed before evidence could be assembled."
@@ -207,13 +207,13 @@ class KernelCheckCardModelMapper {
     private fun buildAnomalyRows(report: KernelCheckReport): List<KernelCheckDetailRowModel> {
         return when (report.stage) {
             KernelCheckStage.LOADING -> placeholderRows(
-                labels = listOf("Kernel naming", "Boot parameters", "Build time"),
+                labels = listOf("Kernel naming", "Boot parameters"),
                 status = DetectorStatus.info(InfoKind.SUPPORT),
                 value = "Pending",
             )
 
             KernelCheckStage.FAILED -> placeholderRows(
-                labels = listOf("Kernel naming", "Boot parameters", "Build time"),
+                labels = listOf("Kernel naming", "Boot parameters"),
                 status = DetectorStatus.info(InfoKind.ERROR),
                 value = "Error",
             )
@@ -594,7 +594,6 @@ class KernelCheckCardModelMapper {
             "mentionScan",
             "customKernel",
             "cmdlineCheck",
-            "buildTime",
             "cvePatchCheck",
             "kptrRestrict",
             "nativeLibrary",

@@ -16,7 +16,6 @@
 
 package com.eltavine.duckdetector.features.kernelcheck.data.repository
 
-import android.os.Build
 import com.eltavine.duckdetector.features.kernelcheck.data.native.KernelCheckNativeBridge
 import com.eltavine.duckdetector.features.kernelcheck.domain.KernelCheckFinding
 import com.eltavine.duckdetector.features.kernelcheck.domain.KernelCheckCvePatchState
@@ -26,10 +25,7 @@ import com.eltavine.duckdetector.features.kernelcheck.domain.KernelCheckMethodRe
 import com.eltavine.duckdetector.features.kernelcheck.domain.KernelCheckReport
 import com.eltavine.duckdetector.features.kernelcheck.domain.KernelCheckStage
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.LinkedHashSet
-import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -47,7 +43,7 @@ class KernelCheckRepository(
 
     private fun scanInternal(): KernelCheckReport {
         val unameOutput = getUnameOutput()
-        val nativeSnapshot = nativeBridge.collectSnapshot(Build.TIME)
+        val nativeSnapshot = nativeBridge.collectSnapshot()
         val procVersion = nativeSnapshot.procVersion.ifBlank { readFileText("/proc/version") }
         val procCmdline = nativeSnapshot.procCmdline.ifBlank {
             readFileText("/proc/cmdline").replace(
@@ -164,22 +160,6 @@ class KernelCheckRepository(
             )
         }
 
-        val buildTimeDetail = nativeSnapshot.findings.firstDetail("BUILD_TIME|MISMATCH|")
-            ?: detectBuildTimeMismatchFallback(
-                unameOutput = unameOutput,
-                procVersion = procVersion,
-                systemBuildTime = Build.TIME,
-            )
-        if (buildTimeDetail != null) {
-            dangerFindings += KernelCheckFinding(
-                id = "build_time_mismatch",
-                label = "Build time drift",
-                value = "Mismatch",
-                detail = buildTimeDetail,
-                severity = KernelCheckFindingSeverity.HARD,
-            )
-        }
-
         val kptrDetail = nativeSnapshot.findings.firstDetail("KPTR_RESTRICT|DISABLED|")
         if (kptrDetail != null || nativeSnapshot.kptrExposed) {
             infoFindings += KernelCheckFinding(
@@ -219,7 +199,6 @@ class KernelCheckRepository(
             dangerFindings = dangerFindings,
             infoFindings = infoFindings,
             suspiciousCmdline = cmdlineMatches.isNotEmpty(),
-            buildTimeMismatch = buildTimeDetail != null,
             kptrExposed = kptrDetail != null || nativeSnapshot.kptrExposed,
             cvePatchState = cveAssessment.state,
             cvePatchDetail = cveAssessment.detail,
@@ -251,12 +230,6 @@ class KernelCheckRepository(
                 dangerById["suspicious_cmdline"],
                 nativeAvailable,
                 "Normal"
-            ),
-            buildNativeMethod(
-                "buildTime",
-                dangerById["build_time_mismatch"],
-                nativeAvailable,
-                "OK"
             ),
             buildCveMethod("cvePatchCheck", cveAssessment),
             buildInfoMethod(
@@ -394,37 +367,6 @@ class KernelCheckRepository(
             )
         }
             .map { it.description }
-    }
-
-    private fun detectBuildTimeMismatchFallback(
-        unameOutput: String,
-        procVersion: String,
-        systemBuildTime: Long,
-    ): String? {
-        if (systemBuildTime <= 0L) {
-            return null
-        }
-        val sources = listOf(
-            "uname -a" to unameOutput,
-            "/proc/version" to procVersion,
-        )
-        val parser = SimpleDateFormat("EEE MMM d HH:mm:ss z yyyy", Locale.US)
-        for ((label, text) in sources) {
-            if (text.isBlank()) {
-                continue
-            }
-            val match = BUILD_TIME_REGEX.find(text) ?: continue
-            val kernelDateText = match.value.replace(Regex("\\s+"), " ")
-            val kernelDate = runCatching { parser.parse(kernelDateText) }.getOrNull() ?: continue
-            val diffDays = TimeUnit.MILLISECONDS.toDays(kernelDate.time - systemBuildTime)
-            if (diffDays <= 30 && diffDays >= -365) {
-                continue
-            }
-            val systemDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(systemBuildTime))
-            val kernelDateShort = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(kernelDate)
-            return "$label -> Kernel: $kernelDateShort, System: $systemDate (diff: $diffDays days)"
-        }
-        return null
     }
 
     private fun getUnameOutput(): String {
@@ -812,9 +754,6 @@ class KernelCheckRepository(
             Regex("""\bTG\b|\btg\b|\bTelegram\b|\btelegram\b|t\.me/""", RegexOption.IGNORE_CASE)
 
         private val MENTION_REGEX = Regex("@[A-Za-z0-9_]+")
-
-        private val BUILD_TIME_REGEX =
-            Regex("""\w{3}\s+\w{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}\s+\w+\s+\d{4}""")
 
         private val CUSTOM_KERNEL_KEYWORDS = listOf(
             "xiaoxiaow",

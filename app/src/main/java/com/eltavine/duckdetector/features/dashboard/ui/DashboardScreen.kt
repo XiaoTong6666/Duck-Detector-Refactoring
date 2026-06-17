@@ -16,7 +16,6 @@
 
 package com.eltavine.duckdetector.features.dashboard.ui
 
-import android.content.ClipData
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -55,13 +54,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import compose.icons.SimpleIcons
-import compose.icons.simpleicons.Tencentqq
 import com.eltavine.duckdetector.BuildConfig
 import com.eltavine.duckdetector.core.ui.model.DetectionSeverity
 import com.eltavine.duckdetector.R
@@ -92,10 +89,6 @@ import com.eltavine.duckdetector.features.tee.ui.model.TeeFooterActionId
 import com.eltavine.duckdetector.features.virtualization.ui.card.VirtualizationDetectorCard
 import com.eltavine.duckdetector.features.zygisk.ui.card.ZygiskDetectorCard
 import com.eltavine.duckdetector.ui.theme.ShapeTokens
-
-private const val DUCK_DETECTOR_QQ_GROUP = "789344870"
-private const val DUCK_DETECTOR_QQ_GROUP_URL =
-    "https://qun.qq.com/universal-share/share?ac=1&authKey=VWdSICnmxMiNF1t409UcE%2FjdQVeorZKvrKP85I2pepXf4rfv9IFfdAw8kAuMdk5v&busi_data=eyJncm91cENvZGUiOiI3ODkzNDQ4NzAiLCJ0b2tlbiI6InZDdVJKWXZCd2ErcmhmWEdkVThWbFRIVER2MFVUeEU0eVNtdk9UOTNjS3BMeUlOV1JlUWVSbGdyOWczRFpzZ3AiLCJ1aW4iOiIzMzM0NzEzMjMzIn0=&data=ms9NmidW7tH7vZrZkYOux0z9cAUWBOp4THmPYdBeCpt6sBVyd1oP9E3lL-0yToQMBBTK3X7aZQ9SLnzxEmxWlQ&svctype=4&tempid=h5_group_info"
 
 @Composable
 fun DashboardScreen(
@@ -306,7 +299,6 @@ private fun DashboardLoadingOverlay(
 @Composable
 private fun BrandHeader() {
     val uriHandler = LocalUriHandler.current
-    val context = LocalContext.current
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -369,24 +361,6 @@ private fun BrandHeader() {
                 iconRes = R.drawable.ic_telegram,
                 onClick = {
                     uriHandler.openUri("https://t.me/duck_detector")
-                },
-            )
-            SocialGlyph(
-                iconVector = SimpleIcons.Tencentqq,
-                onClick = {
-                    context.getSystemService(android.content.ClipboardManager::class.java)
-                        ?.setPrimaryClip(
-                            ClipData.newPlainText(
-                                "Duck Detector QQ group",
-                                DUCK_DETECTOR_QQ_GROUP,
-                            ),
-                        )
-                    Toast.makeText(
-                        context,
-                        "QQ group number copied: $DUCK_DETECTOR_QQ_GROUP",
-                        Toast.LENGTH_SHORT,
-                    ).show()
-                    uriHandler.openUri(DUCK_DETECTOR_QQ_GROUP_URL)
                 },
             )
         }
