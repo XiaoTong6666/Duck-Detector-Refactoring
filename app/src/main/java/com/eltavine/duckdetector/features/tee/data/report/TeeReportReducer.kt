@@ -31,14 +31,17 @@ import com.eltavine.duckdetector.features.tee.domain.TeeSignalLevel
 import com.eltavine.duckdetector.features.tee.domain.TeeTier
 import com.eltavine.duckdetector.features.tee.domain.TeeTrustRoot
 import com.eltavine.duckdetector.features.tee.domain.TeeVerdict
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.AesGcmRoundTripResult
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.GrantDomainAnomalyKind
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.SyntheticGrantGetKeyEntryAccessVectorBlindnessAnomalyKind
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.SyntheticGrantGranteeBlindReadbackAnomalyKind
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.GrantSelfDomainAnomalyKind
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.MIN_RATIO_SAMPLE_COUNT
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.SupplementaryAttestationInfoAnomalyKind
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.TIMING_SIDE_CHANNEL_THRESHOLD_RATIO
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.TimingSideChannelResult
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.UpdateSubcomponentStaleResponseAnomalyKind
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.VintfKeyMintVersionAnomalyKind
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.timingSideChannelRatio
 import java.time.LocalDate
 import java.time.Period
@@ -281,6 +284,17 @@ class TeeReportReducer(
                     )
                 )
             }
+            if (artifacts.vintfKeyMintVersion.anomalyKind == VintfKeyMintVersionAnomalyKind.MISMATCH) {
+                add(
+                    fact(
+                        "KeyMint VINTF",
+                        "VINTF KeyMint version diverged from attestation. " +
+                            vintfKeyMintVersionValue(artifacts),
+                        TeeSignalLevel.FAIL,
+                        hiddenCopyText = artifacts.vintfKeyMintVersion.diagnosticCopyText,
+                    )
+                )
+            }
             // Grant checks are supplementary, but these two kinds are strong local evidence:
             // Grant 检测属于补充证据；但下面两类是强本地证据：
             // 1) chain split means owner alias and Domain.GRANT return different ordered certificate narratives.
@@ -477,6 +491,40 @@ class TeeReportReducer(
                     )
                 )
             }
+            when (artifacts.supplementaryAttestationInfo.anomalyKind) {
+                SupplementaryAttestationInfoAnomalyKind.MISSING_ATTESTATION_MODULE_HASH -> {
+                    add(
+                        fact(
+                            "Module hash",
+                            "getSupplementaryAttestationInfo(MODULE_HASH) returned module info, but attestation omitted MODULE_HASH.",
+                            TeeSignalLevel.WARN,
+                            hiddenCopyText = artifacts.supplementaryAttestationInfo.diagnosticCopyText,
+                        )
+                    )
+                }
+                SupplementaryAttestationInfoAnomalyKind.MISMATCH -> {
+                    add(
+                        fact(
+                            "Module hash",
+                            "Attested MODULE_HASH did not match getSupplementaryAttestationInfo(MODULE_HASH).",
+                            TeeSignalLevel.WARN,
+                            hiddenCopyText = artifacts.supplementaryAttestationInfo.diagnosticCopyText,
+                        )
+                    )
+                }
+                SupplementaryAttestationInfoAnomalyKind.UNEXPECTED_ATTESTATION_MODULE_HASH -> {
+                    add(
+                        fact(
+                            "Module hash",
+                            "Attestation carried MODULE_HASH while getSupplementaryAttestationInfo(MODULE_HASH) was unavailable.",
+                            TeeSignalLevel.WARN,
+                            hiddenCopyText = artifacts.supplementaryAttestationInfo.diagnosticCopyText,
+                        )
+                    )
+                }
+                SupplementaryAttestationInfoAnomalyKind.NONE,
+                SupplementaryAttestationInfoAnomalyKind.UNSUPPORTED -> Unit
+            }
             if (
                 artifacts.updateSubcomponentStaleResponsePersistence.anomalyKind ==
                 UpdateSubcomponentStaleResponseAnomalyKind.STALE_TEE_RESPONSE_AFTER_KEY_ID_UPDATE
@@ -507,12 +555,32 @@ class TeeReportReducer(
                     )
                 )
             }
+            val aesGcmAuthorizationFailures = aesGcmAuthorizationFailures(artifacts.aesGcm)
+            if (artifacts.aesGcm.executed && aesGcmAuthorizationFailures.isNotEmpty()) {
+                add(
+                    fact(
+                        "AES-GCM",
+                        "AndroidKeyStore AES-GCM accepted unauthorized parameters: ${aesGcmAuthorizationFailures.joinToString("; ")}.",
+                        TeeSignalLevel.FAIL,
+                    )
+                )
+            }
             if (artifacts.aesGcm.executed && artifacts.aesGcm.insideSecureHardware == false) {
                 add(
                     fact(
                         "AES-GCM",
                         "AndroidKeyStore AES-GCM key was software-backed instead of secure hardware.",
                         TeeSignalLevel.WARN,
+                    )
+                )
+            }
+            val keyMintCryptoFailures = keyMintCryptoFailures(artifacts)
+            if (keyMintCryptoFailures.isNotEmpty()) {
+                add(
+                    fact(
+                        "KeyMint crypto",
+                        "Hardware-backed KeyMint failed crypto capability checks: ${keyMintCryptoFailures.joinToString("; ")}.",
+                        TeeSignalLevel.FAIL,
                     )
                 )
             }
@@ -911,6 +979,13 @@ class TeeReportReducer(
                     add(fact("Lifecycle", lifecycleValue(artifacts), lifecycleLevel(artifacts)))
                     add(
                         fact(
+                            "KeyMint crypto",
+                            keyMintCryptoValue(artifacts),
+                            keyMintCryptoLevel(artifacts)
+                        )
+                    )
+                    add(
+                        fact(
                             "Timing",
                             timingValue(artifacts),
                             if (artifacts.timing.suspicious) TeeSignalLevel.WARN else TeeSignalLevel.INFO
@@ -945,6 +1020,22 @@ class TeeReportReducer(
                             "ImportKey narrative",
                             importKeyRetainedAttestationNarrativeValue(artifacts),
                             importKeyRetainedAttestationNarrativeLevel(artifacts)
+                        )
+                    )
+                    add(
+                        fact(
+                            "KeyMint VINTF",
+                            vintfKeyMintVersionValue(artifacts),
+                            vintfKeyMintVersionLevel(artifacts),
+                            hiddenCopyText = artifacts.vintfKeyMintVersion.diagnosticCopyText,
+                        )
+                    )
+                    add(
+                        fact(
+                            "Module hash",
+                            supplementaryAttestationInfoValue(artifacts),
+                            supplementaryAttestationInfoLevel(artifacts),
+                            hiddenCopyText = artifacts.supplementaryAttestationInfo.diagnosticCopyText,
                         )
                     )
                     add(
@@ -1470,6 +1561,7 @@ class TeeReportReducer(
 
     private fun aesGcmValue(artifacts: TeeScanArtifacts): String {
         val result = artifacts.aesGcm
+        val authorizationFailures = aesGcmAuthorizationFailures(result)
         return when {
             !result.executed -> "Skipped"
             !result.roundTripSucceeded -> buildString {
@@ -1478,6 +1570,12 @@ class TeeReportReducer(
                     append(" • ")
                     append(it)
                 }
+            }
+
+            authorizationFailures.isNotEmpty() -> buildString {
+                append("Auth failed")
+                append(" • ")
+                append(authorizationFailures.joinToString("; "))
             }
 
             result.insideSecureHardware == true -> buildString {
@@ -1502,6 +1600,126 @@ class TeeReportReducer(
             }
         }
     }
+
+    private fun keyMintCryptoValue(artifacts: TeeScanArtifacts): String {
+        if (!artifacts.keyMintCapability.executed) {
+            return "Skipped"
+        }
+        return keyMintCryptoChecks(artifacts).joinToString(" • ") { check ->
+            when {
+                !check.executed -> "${check.name} skipped"
+                check.ok -> "${check.name} ok"
+                else -> "${check.name} failed: ${check.detail}"
+            }
+        }
+    }
+
+    private fun keyMintCryptoLevel(artifacts: TeeScanArtifacts): TeeSignalLevel = when {
+        !artifacts.keyMintCapability.executed -> TeeSignalLevel.INFO
+        keyMintCryptoFailures(artifacts).isNotEmpty() -> TeeSignalLevel.FAIL
+        keyMintCryptoChecks(artifacts).any { !it.executed } -> TeeSignalLevel.INFO
+        else -> TeeSignalLevel.PASS
+    }
+
+    private fun keyMintCryptoFailures(artifacts: TeeScanArtifacts): List<String> {
+        if (!artifacts.keyMintCapability.executed) {
+            return emptyList()
+        }
+        return keyMintCryptoChecks(artifacts)
+            .filter { it.executed && !it.ok }
+            .map { "${it.name}: ${it.detail}" }
+    }
+
+    private fun keyMintCryptoChecks(artifacts: TeeScanArtifacts): List<KeyMintCryptoCheck> {
+        val crypto = artifacts.keyMintCapability.crypto
+        return listOf(
+            KeyMintCryptoCheck("HMAC-SHA256", true, crypto.hmacSha256Ok, crypto.hmacSha256Detail),
+            KeyMintCryptoCheck(
+                "Single-use EC",
+                crypto.limitedUseEcExecuted,
+                crypto.limitedUseEcOk,
+                crypto.limitedUseEcDetail,
+            ),
+            KeyMintCryptoCheck("ECDH P-256", crypto.ecdhP256Executed, crypto.ecdhP256Ok, crypto.ecdhP256Detail),
+            KeyMintCryptoCheck("RSA-PSS SHA-256", true, crypto.rsaPssSha256Ok, crypto.rsaPssSha256Detail),
+            KeyMintCryptoCheck("AES-CBC/CTR auth", crypto.aesCbcCtrExecuted, crypto.aesCbcCtrOk, crypto.aesCbcCtrDetail),
+            KeyMintCryptoCheck(
+                "AES-CBC padding auth",
+                crypto.aesCbcNoPaddingExecuted,
+                crypto.aesCbcNoPaddingOk,
+                crypto.aesCbcNoPaddingDetail,
+            ),
+            KeyMintCryptoCheck("EC SHA-512 auth", crypto.ecSha512Executed, crypto.ecSha512Ok, crypto.ecSha512Detail),
+            KeyMintCryptoCheck(
+                "RSA-PSS SHA-512 auth",
+                crypto.rsaPssSha512Executed,
+                crypto.rsaPssSha512Ok,
+                crypto.rsaPssSha512Detail,
+            ),
+            KeyMintCryptoCheck(
+                "RSA-PSS PKCS#1 auth",
+                crypto.rsaPssPkcs1Executed,
+                crypto.rsaPssPkcs1Ok,
+                crypto.rsaPssPkcs1Detail,
+            ),
+            KeyMintCryptoCheck(
+                "RSA OAEP/PKCS#1 auth",
+                crypto.rsaOaepPkcs1Executed,
+                crypto.rsaOaepPkcs1Ok,
+                crypto.rsaOaepPkcs1Detail,
+            ),
+            KeyMintCryptoCheck(
+                "RSA PKCS#1/OAEP auth",
+                crypto.rsaPkcs1OaepExecuted,
+                crypto.rsaPkcs1OaepOk,
+                crypto.rsaPkcs1OaepDetail,
+            ),
+            KeyMintCryptoCheck(
+                "RSA-OAEP MGF1",
+                crypto.rsaOaepMgf1Executed,
+                crypto.rsaOaepMgf1Ok,
+                crypto.rsaOaepMgf1Detail,
+            ),
+            KeyMintCryptoCheck(
+                "RSA-OAEP MGF1 auth",
+                crypto.rsaOaepMgf1Sha1Executed,
+                crypto.rsaOaepMgf1Sha1Ok,
+                crypto.rsaOaepMgf1Sha1Detail,
+            ),
+            KeyMintCryptoCheck(
+                "RSA-OAEP SHA-256",
+                crypto.rsaOaepSha256Executed,
+                crypto.rsaOaepSha256Ok,
+                crypto.rsaOaepSha256Detail,
+            ),
+            KeyMintCryptoCheck(
+                "RSA-OAEP SHA-1 auth",
+                crypto.rsaOaepSha1Executed,
+                crypto.rsaOaepSha1Ok,
+                crypto.rsaOaepSha1Detail,
+            ),
+            KeyMintCryptoCheck("EC NONE auth", crypto.ecNoneExecuted, crypto.ecNoneOk, crypto.ecNoneDetail),
+            KeyMintCryptoCheck(
+                "RSA PKCS#1 SHA-1 auth",
+                crypto.rsaPkcs1Sha1Executed,
+                crypto.rsaPkcs1Sha1Ok,
+                crypto.rsaPkcs1Sha1Detail,
+            ),
+            KeyMintCryptoCheck(
+                "RSA PKCS#1/PSS auth",
+                crypto.rsaPkcs1PssExecuted,
+                crypto.rsaPkcs1PssOk,
+                crypto.rsaPkcs1PssDetail,
+            ),
+        )
+    }
+
+    private data class KeyMintCryptoCheck(
+        val name: String,
+        val executed: Boolean,
+        val ok: Boolean,
+        val detail: String,
+    )
 
     private fun timingValue(artifacts: TeeScanArtifacts): String {
         val median = artifacts.timing.medianMicros?.let { "${it}us" } ?: "n/a"
@@ -2016,8 +2234,20 @@ class TeeReportReducer(
         return when {
             !artifacts.aesGcm.executed -> TeeSignalLevel.INFO
             !artifacts.aesGcm.roundTripSucceeded -> TeeSignalLevel.FAIL
+            aesGcmAuthorizationFailures(artifacts.aesGcm).isNotEmpty() -> TeeSignalLevel.FAIL
             artifacts.aesGcm.insideSecureHardware == false -> TeeSignalLevel.WARN
             else -> TeeSignalLevel.PASS
+        }
+    }
+
+    private fun aesGcmAuthorizationFailures(result: AesGcmRoundTripResult): List<String> {
+        if (!result.executed) {
+            return emptyList()
+        }
+        return buildList {
+            if (!result.cbcRejected) add("CBC: ${result.cbcRejectedDetail}")
+            if (!result.mac64Rejected) add("MAC64: ${result.mac64RejectedDetail}")
+            if (!result.shortNonceRejected) add("nonce: ${result.shortNonceRejectedDetail}")
         }
     }
 
@@ -2560,6 +2790,62 @@ class TeeReportReducer(
         artifacts.soter.abnormalEnvironment -> TeeSignalLevel.WARN
         !artifacts.soter.serviceReachable -> TeeSignalLevel.WARN
         else -> TeeSignalLevel.INFO
+    }
+
+    private fun supplementaryAttestationInfoLevel(artifacts: TeeScanArtifacts): TeeSignalLevel = when (
+        artifacts.supplementaryAttestationInfo.anomalyKind
+    ) {
+        SupplementaryAttestationInfoAnomalyKind.MISSING_ATTESTATION_MODULE_HASH,
+        SupplementaryAttestationInfoAnomalyKind.MISMATCH,
+        SupplementaryAttestationInfoAnomalyKind.UNEXPECTED_ATTESTATION_MODULE_HASH -> TeeSignalLevel.WARN
+        SupplementaryAttestationInfoAnomalyKind.NONE -> TeeSignalLevel.PASS
+        SupplementaryAttestationInfoAnomalyKind.UNSUPPORTED -> TeeSignalLevel.INFO
+    }
+
+    private fun vintfKeyMintVersionLevel(artifacts: TeeScanArtifacts): TeeSignalLevel = when (
+        artifacts.vintfKeyMintVersion.anomalyKind
+    ) {
+        VintfKeyMintVersionAnomalyKind.MISMATCH -> TeeSignalLevel.FAIL
+        VintfKeyMintVersionAnomalyKind.NONE -> TeeSignalLevel.PASS
+        VintfKeyMintVersionAnomalyKind.UNREADABLE,
+        VintfKeyMintVersionAnomalyKind.NO_DECLARATION,
+        VintfKeyMintVersionAnomalyKind.NO_ATTESTED_VERSION -> TeeSignalLevel.INFO
+    }
+
+    private fun vintfKeyMintVersionValue(artifacts: TeeScanArtifacts): String {
+        val result = artifacts.vintfKeyMintVersion
+        return when (result.anomalyKind) {
+            VintfKeyMintVersionAnomalyKind.MISMATCH ->
+                "VINTF declaration did not match attested version. ${result.detail}"
+            VintfKeyMintVersionAnomalyKind.NONE ->
+                "VINTF declaration matched attested KeyMint version. ${result.detail}"
+            VintfKeyMintVersionAnomalyKind.UNREADABLE ->
+                "VINTF manifest was not fully readable. ${result.detail}"
+            VintfKeyMintVersionAnomalyKind.NO_DECLARATION ->
+                "No comparable KeyMint VINTF declaration was found. ${result.detail}"
+            VintfKeyMintVersionAnomalyKind.NO_ATTESTED_VERSION ->
+                "Attested KeyMint version was unavailable. ${result.detail}"
+        }
+    }
+
+    private fun supplementaryAttestationInfoValue(artifacts: TeeScanArtifacts): String {
+        val result = artifacts.supplementaryAttestationInfo
+        return when (result.anomalyKind) {
+            SupplementaryAttestationInfoAnomalyKind.MISSING_ATTESTATION_MODULE_HASH ->
+                "MODULE_HASH omitted from attestation. ${result.detail}"
+            SupplementaryAttestationInfoAnomalyKind.MISMATCH ->
+                "MODULE_HASH did not match supplementary attestation info. ${result.detail}"
+            SupplementaryAttestationInfoAnomalyKind.UNEXPECTED_ATTESTATION_MODULE_HASH ->
+                "MODULE_HASH present while supplementary attestation info was unavailable. ${result.detail}"
+            SupplementaryAttestationInfoAnomalyKind.NONE ->
+                if (result.attestedModuleHashHex == null) {
+                    "MODULE_HASH not required by attestation version. ${result.detail}"
+                } else {
+                    "MODULE_HASH matched supplementary attestation info. ${result.detail}"
+                }
+            SupplementaryAttestationInfoAnomalyKind.UNSUPPORTED ->
+                "Unavailable. ${result.detail}"
+        }
     }
 
     private fun indicatorLevel(
