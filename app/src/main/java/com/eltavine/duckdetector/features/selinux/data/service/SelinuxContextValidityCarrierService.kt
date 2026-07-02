@@ -21,7 +21,6 @@ import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
 import android.os.Parcel
-import android.system.Os
 import com.eltavine.duckdetector.features.selinux.data.native.SelinuxContextValidityBridge
 import com.eltavine.duckdetector.features.selinux.data.native.SelinuxContextValidityPayloadCodec
 import com.eltavine.duckdetector.features.selinux.data.native.SelinuxContextValiditySnapshot
@@ -35,38 +34,34 @@ class SelinuxContextValidityCarrierService : Service() {
             data: Parcel,
             reply: Parcel?,
             flags: Int,
-        ): Boolean {
-            return when (code) {
-                INTERFACE_TRANSACTION -> {
-                    reply?.writeString(SelinuxContextValidityCarrierProtocol.DESCRIPTOR)
-                    true
-                }
-
-                SelinuxContextValidityCarrierProtocol.TRANSACTION_COLLECT_SNAPSHOT -> {
-                    data.enforceInterface(SelinuxContextValidityCarrierProtocol.DESCRIPTOR)
-                    reply?.writeNoException()
-                    reply?.writeString(buildSnapshotPayload())
-                    true
-                }
-
-                else -> super.onTransact(code, data, reply, flags)
+        ): Boolean = when (code) {
+            INTERFACE_TRANSACTION -> {
+                reply?.writeString(SelinuxContextValidityCarrierProtocol.DESCRIPTOR)
+                true
             }
+
+            SelinuxContextValidityCarrierProtocol.TRANSACTION_COLLECT_SNAPSHOT -> {
+                data.enforceInterface(SelinuxContextValidityCarrierProtocol.DESCRIPTOR)
+                reply?.writeNoException()
+                reply?.writeString(buildSnapshotPayload())
+                true
+            }
+
+            else -> super.onTransact(code, data, reply, flags)
         }
     }
 
     override fun onBind(intent: Intent?): IBinder = binder
 
-    private fun buildSnapshotPayload(): String {
-        return runCatching {
-            resolveCarrierPayload(
-                consumePreloadedRawData = SelinuxContextValidityBridge::consumePreloadedRawDataForCarrier,
-            )
-        }.getOrElse { throwable ->
-            carrierFailurePayload(
-                throwable.message ?: "SELinux carrier probe failed.",
-                "SELinux carrier probe crashed before returning the preloaded payload.",
-            )
-        }
+    private fun buildSnapshotPayload(): String = runCatching {
+        resolveCarrierPayload(
+            consumePreloadedRawData = SelinuxContextValidityBridge::consumePreloadedRawDataForCarrier,
+        )
+    }.getOrElse { throwable ->
+        carrierFailurePayload(
+            throwable.message ?: "SELinux carrier probe failed.",
+            "SELinux carrier probe crashed before returning the preloaded payload.",
+        )
     }
 
     companion object {
@@ -91,22 +86,20 @@ class SelinuxContextValidityCarrierService : Service() {
         internal fun carrierFailurePayload(
             reason: String,
             note: String,
-        ): String {
-            return SelinuxContextValidityPayloadCodec.encode(
-                SelinuxContextValiditySnapshot(
-                    dirtyPolicyFailureReason = reason,
-                    javaDirtyPolicyFailureReason = reason,
-                    policyloadSeqnoState = SelinuxPolicyloadSeqnoState.UNAVAILABLE.name,
-                    policyloadSeqnoFailureReason = reason,
-                    procAttrCurrentFailureReason = reason,
-                    failureReason = reason,
-                    dirtyPolicyNotes = listOf(note),
-                    javaDirtyPolicyNotes = listOf(note),
-                    policyloadSeqnoNotes = listOf(note),
-                    notes = listOf(note),
-                ),
-            )
-        }
+        ): String = SelinuxContextValidityPayloadCodec.encode(
+            SelinuxContextValiditySnapshot(
+                dirtyPolicyFailureReason = reason,
+                javaDirtyPolicyFailureReason = reason,
+                policyloadSeqnoState = SelinuxPolicyloadSeqnoState.UNAVAILABLE.name,
+                policyloadSeqnoFailureReason = reason,
+                procAttrCurrentFailureReason = reason,
+                failureReason = reason,
+                dirtyPolicyNotes = listOf(note),
+                javaDirtyPolicyNotes = listOf(note),
+                policyloadSeqnoNotes = listOf(note),
+                notes = listOf(note),
+            ),
+        )
 
         internal fun clearCachedPreloadedPayloadForTests() {
             cachedPreloadedPayload = null

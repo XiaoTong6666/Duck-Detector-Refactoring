@@ -45,27 +45,23 @@ open class SelinuxContextValidityCarrierManager(
         )
     }
 
-    private suspend fun performRemoteSnapshotCollection(context: Context): SelinuxContextValiditySnapshot {
-        return performRemoteCall(
-            context = context,
-            onConnected = { proxy -> SelinuxContextValidityBridge().parse(proxy.collectSnapshot()) },
-            onNullBinder = { carrierFailureSnapshot("SELinux carrier service returned a null binder.") },
-            onError = { error -> carrierFailureSnapshot(error) },
-        )
-    }
+    private suspend fun performRemoteSnapshotCollection(context: Context): SelinuxContextValiditySnapshot = performRemoteCall(
+        context = context,
+        onConnected = { proxy -> SelinuxContextValidityBridge().parse(proxy.collectSnapshot()) },
+        onNullBinder = { carrierFailureSnapshot("SELinux carrier service returned a null binder.") },
+        onError = { error -> carrierFailureSnapshot(error) },
+    )
 
     private fun carrierFailureSnapshot(
         reason: String,
-    ): SelinuxContextValiditySnapshot {
-        return SelinuxContextValiditySnapshot(
-            dirtyPolicyFailureReason = reason,
-            javaDirtyPolicyFailureReason = reason,
-            policyloadSeqnoState = SelinuxPolicyloadSeqnoState.UNAVAILABLE.name,
-            policyloadSeqnoFailureReason = reason,
-            procAttrCurrentFailureReason = reason,
-            failureReason = reason,
-        )
-    }
+    ): SelinuxContextValiditySnapshot = SelinuxContextValiditySnapshot(
+        dirtyPolicyFailureReason = reason,
+        javaDirtyPolicyFailureReason = reason,
+        policyloadSeqnoState = SelinuxPolicyloadSeqnoState.UNAVAILABLE.name,
+        policyloadSeqnoFailureReason = reason,
+        procAttrCurrentFailureReason = reason,
+        failureReason = reason,
+    )
 
     private suspend fun <T> performRemoteCall(
         context: Context,

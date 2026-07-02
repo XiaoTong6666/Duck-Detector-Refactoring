@@ -230,9 +230,7 @@ class ImportKeyRetainedAttestationNarrativeProbeTest {
         override val importedOriginValues: Set<Int> = setOf(ORIGIN_IMPORTED)
         override val generatedOriginValue: Int = ORIGIN_GENERATED
 
-        override fun generatePriorAttestedChain(alias: String, challenge: ByteArray): List<ByteArray> {
-            return priorChain
-        }
+        override fun generatePriorAttestedChain(alias: String, challenge: ByteArray): List<ByteArray> = priorChain
 
         override fun importMarkerKey(alias: String) {
             importFailure?.let { throw it }
@@ -243,9 +241,7 @@ class ImportKeyRetainedAttestationNarrativeProbeTest {
             return support
         }
 
-        override fun readPostImportMetadataSnapshots(alias: String): List<ImportKeyRetainedAttestationNarrativeProbe.PostImportMetadata> {
-            return snapshots
-        }
+        override fun readPostImportMetadataSnapshots(alias: String): List<ImportKeyRetainedAttestationNarrativeProbe.PostImportMetadata> = snapshots
 
         override fun cleanup(alias: String) {
             cleanedAliases += alias
@@ -259,17 +255,13 @@ class ImportKeyRetainedAttestationNarrativeProbeTest {
         private const val ORIGIN_IMPORTED = 2
         private val MARKER_CERT = cert(99)
 
-        private fun labelOrigin(value: Int?): String {
-            return when (value) {
-                ORIGIN_GENERATED -> "GENERATED"
-                ORIGIN_IMPORTED -> "IMPORTED"
-                null -> "unknown"
-                else -> value.toString()
-            }
+        private fun labelOrigin(value: Int?): String = when (value) {
+            ORIGIN_GENERATED -> "GENERATED"
+            ORIGIN_IMPORTED -> "IMPORTED"
+            null -> "unknown"
+            else -> value.toString()
         }
 
-        private fun cert(seed: Int): ByteArray {
-            return ByteArray(24) { index -> (seed + index).toByte() }
-        }
+        private fun cert(seed: Int): ByteArray = ByteArray(24) { index -> (seed + index).toByte() }
     }
 }

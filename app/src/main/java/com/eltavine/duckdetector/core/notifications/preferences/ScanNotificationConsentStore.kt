@@ -22,10 +22,10 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.preferencesDataStoreFile
-import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import java.io.IOException
 
 interface ScanNotificationPrefsStore {
     val prefs: Flow<ScanNotificationPrefs>
@@ -79,13 +79,11 @@ class ScanNotificationConsentStore private constructor(
         private val KEY_LIVE_UPDATES_PROMPTED =
             booleanPreferencesKey("scan_live_updates_prompted")
 
-        fun getInstance(context: Context): ScanNotificationConsentStore {
-            return instance ?: synchronized(this) {
-                instance
-                    ?: ScanNotificationConsentStore(context.applicationContext).also { created ->
-                        instance = created
-                    }
-            }
+        fun getInstance(context: Context): ScanNotificationConsentStore = instance ?: synchronized(this) {
+            instance
+                ?: ScanNotificationConsentStore(context.applicationContext).also { created ->
+                    instance = created
+                }
         }
     }
 }

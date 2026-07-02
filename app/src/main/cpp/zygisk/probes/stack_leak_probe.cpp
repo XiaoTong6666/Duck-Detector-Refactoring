@@ -50,7 +50,8 @@ ProbeResult collect_stack_leak_probe() {
     }
 
     constexpr size_t kScanWindowBytes = 256U * 1024U;
-    const auto window_start = current_sp > kScanWindowBytes ? current_sp - kScanWindowBytes : stack_map->start;
+    const auto window_start =
+        current_sp > kScanWindowBytes ? current_sp - kScanWindowBytes : stack_map->start;
     const auto begin_address = std::max(stack_map->start, window_start);
     const auto end_address = std::min(stack_map->end, current_sp + 4096U);
     if (end_address <= begin_address) {
@@ -61,11 +62,7 @@ ProbeResult collect_stack_leak_probe() {
     const char* begin = reinterpret_cast<const char*>(begin_address);
     const char* end = reinterpret_cast<const char*>(end_address);
     constexpr std::array<std::string_view, 5> kKeywords = {
-        "zygisk",
-        "magisk",
-        "rezygisk",
-        "debug_ramdisk",
-        "riru",
+        "zygisk", "magisk", "rezygisk", "debug_ramdisk", "riru",
     };
     for (const auto keyword : kKeywords) {
         const auto* location = std::search(begin, end, keyword.begin(), keyword.end());
@@ -74,8 +71,8 @@ ProbeResult collect_stack_leak_probe() {
                 SignalGroup::kRuntime,
                 SignalSeverity::kWarning,
                 "Stack leak",
-                "Current thread stack window still contains the keyword '" + std::string(keyword) + "' near 0x" +
-                    std::to_string(reinterpret_cast<uintptr_t>(location)) + '.',
+                "Current thread stack window still contains the keyword '" + std::string(keyword) +
+                    "' near 0x" + std::to_string(reinterpret_cast<uintptr_t>(location)) + '.',
             });
             result.hit_count = 1;
             result.heuristic_hits = 1;

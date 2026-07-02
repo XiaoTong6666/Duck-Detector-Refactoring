@@ -30,31 +30,27 @@ import com.eltavine.duckdetector.features.tee.data.verification.certificate.Chai
 import com.eltavine.duckdetector.features.tee.data.verification.certificate.DualAlgorithmChainProbe
 import com.eltavine.duckdetector.features.tee.data.verification.certificate.GoogleAttestationRootStore
 import com.eltavine.duckdetector.features.tee.data.verification.crl.CrlStatusService
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.IdAttestationProbe
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.AesGcmRoundTripProbe
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.BinderChainConsistencyProbe
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.BinderHookBootstrapProbe
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.BinderPatchModeProbe
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.BiometricTeeIntegrationProbe
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.GrantDomainAnomalyKind
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.GrantDomainFullChainSplitProbe
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.GrantDomainFullChainSplitResult
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.GrantSelfDomainAnomalyKind
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.GrantSelfDomainFullChainSplitProbe
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.GrantSelfDomainFullChainSplitResult
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.IdAttestationProbe
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.ImportKeyRetainedAttestationNarrativeProbe
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.KeyLifecycleProbe
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.KeyMintCapabilityProbe
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.KeyMetadataSemanticsProbe
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.KeyMetadataShapeProbe
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.KeyMintCapabilityProbe
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.KeyPairConsistencyProbe
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.KeyboxImportProbe
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.Keystore2GenerateModeParcelFingerprintProbe
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.Keystore2HookProbe
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.GrantDomainFullChainSplitProbe
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.GrantDomainAnomalyKind
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.GrantDomainFullChainSplitResult
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.GrantSelfDomainFullChainSplitProbe
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.GrantSelfDomainAnomalyKind
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.GrantSelfDomainFullChainSplitResult
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.SyntheticGrantGetKeyEntryAccessVectorBlindnessProbe
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.SyntheticGrantGranteeBlindReadbackAnomalyKind
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.SyntheticGrantGranteeBlindReadbackProbe
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.SyntheticGrantGranteeBlindReadbackResult
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.LegacyKeystorePathProbe
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.ListEntriesBatchedProbe
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.ListEntriesConsistencyProbe
@@ -64,6 +60,10 @@ import com.eltavine.duckdetector.features.tee.data.verification.keystore.Oversiz
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.PureCertificateProbe
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.PureCertificateSecurityLevelProbe
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.SupplementaryAttestationInfoProbe
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.SyntheticGrantGetKeyEntryAccessVectorBlindnessProbe
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.SyntheticGrantGranteeBlindReadbackAnomalyKind
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.SyntheticGrantGranteeBlindReadbackProbe
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.SyntheticGrantGranteeBlindReadbackResult
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.TimingAnomalyProbe
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.TimingSideChannelProbe
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.UpdateSubcomponentProbe
@@ -141,7 +141,7 @@ class TeeRepository(
             val rkp = rkpAnalyzer.analyze(
                 snapshot.rawCertificates,
                 chainStructure,
-                trust.googleRootMatched
+                trust.googleRootMatched,
             )
             val crl = crlStatusService.inspect(snapshot.rawCertificates)
             val native =
@@ -160,7 +160,6 @@ class TeeRepository(
                 snapshot = snapshot,
                 timingSideChannel = timingSideChannel,
             )
-
 
             reducer.reduce(
                 TeeScanArtifacts(
@@ -185,7 +184,7 @@ class TeeRepository(
                     grantDomainFullChainSplit = deepChecks.grantDomainFullChainSplit,
                     syntheticGrantGranteeBlindReadback = deepChecks.syntheticGrantGranteeBlindReadback,
                     syntheticGrantGetKeyEntryAccessVectorBlindness =
-                        deepChecks.syntheticGrantGetKeyEntryAccessVectorBlindness,
+                    deepChecks.syntheticGrantGetKeyEntryAccessVectorBlindness,
                     grantSelfDomainFullChainSplit = deepChecks.grantSelfDomainFullChainSplit,
                     legacyKeystorePath = deepChecks.legacyKeystorePath,
                     listEntriesConsistency = deepChecks.listEntriesConsistency,
@@ -201,7 +200,7 @@ class TeeRepository(
                     binderChainConsistency = deepChecks.binderChainConsistency,
                     updateSubcomponent = deepChecks.updateSubcomponent,
                     updateSubcomponentStaleResponsePersistence =
-                        deepChecks.updateSubcomponentStaleResponsePersistence,
+                    deepChecks.updateSubcomponentStaleResponsePersistence,
                     pruning = deepChecks.pruning,
                     dualAlgorithm = deepChecks.dualAlgorithm,
                     idAttestation = deepChecks.idAttestation,
@@ -342,22 +341,15 @@ class TeeRepository(
             strongBox = strongBoxResult,
         )
     }
-
 }
 
-private fun GrantDomainFullChainSplitResult.hasDanger(): Boolean {
-    return anomalyKind == GrantDomainAnomalyKind.ISOLATED_CHAIN_SPLIT ||
-        anomalyKind == GrantDomainAnomalyKind.ISOLATED_GRANT_KEY_NOT_FOUND_AFTER_OWNER_CHAIN
-}
+private fun GrantDomainFullChainSplitResult.hasDanger(): Boolean = anomalyKind == GrantDomainAnomalyKind.ISOLATED_CHAIN_SPLIT ||
+    anomalyKind == GrantDomainAnomalyKind.ISOLATED_GRANT_KEY_NOT_FOUND_AFTER_OWNER_CHAIN
 
-private fun GrantSelfDomainFullChainSplitResult.hasDanger(): Boolean {
-    return anomalyKind == GrantSelfDomainAnomalyKind.SELF_CHAIN_SPLIT ||
-        anomalyKind == GrantSelfDomainAnomalyKind.SELF_GRANT_KEY_NOT_FOUND_AFTER_OWNER_CHAIN
-}
+private fun GrantSelfDomainFullChainSplitResult.hasDanger(): Boolean = anomalyKind == GrantSelfDomainAnomalyKind.SELF_CHAIN_SPLIT ||
+    anomalyKind == GrantSelfDomainAnomalyKind.SELF_GRANT_KEY_NOT_FOUND_AFTER_OWNER_CHAIN
 
-private fun SyntheticGrantGranteeBlindReadbackResult.hasDanger(): Boolean {
-    return anomalyKind == SyntheticGrantGranteeBlindReadbackAnomalyKind.NON_GRANTEE_READBACK_ALLOWED
-}
+private fun SyntheticGrantGranteeBlindReadbackResult.hasDanger(): Boolean = anomalyKind == SyntheticGrantGranteeBlindReadbackAnomalyKind.NON_GRANTEE_READBACK_ALLOWED
 
 private data class DeferredChecks(
     val pairConsistency: com.eltavine.duckdetector.features.tee.data.verification.keystore.KeyPairConsistencyResult,
@@ -453,9 +445,9 @@ private data class DeferredChecks(
                 detail = "Grant caller-binding private binder probe skipped.",
             ),
             syntheticGrantGetKeyEntryAccessVectorBlindness =
-                com.eltavine.duckdetector.features.tee.data.verification.keystore.SyntheticGrantGetKeyEntryAccessVectorBlindnessResult(
-                    detail = "Grant access-vector private binder probe skipped.",
-                ),
+            com.eltavine.duckdetector.features.tee.data.verification.keystore.SyntheticGrantGetKeyEntryAccessVectorBlindnessResult(
+                detail = "Grant access-vector private binder probe skipped.",
+            ),
             grantSelfDomainFullChainSplit = com.eltavine.duckdetector.features.tee.data.verification.keystore.GrantSelfDomainFullChainSplitResult(
                 detail = "Grant self-domain full-chain split probe skipped.",
             ),
@@ -513,9 +505,9 @@ private data class DeferredChecks(
                 detail = "Update subcomponent probe skipped.",
             ),
             updateSubcomponentStaleResponsePersistence =
-                com.eltavine.duckdetector.features.tee.data.verification.keystore.UpdateSubcomponentStaleResponsePersistenceResult(
-                    detail = "UpdateSubcomponent stale response persistence probe skipped.",
-                ),
+            com.eltavine.duckdetector.features.tee.data.verification.keystore.UpdateSubcomponentStaleResponsePersistenceResult(
+                detail = "UpdateSubcomponent stale response persistence probe skipped.",
+            ),
             pruning = com.eltavine.duckdetector.features.tee.data.verification.keystore.OperationPruningResult(
                 suspicious = false,
                 operationsCreated = 0,

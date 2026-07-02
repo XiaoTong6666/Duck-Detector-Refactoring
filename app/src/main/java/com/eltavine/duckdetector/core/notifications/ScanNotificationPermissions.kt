@@ -59,15 +59,11 @@ object ScanNotificationPermissions {
         ) == PackageManager.PERMISSION_GRANTED
     }
 
-    fun appNotificationSettingsIntent(context: Context): Intent {
-        return Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-        }
+    fun appNotificationSettingsIntent(context: Context): Intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+        putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
     }
 
-    fun appNotificationPromotionSettingsIntent(context: Context): Intent {
-        return Intent(Settings.ACTION_APP_NOTIFICATION_PROMOTION_SETTINGS).apply {
-            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-        }
+    fun appNotificationPromotionSettingsIntent(context: Context): Intent = Intent(Settings.ACTION_APP_NOTIFICATION_PROMOTION_SETTINGS).apply {
+        putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
     }
 }

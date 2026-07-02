@@ -18,11 +18,9 @@ package com.eltavine.duckdetector.features.su.data.native
 
 class SuNativeBridge {
 
-    fun collectSnapshot(): SuNativeSnapshot {
-        return runCatching {
-            parse(nativeCollectSnapshot())
-        }.getOrDefault(SuNativeSnapshot())
-    }
+    fun collectSnapshot(): SuNativeSnapshot = runCatching {
+        parse(nativeCollectSnapshot())
+    }.getOrDefault(SuNativeSnapshot())
 
     internal fun parse(raw: String): SuNativeSnapshot {
         if (raw.isBlank()) {

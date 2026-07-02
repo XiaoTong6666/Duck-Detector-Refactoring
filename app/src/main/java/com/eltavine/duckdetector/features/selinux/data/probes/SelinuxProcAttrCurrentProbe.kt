@@ -30,11 +30,9 @@ data class SelinuxProcAttrCurrentResult(
     val outcomeClass: String,
     val rawMessage: String,
 ) {
-    fun detected(): Boolean {
-        return outcomeClass == OUTCOME_SUCCESS ||
-            outcomeClass == OUTCOME_DETECTED_NON_EINVAL ||
-            outcomeClass == OUTCOME_DETECTED_SECURITY_EXCEPTION
-    }
+    fun detected(): Boolean = outcomeClass == OUTCOME_SUCCESS ||
+        outcomeClass == OUTCOME_DETECTED_NON_EINVAL ||
+        outcomeClass == OUTCOME_DETECTED_SECURITY_EXCEPTION
 
     companion object {
         const val OUTCOME_SUCCESS = "SUCCESS"
@@ -46,39 +44,35 @@ data class SelinuxProcAttrCurrentResult(
 
 class SelinuxProcAttrCurrentProbe {
 
-    fun inspect(): List<SelinuxProcAttrCurrentResult> {
-        return TARGETS.map { target ->
-            runProbe(target.label, target.context)
-        }
+    fun inspect(): List<SelinuxProcAttrCurrentResult> = TARGETS.map { target ->
+        runProbe(target.label, target.context)
     }
 
     private fun runProbe(
         label: String,
         targetContext: String,
-    ): SelinuxProcAttrCurrentResult {
-        return try {
-            val payload = targetContext.toByteArray(StandardCharsets.UTF_8)
-            FileOutputStream(PROC_ATTR_CURRENT_PATH).use { out ->
-                Os.write(out.fd, payload, 0, payload.size)
-            }
-            SelinuxProcAttrCurrentResult(
-                label = label,
-                targetContext = targetContext,
-                outcomeClass = SelinuxProcAttrCurrentResult.OUTCOME_SUCCESS,
-                rawMessage = "write succeeded",
-            )
-        } catch (error: SecurityException) {
-            SelinuxProcAttrCurrentResult(
-                label = label,
-                targetContext = targetContext,
-                outcomeClass = SelinuxProcAttrCurrentResult.OUTCOME_DETECTED_SECURITY_EXCEPTION,
-                rawMessage = "${error::class.java.simpleName}: ${error.message}",
-            )
-        } catch (error: IOException) {
-            classifyIOException(label, targetContext, error)
-        } catch (error: ErrnoException) {
-            classifyErrnoException(label, targetContext, error)
+    ): SelinuxProcAttrCurrentResult = try {
+        val payload = targetContext.toByteArray(StandardCharsets.UTF_8)
+        FileOutputStream(PROC_ATTR_CURRENT_PATH).use { out ->
+            Os.write(out.fd, payload, 0, payload.size)
         }
+        SelinuxProcAttrCurrentResult(
+            label = label,
+            targetContext = targetContext,
+            outcomeClass = SelinuxProcAttrCurrentResult.OUTCOME_SUCCESS,
+            rawMessage = "write succeeded",
+        )
+    } catch (error: SecurityException) {
+        SelinuxProcAttrCurrentResult(
+            label = label,
+            targetContext = targetContext,
+            outcomeClass = SelinuxProcAttrCurrentResult.OUTCOME_DETECTED_SECURITY_EXCEPTION,
+            rawMessage = "${error::class.java.simpleName}: ${error.message}",
+        )
+    } catch (error: IOException) {
+        classifyIOException(label, targetContext, error)
+    } catch (error: ErrnoException) {
+        classifyErrnoException(label, targetContext, error)
     }
 
     private fun classifyIOException(

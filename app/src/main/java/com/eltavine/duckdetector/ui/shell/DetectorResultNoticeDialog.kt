@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("ktlint:standard:function-naming")
+
 package com.eltavine.duckdetector.ui.shell
 
 import androidx.compose.foundation.layout.Arrangement
@@ -26,18 +28,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import com.eltavine.duckdetector.R
+import com.eltavine.duckdetector.core.ui.components.WrapSafeText
 import com.eltavine.duckdetector.core.ui.model.DetectionSeverity
 import com.eltavine.duckdetector.core.ui.model.DetectorStatus
-import com.eltavine.duckdetector.core.ui.components.WrapSafeText
 import com.eltavine.duckdetector.features.dashboard.ui.model.DashboardDetectorContribution
 import kotlinx.coroutines.delay
 
@@ -46,31 +48,33 @@ internal const val RESULT_NOTICE_LOCK_SECONDS = 5
 internal fun shouldShowDetectorResultNotice(
     isLoading: Boolean,
     overviewStatus: DetectorStatus,
-): Boolean {
-    return !isLoading && when (overviewStatus.severity) {
+): Boolean = !isLoading &&
+    when (overviewStatus.severity) {
         DetectionSeverity.DANGER,
-        DetectionSeverity.WARNING -> true
+        DetectionSeverity.WARNING,
+        -> true
 
         DetectionSeverity.INFO,
-        DetectionSeverity.ALL_CLEAR -> false
+        DetectionSeverity.ALL_CLEAR,
+        -> false
     }
-}
 
 internal fun attentionDetectorTitles(
     contributions: List<DashboardDetectorContribution>,
-): Set<String> {
-    return contributions
-        .filter { contribution ->
-            contribution.ready && when (contribution.status.severity) {
+): Set<String> = contributions
+    .filter { contribution ->
+        contribution.ready &&
+            when (contribution.status.severity) {
                 DetectionSeverity.DANGER,
-                DetectionSeverity.WARNING -> true
+                DetectionSeverity.WARNING,
+                -> true
 
                 DetectionSeverity.INFO,
-                DetectionSeverity.ALL_CLEAR -> false
+                DetectionSeverity.ALL_CLEAR,
+                -> false
             }
-        }
-        .mapTo(linkedSetOf()) { contribution -> contribution.title }
-}
+    }
+    .mapTo(linkedSetOf()) { contribution -> contribution.title }
 
 @Composable
 fun DetectorResultNoticeDialog(

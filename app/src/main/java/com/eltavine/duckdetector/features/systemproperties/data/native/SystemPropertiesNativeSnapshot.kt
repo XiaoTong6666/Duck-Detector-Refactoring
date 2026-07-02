@@ -46,9 +46,7 @@ data class SystemPropertiesNativeSnapshot(
 
     fun libcValue(
         property: String,
-    ): String {
-        return sanitizeLibcValue(libcProperties[property])
-    }
+    ): String = sanitizeLibcValue(libcProperties[property])
 
     fun findBootValueForProperty(
         property: String,

@@ -114,25 +114,23 @@ class GenerateKeyReplyParcelParser {
         rawReply: ByteArray,
         rawPrefix: String?,
         reason: String,
-    ): GenerateKeyReplyParcelParseResult {
-        return GenerateKeyReplyParcelParseResult(
+    ): GenerateKeyReplyParcelParseResult = GenerateKeyReplyParcelParseResult(
+        parseSucceeded = false,
+        authorizationCount = null,
+        lastAuthorizationSecLevel = null,
+        lastAuthorizationTag = null,
+        lastAuthorizationUnionTag = null,
+        lastAuthorizationHasUnknownUnionTag = false,
+        modificationTimeMs = null,
+        matched = false,
+        rawPrefix = rawPrefix,
+        detail = buildDetail(
             parseSucceeded = false,
-            authorizationCount = null,
-            lastAuthorizationSecLevel = null,
-            lastAuthorizationTag = null,
-            lastAuthorizationUnionTag = null,
-            lastAuthorizationHasUnknownUnionTag = false,
-            modificationTimeMs = null,
-            matched = false,
+            reason = reason,
+            rawSize = rawReply.size,
             rawPrefix = rawPrefix,
-            detail = buildDetail(
-                parseSucceeded = false,
-                reason = reason,
-                rawSize = rawReply.size,
-                rawPrefix = rawPrefix,
-            ),
-        )
-    }
+        ),
+    )
 
     private fun buildDetail(
         parseSucceeded: Boolean,
@@ -150,25 +148,23 @@ class GenerateKeyReplyParcelParser {
         certificateLength: Int? = null,
         certificateChainLength: Int? = null,
         matched: Boolean? = null,
-    ): String {
-        return listOf(
-            "parseSucceeded=$parseSucceeded",
-            "reason=$reason",
-            "rawSize=$rawSize",
-            "rawPrefix=${rawPrefix ?: "null"}",
-            "exceptionCode=${exceptionCode ?: "null"}",
-            "authorizationCount=${authorizationCount ?: "null"}",
-            "lastAuthorizationSecLevel=${lastAuthorizationSecLevel ?: "null"}",
-            "lastAuthorizationTag=${lastAuthorizationTag ?: "null"}",
-            "lastAuthorizationUnionTag=${lastAuthorizationUnionTag ?: "null"}",
-            "lastAuthorizationHasUnknownUnionTag=${lastAuthorizationHasUnknownUnionTag ?: "null"}",
-            "modificationTimeMs=${modificationTimeMs ?: "null"}",
-            "finalOffset=${finalOffset ?: "null"}",
-            "certificateLength=${certificateLength ?: "null"}",
-            "certificateChainLength=${certificateChainLength ?: "null"}",
-            "matched=${matched ?: "null"}",
-        ).joinToString(separator = ";")
-    }
+    ): String = listOf(
+        "parseSucceeded=$parseSucceeded",
+        "reason=$reason",
+        "rawSize=$rawSize",
+        "rawPrefix=${rawPrefix ?: "null"}",
+        "exceptionCode=${exceptionCode ?: "null"}",
+        "authorizationCount=${authorizationCount ?: "null"}",
+        "lastAuthorizationSecLevel=${lastAuthorizationSecLevel ?: "null"}",
+        "lastAuthorizationTag=${lastAuthorizationTag ?: "null"}",
+        "lastAuthorizationUnionTag=${lastAuthorizationUnionTag ?: "null"}",
+        "lastAuthorizationHasUnknownUnionTag=${lastAuthorizationHasUnknownUnionTag ?: "null"}",
+        "modificationTimeMs=${modificationTimeMs ?: "null"}",
+        "finalOffset=${finalOffset ?: "null"}",
+        "certificateLength=${certificateLength ?: "null"}",
+        "certificateChainLength=${certificateChainLength ?: "null"}",
+        "matched=${matched ?: "null"}",
+    ).joinToString(separator = ";")
 
     private fun parseAuthorizations(rawReply: ByteArray, authorizationCount: Int): List<AuthorizationSlot> {
         var offset = AUTHORIZATION_LOGICAL_START_OFFSET
@@ -239,16 +235,17 @@ class GenerateKeyReplyParcelParser {
         )
     }
 
-    private fun keyParameterValuePayloadSize(rawReply: ByteArray, offset: Int, unionTag: Long): Int {
-        return when (unionTag) {
-            in INT_LIKE_KEY_PARAMETER_VALUE_UNION_TAGS -> INT_SIZE_BYTES
-            in LONG_LIKE_KEY_PARAMETER_VALUE_UNION_TAGS -> Long.SIZE_BYTES
-            BLOB_KEY_PARAMETER_VALUE_UNION_TAG -> {
-                val length = readByteArrayLength(rawReply, offset)
-                skipByteArray(rawReply, offset, length, "key_parameter_blob") - offset
-            }
-            else -> 0
+    private fun keyParameterValuePayloadSize(rawReply: ByteArray, offset: Int, unionTag: Long): Int = when (unionTag) {
+        in INT_LIKE_KEY_PARAMETER_VALUE_UNION_TAGS -> INT_SIZE_BYTES
+
+        in LONG_LIKE_KEY_PARAMETER_VALUE_UNION_TAGS -> Long.SIZE_BYTES
+
+        BLOB_KEY_PARAMETER_VALUE_UNION_TAG -> {
+            val length = readByteArrayLength(rawReply, offset)
+            skipByteArray(rawReply, offset, length, "key_parameter_blob") - offset
         }
+
+        else -> 0
     }
 
     private fun readIntLe(bytes: ByteArray, offset: Int): Int {
@@ -281,13 +278,9 @@ class GenerateKeyReplyParcelParser {
         }
     }
 
-    private fun alignToParcelWord(offset: Int): Int {
-        return (offset + PARCEL_WORD_MASK) and PARCEL_WORD_MASK.inv()
-    }
+    private fun alignToParcelWord(offset: Int): Int = (offset + PARCEL_WORD_MASK) and PARCEL_WORD_MASK.inv()
 
-    private fun ByteArray.toHexPrefix(maxBytes: Int = DEFAULT_PREFIX_BYTES): String {
-        return take(maxBytes).joinToString(" ") { "%02X".format(it.toInt() and 0xFF) }
-    }
+    private fun ByteArray.toHexPrefix(maxBytes: Int = DEFAULT_PREFIX_BYTES): String = take(maxBytes).joinToString(" ") { "%02X".format(it.toInt() and 0xFF) }
 
     private data class MetadataTail(
         val certificateLength: Int,

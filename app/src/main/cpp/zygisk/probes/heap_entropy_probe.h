@@ -20,6 +20,6 @@
 
 namespace duckdetector::zygisk {
 
-    ProbeResult collect_heap_entropy_probe();
+ProbeResult collect_heap_entropy_probe();
 
 }  // namespace duckdetector::zygisk

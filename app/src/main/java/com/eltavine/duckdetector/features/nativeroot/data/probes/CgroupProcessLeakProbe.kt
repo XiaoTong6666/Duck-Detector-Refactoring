@@ -153,7 +153,7 @@ class CgroupProcessLeakProbe(
                         id = "cgroup_context_${contextRule.token}_${entry.pid}",
                         label = when {
                             rule?.label == "LSPosed companion residue" &&
-                                    contextRule.token == ":su:" -> "LSPosed root-context process"
+                                contextRule.token == ":su:" -> "LSPosed root-context process"
 
                             else -> contextRule.label
                         },
@@ -177,8 +177,9 @@ class CgroupProcessLeakProbe(
             }
 
             val shouldCheckVisibility =
-                rule != null || contextRule != null ||
-                        uidMismatch
+                rule != null ||
+                    contextRule != null ||
+                    uidMismatch
             if (shouldCheckVisibility && !javaVisible) {
                 val pathState = nativePathsByPath[entry.uidPath]
                 val key = "visibility|${entry.uidPath}|${entry.pid}"
@@ -309,64 +310,62 @@ class CgroupProcessLeakProbe(
     private val CgroupProcessLeakNativeEntry.contextText: String
         get() = procContext.lowercase()
 
-    private fun CgroupProcessLeakNativeEntry.describe(): String {
-        return buildString {
-            append("\nuidPath=")
-            append(uidPath)
-            append("\npid=")
-            append(pid)
-            append("\ncgroupUid=")
-            append(cgroupUid)
-            append("\nprocUid=")
-            append(procUid ?: -1)
-            startTimeTicks?.let {
-                append("\nstartTimeTicks=")
-                append(it)
-            }
-            killErrno?.let {
-                append("\nkillErrno=")
-                append(it)
-            }
-            sid?.let {
-                append("\ngetsid=")
-                append(it)
-            }
-            sidErrno?.let {
-                append("\ngetsidErrno=")
-                append(it)
-            }
-            pgid?.let {
-                append("\ngetpgid=")
-                append(it)
-            }
-            pgidErrno?.let {
-                append("\ngetpgidErrno=")
-                append(it)
-            }
-            schedulerPolicy?.let {
-                append("\nschedulerPolicy=")
-                append(it)
-            }
-            schedulerErrno?.let {
-                append("\nschedulerErrno=")
-                append(it)
-            }
-            pidfdErrno?.let {
-                append("\npidfdErrno=")
-                append(it)
-            }
-            if (procContext.isNotBlank()) {
-                append("\nprocContext=")
-                append(procContext)
-            }
-            if (comm.isNotBlank()) {
-                append("\ncomm=")
-                append(comm)
-            }
-            if (cmdline.isNotBlank()) {
-                append("\ncmdline=")
-                append(cmdline.replace('\u0000', ' '))
-            }
+    private fun CgroupProcessLeakNativeEntry.describe(): String = buildString {
+        append("\nuidPath=")
+        append(uidPath)
+        append("\npid=")
+        append(pid)
+        append("\ncgroupUid=")
+        append(cgroupUid)
+        append("\nprocUid=")
+        append(procUid ?: -1)
+        startTimeTicks?.let {
+            append("\nstartTimeTicks=")
+            append(it)
+        }
+        killErrno?.let {
+            append("\nkillErrno=")
+            append(it)
+        }
+        sid?.let {
+            append("\ngetsid=")
+            append(it)
+        }
+        sidErrno?.let {
+            append("\ngetsidErrno=")
+            append(it)
+        }
+        pgid?.let {
+            append("\ngetpgid=")
+            append(it)
+        }
+        pgidErrno?.let {
+            append("\ngetpgidErrno=")
+            append(it)
+        }
+        schedulerPolicy?.let {
+            append("\nschedulerPolicy=")
+            append(it)
+        }
+        schedulerErrno?.let {
+            append("\nschedulerErrno=")
+            append(it)
+        }
+        pidfdErrno?.let {
+            append("\npidfdErrno=")
+            append(it)
+        }
+        if (procContext.isNotBlank()) {
+            append("\nprocContext=")
+            append(procContext)
+        }
+        if (comm.isNotBlank()) {
+            append("\ncomm=")
+            append(comm)
+        }
+        if (cmdline.isNotBlank()) {
+            append("\ncmdline=")
+            append(cmdline.replace('\u0000', ' '))
         }
     }
 
@@ -401,14 +400,12 @@ class CgroupProcessLeakProbe(
 
     private fun CgroupProcessLeakNativeEntry.livenessDetail(
         liveness: CgroupProcessLiveness,
-    ): String {
-        return buildString {
-            append("\nLiveness: ")
-            if (liveness.confirmed) {
-                append(liveness.evidence.joinToString())
-            } else {
-                append("unconfirmed")
-            }
+    ): String = buildString {
+        append("\nLiveness: ")
+        if (liveness.confirmed) {
+            append(liveness.evidence.joinToString())
+        } else {
+            append("unconfirmed")
         }
     }
 

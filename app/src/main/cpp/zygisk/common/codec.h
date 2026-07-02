@@ -22,8 +22,8 @@
 
 namespace duckdetector::zygisk {
 
-    std::string escape_value(const std::string &value);
+std::string escape_value(const std::string& value);
 
-    std::string encode_snapshot(const Snapshot &snapshot);
+std::string encode_snapshot(const Snapshot& snapshot);
 
 }  // namespace duckdetector::zygisk

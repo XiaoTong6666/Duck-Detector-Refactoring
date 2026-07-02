@@ -23,7 +23,7 @@
 
 namespace duckdetector::playintegrityfix {
 
-    std::map<std::string, std::string> read_properties(const std::vector<std::string> &keys);
+std::map<std::string, std::string> read_properties(const std::vector<std::string>& keys);
 
 }  // namespace duckdetector::playintegrityfix
 

@@ -28,65 +28,62 @@
 
 namespace {
 
-    std::set<std::string> interesting_boot_keys(const std::vector<std::string> &properties) {
-        std::set<std::string> keys;
-        for (const std::string &property: properties) {
-            if (!property.starts_with("ro.boot.")) {
-                continue;
-            }
-            keys.insert("androidboot." + property.substr(sizeof("ro.boot.") - 1));
+std::set<std::string> interesting_boot_keys(const std::vector<std::string>& properties) {
+    std::set<std::string> keys;
+    for (const std::string& property : properties) {
+        if (!property.starts_with("ro.boot.")) {
+            continue;
         }
-        return keys;
+        keys.insert("androidboot." + property.substr(sizeof("ro.boot.") - 1));
     }
+    return keys;
+}
 
-    std::vector<std::string> read_requested_properties(JNIEnv *env, jobjectArray property_names) {
-        std::vector<std::string> properties;
-        if (property_names == nullptr) {
-            return properties;
-        }
-
-        const jsize count = env->GetArrayLength(property_names);
-        properties.reserve(static_cast<size_t>(count));
-        for (jsize index = 0; index < count; ++index) {
-            auto *java_property = static_cast<jstring>(env->GetObjectArrayElement(property_names,
-                                                                                  index));
-            if (java_property == nullptr) {
-                continue;
-            }
-
-            const char *chars = env->GetStringUTFChars(java_property, nullptr);
-            if (chars != nullptr) {
-                properties.emplace_back(chars);
-                env->ReleaseStringUTFChars(java_property, chars);
-            }
-            env->DeleteLocalRef(java_property);
-        }
+std::vector<std::string> read_requested_properties(JNIEnv* env, jobjectArray property_names) {
+    std::vector<std::string> properties;
+    if (property_names == nullptr) {
         return properties;
     }
 
-    jstring to_jstring(JNIEnv *env, const std::string &value) {
-        return env->NewStringUTF(value.c_str());
+    const jsize count = env->GetArrayLength(property_names);
+    properties.reserve(static_cast<size_t>(count));
+    for (jsize index = 0; index < count; ++index) {
+        auto* java_property =
+            static_cast<jstring>(env->GetObjectArrayElement(property_names, index));
+        if (java_property == nullptr) {
+            continue;
+        }
+
+        const char* chars = env->GetStringUTFChars(java_property, nullptr);
+        if (chars != nullptr) {
+            properties.emplace_back(chars);
+            env->ReleaseStringUTFChars(java_property, chars);
+        }
+        env->DeleteLocalRef(java_property);
     }
+    return properties;
+}
+
+jstring to_jstring(JNIEnv* env, const std::string& value) {
+    return env->NewStringUTF(value.c_str());
+}
 
 }  // namespace
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_eltavine_duckdetector_features_systemproperties_data_native_SystemPropertiesNativeBridge_nativeCollectSnapshot(
-        JNIEnv *env,
-        jobject,
-        jobjectArray property_names
-) {
+    JNIEnv* env, jobject, jobjectArray property_names) {
     const std::vector<std::string> properties = read_requested_properties(env, property_names);
     const auto libc_properties = systemproperties::read_system_properties(properties);
     const std::string raw_cmdline = systemproperties::read_text_file("/proc/cmdline", 8192);
     const std::string raw_bootconfig = systemproperties::read_text_file("/proc/bootconfig", 8192);
     const std::set<std::string> boot_keys = interesting_boot_keys(properties);
     const auto cmdline_params = systemproperties::parse_cmdline_params(raw_cmdline, boot_keys);
-    const auto bootconfig_params = systemproperties::parse_bootconfig_params(raw_bootconfig,
-                                                                             boot_keys);
+    const auto bootconfig_params =
+        systemproperties::parse_bootconfig_params(raw_bootconfig, boot_keys);
     const auto prop_area_snapshot = systemproperties::scan_prop_area_holes();
     const auto readonly_handle_snapshot =
-            systemproperties::scan_readonly_property_handles(properties);
+        systemproperties::scan_readonly_property_handles(properties);
 
     std::ostringstream output;
     output << "AVAILABLE=1\n";
@@ -98,24 +95,18 @@ Java_com_eltavine_duckdetector_features_systemproperties_data_native_SystemPrope
     output << "RO_HANDLE_AVAILABLE=" << (readonly_handle_snapshot.available ? 1 : 0) << "\n";
     output << "RO_HANDLE_CHECKED=" << readonly_handle_snapshot.checked_count << "\n";
 
-    for (const auto &[key, value]: libc_properties) {
+    for (const auto& [key, value] : libc_properties) {
         output << "PROP=" << key << "|" << systemproperties::escape_value(value) << "\n";
     }
-    for (const auto &[key, value]: cmdline_params) {
+    for (const auto& [key, value] : cmdline_params) {
         output << "CMDLINE=" << key << "|" << systemproperties::escape_value(value) << "\n";
     }
-    for (const auto &[key, value]: bootconfig_params) {
+    for (const auto& [key, value] : bootconfig_params) {
         output << "BOOTCONFIG=" << key << "|" << systemproperties::escape_value(value) << "\n";
     }
-    for (const auto &finding: prop_area_snapshot.findings) {
-        output
-                << "PROP_AREA_FINDING="
-                << finding.context
-                << '|'
-                << finding.hole_count
-                << '|'
-                << systemproperties::escape_value(finding.detail)
-                << "\n";
+    for (const auto& finding : prop_area_snapshot.findings) {
+        output << "PROP_AREA_FINDING=" << finding.context << '|' << finding.hole_count << '|'
+               << systemproperties::escape_value(finding.detail) << "\n";
     }
 
     return to_jstring(env, output.str());

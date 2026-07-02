@@ -188,11 +188,9 @@ class GrantSelfDomainFullChainSplitProbeTest {
         assertEquals(GrantSelfDomainAnomalyKind.SELF_GRANT_KEY_NOT_FOUND_AFTER_OWNER_CHAIN, result.anomalyKind)
     }
 
-    private fun chain(vararg labels: String): GrantDomainCertificateChain {
-        return GrantDomainCertificateChain(
-            labels.map { label ->
-                GrantDomainCertificateFingerprint.fromDer(label.toByteArray())
-            },
-        )
-    }
+    private fun chain(vararg labels: String): GrantDomainCertificateChain = GrantDomainCertificateChain(
+        labels.map { label ->
+            GrantDomainCertificateFingerprint.fromDer(label.toByteArray())
+        },
+    )
 }

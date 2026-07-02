@@ -41,7 +41,6 @@ import com.eltavine.duckdetector.features.virtualization.data.probes.Virtualizat
 import com.eltavine.duckdetector.features.virtualization.data.probes.VirtualizationHostAppProbeResult
 import com.eltavine.duckdetector.features.virtualization.data.probes.VirtualizationPropertyProbe
 import com.eltavine.duckdetector.features.virtualization.data.probes.VirtualizationServiceProbe
-import com.eltavine.duckdetector.features.virtualization.data.probes.VirtualizationServiceProbeResult
 import com.eltavine.duckdetector.features.virtualization.data.rules.VirtualizationHostAppsCatalog
 import com.eltavine.duckdetector.features.virtualization.data.service.VirtualizationIsolatedProbeManager
 import com.eltavine.duckdetector.features.virtualization.data.service.VirtualizationProbeManager
@@ -158,17 +157,17 @@ class VirtualizationRepository(
         )
 
         val signals = (
-                propertySignals +
-                        buildSignals +
-                        serviceResult.signals +
-                        dexPathResult.signals +
-                        uidIdentityResult.signals +
-                        nativeSignals +
-                        preloadSignals +
-                        consistency.allSignals +
-                        hostSignals +
-                        honeypotSignals
-                )
+            propertySignals +
+                buildSignals +
+                serviceResult.signals +
+                dexPathResult.signals +
+                uidIdentityResult.signals +
+                nativeSignals +
+                preloadSignals +
+                consistency.allSignals +
+                hostSignals +
+                honeypotSignals
+            )
             .distinctBy { it.id }
             .sortedWith(
                 compareBy<VirtualizationSignal> { severityPriority(it.severity) }
@@ -179,7 +178,7 @@ class VirtualizationRepository(
         val runtimeSignals = signals.filter { it.group == VirtualizationSignalGroup.RUNTIME }
         val graphicsSignals = runtimeSignals.filter {
             it.label.contains("renderer", ignoreCase = true) ||
-                    it.label.contains("graphics", ignoreCase = true)
+                it.label.contains("graphics", ignoreCase = true)
         }
         val translationSignals =
             signals.filter { it.group == VirtualizationSignalGroup.TRANSLATION }
@@ -242,15 +241,13 @@ class VirtualizationRepository(
 
     private fun countHits(
         signals: List<VirtualizationSignal>,
-        group: VirtualizationSignalGroup
-    ): Int {
-        return signals.count {
-            it.group == group &&
-                    it.severity in setOf(
+        group: VirtualizationSignalGroup,
+    ): Int = signals.count {
+        it.group == group &&
+            it.severity in setOf(
                 VirtualizationSignalSeverity.WARNING,
                 VirtualizationSignalSeverity.DANGER,
             )
-        }
     }
 
     private data class ParsedMountAnchor(
@@ -270,9 +267,7 @@ class VirtualizationRepository(
                 normalizeMountPath(source),
             ).joinToString("|")
 
-        fun semanticSummary(): String {
-            return "dev=$majorMinor root=$root point=$mountPoint fs=$fsType source=$source"
-        }
+        fun semanticSummary(): String = "dev=$majorMinor root=$root point=$mountPoint fs=$fsType source=$source"
 
         companion object {
             fun parse(raw: String): ParsedMountAnchor? {
@@ -293,9 +288,7 @@ class VirtualizationRepository(
                 )
             }
 
-            private fun normalizeMountField(value: String): String {
-                return value.trim().lowercase()
-            }
+            private fun normalizeMountField(value: String): String = value.trim().lowercase()
 
             private fun normalizeMountPath(value: String): String {
                 val normalized = value.trim()
@@ -310,26 +303,24 @@ class VirtualizationRepository(
         }
     }
 
-    private fun nativeFindingToSignal(finding: VirtualizationNativeFinding): VirtualizationSignal {
-        return VirtualizationSignal(
-            id = "virt_native_${finding.group}_${finding.label}_${finding.value}",
-            label = finding.label,
-            value = finding.value,
-            group = when (finding.group.uppercase()) {
-                "ENVIRONMENT" -> VirtualizationSignalGroup.ENVIRONMENT
-                "TRANSLATION" -> VirtualizationSignalGroup.TRANSLATION
-                else -> VirtualizationSignalGroup.RUNTIME
-            },
-            severity = when (finding.severity.uppercase()) {
-                "DANGER" -> VirtualizationSignalSeverity.DANGER
-                "INFO" -> VirtualizationSignalSeverity.INFO
-                "SAFE" -> VirtualizationSignalSeverity.SAFE
-                else -> VirtualizationSignalSeverity.WARNING
-            },
-            detail = finding.detail,
-            detailMonospace = finding.detail.shouldUseMonospace(),
-        )
-    }
+    private fun nativeFindingToSignal(finding: VirtualizationNativeFinding): VirtualizationSignal = VirtualizationSignal(
+        id = "virt_native_${finding.group}_${finding.label}_${finding.value}",
+        label = finding.label,
+        value = finding.value,
+        group = when (finding.group.uppercase()) {
+            "ENVIRONMENT" -> VirtualizationSignalGroup.ENVIRONMENT
+            "TRANSLATION" -> VirtualizationSignalGroup.TRANSLATION
+            else -> VirtualizationSignalGroup.RUNTIME
+        },
+        severity = when (finding.severity.uppercase()) {
+            "DANGER" -> VirtualizationSignalSeverity.DANGER
+            "INFO" -> VirtualizationSignalSeverity.INFO
+            "SAFE" -> VirtualizationSignalSeverity.SAFE
+            else -> VirtualizationSignalSeverity.WARNING
+        },
+        detail = finding.detail,
+        detailMonospace = finding.detail.shouldUseMonospace(),
+    )
 
     internal fun buildPreloadSignals(preloadResult: EarlyVirtualizationPreloadResult): List<VirtualizationSignal> {
         if (!preloadResult.hasRun) return emptyList()
@@ -382,17 +373,23 @@ class VirtualizationRepository(
                     mainProcessInfo.filesDir.isNotBlank() &&
                     remoteSnapshot.filesDir.isNotBlank() &&
                     mainProcessInfo.filesDir != remoteSnapshot.filesDir
-                ) add("filesDir main=${mainProcessInfo.filesDir} helper=${remoteSnapshot.filesDir}")
+                ) {
+                    add("filesDir main=${mainProcessInfo.filesDir} helper=${remoteSnapshot.filesDir}")
+                }
                 if (
                     mainProcessInfo.cacheDir.isNotBlank() &&
                     remoteSnapshot.cacheDir.isNotBlank() &&
                     mainProcessInfo.cacheDir != remoteSnapshot.cacheDir
-                ) add("cacheDir main=${mainProcessInfo.cacheDir} helper=${remoteSnapshot.cacheDir}")
+                ) {
+                    add("cacheDir main=${mainProcessInfo.cacheDir} helper=${remoteSnapshot.cacheDir}")
+                }
                 if (
                     mainProcessInfo.codePath.isNotBlank() &&
                     remoteSnapshot.codePath.isNotBlank() &&
                     mainProcessInfo.codePath != remoteSnapshot.codePath
-                ) add("codePath main=${mainProcessInfo.codePath} helper=${remoteSnapshot.codePath}")
+                ) {
+                    add("codePath main=${mainProcessInfo.codePath} helper=${remoteSnapshot.codePath}")
+                }
             }
             if (pathMismatches.isNotEmpty()) {
                 crossSignals += VirtualizationSignal(
@@ -450,14 +447,14 @@ class VirtualizationRepository(
         val mainHasHostResidue = dexPathResult.hostPathHit || uidIdentityResult.hostPackageHit
         val helperHasHostResidue =
             remoteSnapshot.classPathEntries.any(VirtualizationHostAppsCatalog::containsHostToken) ||
-                    remoteSnapshot.packagesForUid.any {
-                        VirtualizationHostAppsCatalog.targetByPackage.containsKey(it)
-                    }
+                remoteSnapshot.packagesForUid.any {
+                    VirtualizationHostAppsCatalog.targetByPackage.containsKey(it)
+                }
         val isolatedHasHostResidue =
             isolatedSnapshot.classPathEntries.any(VirtualizationHostAppsCatalog::containsHostToken) ||
-                    isolatedSnapshot.packagesForUid.any {
-                        VirtualizationHostAppsCatalog.targetByPackage.containsKey(it)
-                    }
+                isolatedSnapshot.packagesForUid.any {
+                    VirtualizationHostAppsCatalog.targetByPackage.containsKey(it)
+                }
 
         if ((mainHasHostResidue || helperHasHostResidue) && isolatedSnapshot.available && !isolatedHasHostResidue) {
             isolatedSignals += VirtualizationSignal(
@@ -569,8 +566,8 @@ class VirtualizationRepository(
             mainVendor to otherVendor,
         ).count { (mainRaw, otherRaw) -> hasComparableMountAnchors(mainRaw, otherRaw) }
         val namespaceDrift = mainNamespace.isNotBlank() &&
-                otherNamespace.isNotBlank() &&
-                mainNamespace != otherNamespace
+            otherNamespace.isNotBlank() &&
+            mainNamespace != otherNamespace
         val signals = mutableListOf<VirtualizationSignal>()
 
         if (driftLines.isNotEmpty()) {
@@ -624,34 +621,28 @@ class VirtualizationRepository(
     private fun hasComparableMountAnchors(
         mainRaw: String,
         otherRaw: String,
-    ): Boolean {
-        return ParsedMountAnchor.parse(mainRaw) != null && ParsedMountAnchor.parse(otherRaw) != null
-    }
+    ): Boolean = ParsedMountAnchor.parse(mainRaw) != null && ParsedMountAnchor.parse(otherRaw) != null
 
     private fun comparableArtifactKeys(
         findings: List<VirtualizationNativeFinding>,
-    ): Set<String> {
-        return findings.asSequence()
-            .filterNot { it.severity.equals("INFO", ignoreCase = true) }
-            .filterNot { it.label.equals("Graphics renderer", ignoreCase = true) }
-            .map { "${it.group}:${it.label}:${it.value}" }
-            .toCollection(linkedSetOf())
-    }
+    ): Set<String> = findings.asSequence()
+        .filterNot { it.severity.equals("INFO", ignoreCase = true) }
+        .filterNot { it.label.equals("Graphics renderer", ignoreCase = true) }
+        .map { "${it.group}:${it.label}:${it.value}" }
+        .toCollection(linkedSetOf())
 
-    internal fun buildHostAppSignals(result: VirtualizationHostAppProbeResult): List<VirtualizationSignal> {
-        return result.findings.map { finding ->
-            VirtualizationSignal(
-                id = "virt_host_${finding.target.packageName}",
-                label = finding.target.appName,
-                value = "Corroboration",
-                group = VirtualizationSignalGroup.HOST_APPS,
-                severity = VirtualizationSignalSeverity.INFO,
-                detail = finding.methods.joinToString(separator = "\n") { method ->
-                    method.detail?.let { "${method.kind.label}: $it" } ?: method.kind.label
-                },
-                detailMonospace = true,
-            )
-        }
+    internal fun buildHostAppSignals(result: VirtualizationHostAppProbeResult): List<VirtualizationSignal> = result.findings.map { finding ->
+        VirtualizationSignal(
+            id = "virt_host_${finding.target.packageName}",
+            label = finding.target.appName,
+            value = "Corroboration",
+            group = VirtualizationSignalGroup.HOST_APPS,
+            severity = VirtualizationSignalSeverity.INFO,
+            detail = finding.methods.joinToString(separator = "\n") { method ->
+                method.detail?.let { "${method.kind.label}: $it" } ?: method.kind.label
+            },
+            detailMonospace = true,
+        )
     }
 
     internal fun buildHoneypotSignals(
@@ -737,9 +728,13 @@ class VirtualizationRepository(
             ),
             VirtualizationMethodResult(
                 label = "Dex and classpath",
-                summary = if (dexPathResult.signals.isEmpty()) "Clean" else methodSummary(
-                    dexPathResult.signals
-                ),
+                summary = if (dexPathResult.signals.isEmpty()) {
+                    "Clean"
+                } else {
+                    methodSummary(
+                        dexPathResult.signals,
+                    )
+                },
                 outcome = methodOutcome(dexPathResult.signals),
                 detail = buildString {
                     append("Class path entries: ")
@@ -752,9 +747,13 @@ class VirtualizationRepository(
             ),
             VirtualizationMethodResult(
                 label = "UID identity",
-                summary = if (uidIdentityResult.signals.isEmpty()) "Clean" else methodSummary(
-                    uidIdentityResult.signals
-                ),
+                summary = if (uidIdentityResult.signals.isEmpty()) {
+                    "Clean"
+                } else {
+                    methodSummary(
+                        uidIdentityResult.signals,
+                    )
+                },
                 outcome = methodOutcome(uidIdentityResult.signals),
                 detail = buildString {
                     append("uid=")
@@ -768,23 +767,32 @@ class VirtualizationRepository(
                     append("\npackagesForUid=\n")
                     append(
                         uidIdentityResult.packagesForUid.joinToString(separator = "\n")
-                            .ifBlank { "<empty>" })
+                            .ifBlank { "<empty>" },
+                    )
                 },
             ),
             VirtualizationMethodResult(
                 label = "Runtime artifacts",
                 summary = if (runtimeSignals.isEmpty()) "Clean" else methodSummary(runtimeSignals),
-                outcome = if (runtimeSignals.isEmpty()) VirtualizationMethodOutcome.CLEAN else methodOutcome(
-                    runtimeSignals
-                ),
+                outcome = if (runtimeSignals.isEmpty()) {
+                    VirtualizationMethodOutcome.CLEAN
+                } else {
+                    methodOutcome(
+                        runtimeSignals,
+                    )
+                },
                 detail = "Collects /proc/self/maps, /proc/self/fd, mountinfo, direct device nodes, and raw mount anchors from the current process.",
             ),
             VirtualizationMethodResult(
                 label = "Graphics renderer",
                 summary = if (graphicsSignals.isEmpty()) "Clean" else methodSummary(graphicsSignals),
-                outcome = if (graphicsSignals.isEmpty()) VirtualizationMethodOutcome.CLEAN else methodOutcome(
-                    graphicsSignals
-                ),
+                outcome = if (graphicsSignals.isEmpty()) {
+                    VirtualizationMethodOutcome.CLEAN
+                } else {
+                    methodOutcome(
+                        graphicsSignals,
+                    )
+                },
                 detail = "Builds an off-screen EGL context and inspects GL_VENDOR, GL_RENDERER, and GL_VERSION.",
             ),
             VirtualizationMethodResult(
@@ -916,7 +924,7 @@ class VirtualizationRepository(
         if (
             signals.none {
                 it.severity == VirtualizationSignalSeverity.DANGER ||
-                        it.severity == VirtualizationSignalSeverity.WARNING
+                    it.severity == VirtualizationSignalSeverity.WARNING
             } &&
             hostAppResult.findings.isNotEmpty()
         ) {
@@ -941,22 +949,18 @@ class VirtualizationRepository(
         }
     }
 
-    private fun methodSummary(signals: List<VirtualizationSignal>): String {
-        return when {
-            signals.any { it.severity == VirtualizationSignalSeverity.DANGER } -> "${signals.size} hit(s)"
-            signals.any { it.severity == VirtualizationSignalSeverity.WARNING } -> "${signals.size} hit(s)"
-            signals.any { it.severity == VirtualizationSignalSeverity.INFO } -> "${signals.size} info hit(s)"
-            else -> "Clean"
-        }
+    private fun methodSummary(signals: List<VirtualizationSignal>): String = when {
+        signals.any { it.severity == VirtualizationSignalSeverity.DANGER } -> "${signals.size} hit(s)"
+        signals.any { it.severity == VirtualizationSignalSeverity.WARNING } -> "${signals.size} hit(s)"
+        signals.any { it.severity == VirtualizationSignalSeverity.INFO } -> "${signals.size} info hit(s)"
+        else -> "Clean"
     }
 
-    private fun methodOutcome(signals: List<VirtualizationSignal>): VirtualizationMethodOutcome {
-        return when {
-            signals.any { it.severity == VirtualizationSignalSeverity.DANGER } -> VirtualizationMethodOutcome.DANGER
-            signals.any { it.severity == VirtualizationSignalSeverity.WARNING } -> VirtualizationMethodOutcome.WARNING
-            signals.any { it.severity == VirtualizationSignalSeverity.INFO } -> VirtualizationMethodOutcome.INFO
-            else -> VirtualizationMethodOutcome.CLEAN
-        }
+    private fun methodOutcome(signals: List<VirtualizationSignal>): VirtualizationMethodOutcome = when {
+        signals.any { it.severity == VirtualizationSignalSeverity.DANGER } -> VirtualizationMethodOutcome.DANGER
+        signals.any { it.severity == VirtualizationSignalSeverity.WARNING } -> VirtualizationMethodOutcome.WARNING
+        signals.any { it.severity == VirtualizationSignalSeverity.INFO } -> VirtualizationMethodOutcome.INFO
+        else -> VirtualizationMethodOutcome.CLEAN
     }
 
     private fun honeypotSummary(results: List<VirtualizationTrapResult>): String {
@@ -979,52 +983,44 @@ class VirtualizationRepository(
         }
     }
 
-    private fun syscallPackSummary(result: SacrificialSyscallPackResult): String {
-        return when {
-            !result.supported -> "Unsupported"
-            result.suspiciousItems.isNotEmpty() -> "${result.suspiciousItems.size} suspicious syscall(s)"
-            result.items.isNotEmpty() && result.items.all { it.clean } -> "Clean"
-            else -> "Partial"
-        }
+    private fun syscallPackSummary(result: SacrificialSyscallPackResult): String = when {
+        !result.supported -> "Unsupported"
+        result.suspiciousItems.isNotEmpty() -> "${result.suspiciousItems.size} suspicious syscall(s)"
+        result.items.isNotEmpty() && result.items.all { it.clean } -> "Clean"
+        else -> "Partial"
     }
 
-    private fun syscallPackOutcome(result: SacrificialSyscallPackResult): VirtualizationMethodOutcome {
-        return when {
-            !result.supported -> VirtualizationMethodOutcome.SUPPORT
-            result.suspiciousItems.isNotEmpty() -> VirtualizationMethodOutcome.WARNING
-            result.items.isNotEmpty() && result.items.all { it.clean } -> VirtualizationMethodOutcome.CLEAN
-            else -> VirtualizationMethodOutcome.SUPPORT
-        }
+    private fun syscallPackOutcome(result: SacrificialSyscallPackResult): VirtualizationMethodOutcome = when {
+        !result.supported -> VirtualizationMethodOutcome.SUPPORT
+        result.suspiciousItems.isNotEmpty() -> VirtualizationMethodOutcome.WARNING
+        result.items.isNotEmpty() && result.items.all { it.clean } -> VirtualizationMethodOutcome.CLEAN
+        else -> VirtualizationMethodOutcome.SUPPORT
     }
 
-    private fun severityPriority(severity: VirtualizationSignalSeverity): Int {
-        return when (severity) {
-            VirtualizationSignalSeverity.DANGER -> 0
-            VirtualizationSignalSeverity.WARNING -> 1
-            VirtualizationSignalSeverity.INFO -> 2
-            VirtualizationSignalSeverity.SAFE -> 3
-        }
+    private fun severityPriority(severity: VirtualizationSignalSeverity): Int = when (severity) {
+        VirtualizationSignalSeverity.DANGER -> 0
+        VirtualizationSignalSeverity.WARNING -> 1
+        VirtualizationSignalSeverity.INFO -> 2
+        VirtualizationSignalSeverity.SAFE -> 3
     }
 
-    private fun groupPriority(group: VirtualizationSignalGroup): Int {
-        return when (group) {
-            VirtualizationSignalGroup.ENVIRONMENT -> 0
-            VirtualizationSignalGroup.TRANSLATION -> 1
-            VirtualizationSignalGroup.RUNTIME -> 2
-            VirtualizationSignalGroup.CONSISTENCY -> 3
-            VirtualizationSignalGroup.HONEYPOT -> 4
-            VirtualizationSignalGroup.HOST_APPS -> 5
-        }
+    private fun groupPriority(group: VirtualizationSignalGroup): Int = when (group) {
+        VirtualizationSignalGroup.ENVIRONMENT -> 0
+        VirtualizationSignalGroup.TRANSLATION -> 1
+        VirtualizationSignalGroup.RUNTIME -> 2
+        VirtualizationSignalGroup.CONSISTENCY -> 3
+        VirtualizationSignalGroup.HONEYPOT -> 4
+        VirtualizationSignalGroup.HOST_APPS -> 5
     }
 
     private fun String?.shouldUseMonospace(): Boolean {
         val value = this.orEmpty()
         return value.contains("/proc/") ||
-                value.contains("/data/") ||
-                value.contains("/dev/") ||
-                value.contains(".so") ||
-                value.contains("=") ||
-                value.contains(":") ||
-                value.contains("|")
+            value.contains("/data/") ||
+            value.contains("/dev/") ||
+            value.contains(".so") ||
+            value.contains("=") ||
+            value.contains(":") ||
+            value.contains("|")
     }
 }

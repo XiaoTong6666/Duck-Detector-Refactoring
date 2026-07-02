@@ -37,7 +37,7 @@ class BootConsistencyProbe(
         val runtimeVbmetaDigest = normalizeHex(property.value)
         val bootState = parseBootState(root.verifiedBootState)
         val compareRuntimeDigest = bootState == ParsedBootState.VERIFIED ||
-                bootState == ParsedBootState.SELF_SIGNED
+            bootState == ParsedBootState.SELF_SIGNED
         val verifiedBootHashAllZeros =
             compareRuntimeDigest && isAllZeroHex(root.verifiedBootHashHex)
         val verifiedBootKeyAllZeros = compareRuntimeDigest && isAllZeroHex(root.verifiedBootKeyHex)
@@ -45,18 +45,18 @@ class BootConsistencyProbe(
             bootState == ParsedBootState.VERIFIED && root.deviceLocked == false
         val vbmetaDigestMissingWhileAttestedHashPresent =
             compareRuntimeDigest &&
-                    attestedBootHash != null &&
-                    property.available &&
-                    runtimeVbmetaDigest == null
+                attestedBootHash != null &&
+                property.available &&
+                runtimeVbmetaDigest == null
         val vbmetaDigestMismatch =
             compareRuntimeDigest &&
-                    attestedBootHash != null &&
-                    runtimeVbmetaDigest != null &&
-                    attestedBootHash != runtimeVbmetaDigest
+                attestedBootHash != null &&
+                runtimeVbmetaDigest != null &&
+                attestedBootHash != runtimeVbmetaDigest
         val runtimeComparisonPerformed =
             compareRuntimeDigest &&
-                    attestedBootHash != null &&
-                    runtimeVbmetaDigest != null
+                attestedBootHash != null &&
+                runtimeVbmetaDigest != null
 
         return BootConsistencyResult(
             vbmetaDigestMismatch = vbmetaDigestMismatch,
@@ -84,6 +84,7 @@ class BootConsistencyProbe(
                 }
                 when {
                     issues.isNotEmpty() -> append(issues.joinToString(separator = " "))
+
                     bootState == ParsedBootState.FAILED ->
                         append("Attestation reported Failed; AOSP does not guarantee other RootOfTrust fields in this state.")
 
@@ -92,10 +93,15 @@ class BootConsistencyProbe(
 
                     verifiedStateUnlockedObserved ->
                         append("Attestation reported Verified while deviceLocked=false; AOSP allows this on approved test devices, so no anomaly was raised.")
+
                     !property.available -> append("Boot consistency check could not read ro.boot.vbmeta.digest.")
+
                     !compareRuntimeDigest -> append("Boot state ${root.verifiedBootState ?: UNKNOWN_BOOT_STATE} was recorded without runtime vbmeta comparison.")
+
                     attestedBootHash == null -> append("Attestation did not expose verifiedBootHash for runtime comparison.")
+
                     runtimeVbmetaDigest == null -> append("Runtime vbmeta digest was unavailable for comparison.")
+
                     else -> append("Attested verifiedBootHash matched ro.boot.vbmeta.digest.")
                 }
             },
@@ -121,14 +127,13 @@ class BootConsistencyProbe(
             return normalized.isNotEmpty() && normalized.all { it == '0' }
         }
 
-        private fun parseBootState(raw: String?): ParsedBootState =
-            when (raw?.trim()?.lowercase()) {
-                "verified" -> ParsedBootState.VERIFIED
-                "self-signed" -> ParsedBootState.SELF_SIGNED
-                "unverified" -> ParsedBootState.UNVERIFIED
-                "failed" -> ParsedBootState.FAILED
-                else -> ParsedBootState.UNKNOWN
-            }
+        private fun parseBootState(raw: String?): ParsedBootState = when (raw?.trim()?.lowercase()) {
+            "verified" -> ParsedBootState.VERIFIED
+            "self-signed" -> ParsedBootState.SELF_SIGNED
+            "unverified" -> ParsedBootState.UNVERIFIED
+            "failed" -> ParsedBootState.FAILED
+            else -> ParsedBootState.UNKNOWN
+        }
     }
 }
 
@@ -145,10 +150,10 @@ data class BootConsistencyResult(
 ) {
     val hasHardAnomaly: Boolean
         get() = vbmetaDigestMismatch ||
-                vbmetaDigestMissingWhileAttestedHashPresent ||
-                verifiedBootHashAllZeros ||
-                verifiedBootKeyAllZeros ||
-                verifiedStateUnlockedMismatch
+            vbmetaDigestMissingWhileAttestedHashPresent ||
+            verifiedBootHashAllZeros ||
+            verifiedBootKeyAllZeros ||
+            verifiedStateUnlockedMismatch
 }
 
 private enum class ParsedBootState {
@@ -170,14 +175,12 @@ data class PropertyReadResult(
 
 private class ReflectionSystemPropertyReader : SystemPropertyReader {
 
-    override fun read(name: String): PropertyReadResult {
-        return runCatching {
-            val clazz = Class.forName("android.os.SystemProperties")
-            val method = clazz.getMethod("get", String::class.java)
-            val value = method.invoke(null, name) as? String
-            PropertyReadResult(available = true, value = value)
-        }.getOrElse {
-            PropertyReadResult(available = false)
-        }
+    override fun read(name: String): PropertyReadResult = runCatching {
+        val clazz = Class.forName("android.os.SystemProperties")
+        val method = clazz.getMethod("get", String::class.java)
+        val value = method.invoke(null, name) as? String
+        PropertyReadResult(available = true, value = value)
+    }.getOrElse {
+        PropertyReadResult(available = false)
     }
 }

@@ -207,63 +207,61 @@ class MountRepository(
     private fun buildImpacts(
         snapshot: MountNativeSnapshot,
         findings: List<MountFinding>,
-    ): List<MountImpact> {
-        return buildList {
-            if (findings.any { it.severity == MountFindingSeverity.DANGER }) {
-                add(
-                    MountImpact(
-                        text = "Mount-layer anomalies are strong signals because they describe how the current process actually sees filesystems, overlays, and root-managed bind mounts at runtime.",
-                        severity = MountFindingSeverity.DANGER,
-                    ),
-                )
-            }
-            if (snapshot.zygiskCacheDetected || snapshot.magiskMountDetected || snapshot.dataAdbDetected) {
-                add(
-                    MountImpact(
-                        text = "Magisk, Zygisk, KernelSU, or APatch-style mount artifacts can be used to present a cleaner filesystem view to selected apps while keeping root tooling active elsewhere.",
-                        severity = MountFindingSeverity.DANGER,
-                    ),
-                )
-            }
-            if (snapshot.systemRwDetected || snapshot.overlayMountDetected || snapshot.bindMountDetected || snapshot.dmVerityBypassDetected) {
-                add(
-                    MountImpact(
-                        text = "Writable or overlaid system partitions weaken stock verified-boot expectations and often indicate systemless or direct partition modification.",
-                        severity = MountFindingSeverity.DANGER,
-                    ),
-                )
-            }
-            if (snapshot.mountIdLoopholeDetected || snapshot.inconsistentMountDetected || snapshot.statxMntIdMismatch || snapshot.statxMountRootAnomaly) {
-                add(
-                    MountImpact(
-                        text = "Mount-info and statx contradictions are harder to explain away than a single suspicious path because different kernel-visible mount views disagree.",
-                        severity = MountFindingSeverity.DANGER,
-                    ),
-                )
-            }
-            if (findings.any { it.severity == MountFindingSeverity.WARNING } && none { it.severity == MountFindingSeverity.DANGER }) {
-                add(
-                    MountImpact(
-                        text = "The mount layer is not clean enough to ignore, but the current evidence is weaker than a direct root-managed overlay or writable-system hit.",
-                        severity = MountFindingSeverity.WARNING,
-                    ),
-                )
-            }
-            if (isEmpty()) {
-                add(
-                    MountImpact(
-                        text = "No suspicious mount, overlay, namespace, or root-managed filesystem artifact was visible from the current app context.",
-                        severity = MountFindingSeverity.SAFE,
-                    ),
-                )
-            }
+    ): List<MountImpact> = buildList {
+        if (findings.any { it.severity == MountFindingSeverity.DANGER }) {
             add(
                 MountImpact(
-                    text = "Permission-restricted paths and namespace boundaries can hide part of the mount picture, so combine this card with SU, TEE, kernel, and package detectors.",
-                    severity = if (snapshot.permissionDenied > 0) MountFindingSeverity.INFO else MountFindingSeverity.INFO,
+                    text = "Mount-layer anomalies are strong signals because they describe how the current process actually sees filesystems, overlays, and root-managed bind mounts at runtime.",
+                    severity = MountFindingSeverity.DANGER,
                 ),
             )
         }
+        if (snapshot.zygiskCacheDetected || snapshot.magiskMountDetected || snapshot.dataAdbDetected) {
+            add(
+                MountImpact(
+                    text = "Magisk, Zygisk, KernelSU, or APatch-style mount artifacts can be used to present a cleaner filesystem view to selected apps while keeping root tooling active elsewhere.",
+                    severity = MountFindingSeverity.DANGER,
+                ),
+            )
+        }
+        if (snapshot.systemRwDetected || snapshot.overlayMountDetected || snapshot.bindMountDetected || snapshot.dmVerityBypassDetected) {
+            add(
+                MountImpact(
+                    text = "Writable or overlaid system partitions weaken stock verified-boot expectations and often indicate systemless or direct partition modification.",
+                    severity = MountFindingSeverity.DANGER,
+                ),
+            )
+        }
+        if (snapshot.mountIdLoopholeDetected || snapshot.inconsistentMountDetected || snapshot.statxMntIdMismatch || snapshot.statxMountRootAnomaly) {
+            add(
+                MountImpact(
+                    text = "Mount-info and statx contradictions are harder to explain away than a single suspicious path because different kernel-visible mount views disagree.",
+                    severity = MountFindingSeverity.DANGER,
+                ),
+            )
+        }
+        if (findings.any { it.severity == MountFindingSeverity.WARNING } && none { it.severity == MountFindingSeverity.DANGER }) {
+            add(
+                MountImpact(
+                    text = "The mount layer is not clean enough to ignore, but the current evidence is weaker than a direct root-managed overlay or writable-system hit.",
+                    severity = MountFindingSeverity.WARNING,
+                ),
+            )
+        }
+        if (isEmpty()) {
+            add(
+                MountImpact(
+                    text = "No suspicious mount, overlay, namespace, or root-managed filesystem artifact was visible from the current app context.",
+                    severity = MountFindingSeverity.SAFE,
+                ),
+            )
+        }
+        add(
+            MountImpact(
+                text = "Permission-restricted paths and namespace boundaries can hide part of the mount picture, so combine this card with SU, TEE, kernel, and package detectors.",
+                severity = if (snapshot.permissionDenied > 0) MountFindingSeverity.INFO else MountFindingSeverity.INFO,
+            ),
+        )
     }
 
     private fun buildMethods(
@@ -424,12 +422,10 @@ class MountRepository(
         )
     }
 
-    private fun shouldRenderMonospace(finding: MountNativeFinding): Boolean {
-        return finding.detail.contains("/proc/") ||
-                finding.detail.contains("/system/") ||
-                finding.detail.contains("/data/adb") ||
-                finding.detail.contains("0x")
-    }
+    private fun shouldRenderMonospace(finding: MountNativeFinding): Boolean = finding.detail.contains("/proc/") ||
+        finding.detail.contains("/system/") ||
+        finding.detail.contains("/data/adb") ||
+        finding.detail.contains("0x")
 
     private fun buildPreloadFindings(result: EarlyMountPreloadResult): List<MountFinding> {
         if (!result.available) {
@@ -568,7 +564,7 @@ class MountRepository(
         merged.removeAll(mountIdFindings.toSet())
         mergeMountIdFinding(
             runtimeFindings = mountIdFindings,
-            preloadFinding = null
+            preloadFinding = null,
         )?.let(merged::add)
         return merged
     }
@@ -631,49 +627,39 @@ class MountRepository(
         return parts.joinToString(separator = " | ")
     }
 
-    private fun String.toGroup(): MountFindingGroup {
-        return when (uppercase()) {
-            "ARTIFACTS" -> MountFindingGroup.ARTIFACTS
-            "RUNTIME" -> MountFindingGroup.RUNTIME
-            "FILESYSTEM" -> MountFindingGroup.FILESYSTEM
-            "CONSISTENCY" -> MountFindingGroup.CONSISTENCY
-            else -> MountFindingGroup.CONSISTENCY
-        }
+    private fun String.toGroup(): MountFindingGroup = when (uppercase()) {
+        "ARTIFACTS" -> MountFindingGroup.ARTIFACTS
+        "RUNTIME" -> MountFindingGroup.RUNTIME
+        "FILESYSTEM" -> MountFindingGroup.FILESYSTEM
+        "CONSISTENCY" -> MountFindingGroup.CONSISTENCY
+        else -> MountFindingGroup.CONSISTENCY
     }
 
-    private fun String.toSeverity(): MountFindingSeverity {
-        return when (uppercase()) {
-            "DANGER" -> MountFindingSeverity.DANGER
-            "WARNING" -> MountFindingSeverity.WARNING
-            "SAFE" -> MountFindingSeverity.SAFE
-            else -> MountFindingSeverity.INFO
-        }
+    private fun String.toSeverity(): MountFindingSeverity = when (uppercase()) {
+        "DANGER" -> MountFindingSeverity.DANGER
+        "WARNING" -> MountFindingSeverity.WARNING
+        "SAFE" -> MountFindingSeverity.SAFE
+        else -> MountFindingSeverity.INFO
     }
 
-    private fun severityPriority(severity: MountFindingSeverity): Int {
-        return when (severity) {
-            MountFindingSeverity.DANGER -> 0
-            MountFindingSeverity.WARNING -> 1
-            MountFindingSeverity.INFO -> 2
-            MountFindingSeverity.SAFE -> 3
-        }
+    private fun severityPriority(severity: MountFindingSeverity): Int = when (severity) {
+        MountFindingSeverity.DANGER -> 0
+        MountFindingSeverity.WARNING -> 1
+        MountFindingSeverity.INFO -> 2
+        MountFindingSeverity.SAFE -> 3
     }
 
-    private fun groupPriority(group: MountFindingGroup): Int {
-        return when (group) {
-            MountFindingGroup.ARTIFACTS -> 0
-            MountFindingGroup.RUNTIME -> 1
-            MountFindingGroup.FILESYSTEM -> 2
-            MountFindingGroup.CONSISTENCY -> 3
-        }
+    private fun groupPriority(group: MountFindingGroup): Int = when (group) {
+        MountFindingGroup.ARTIFACTS -> 0
+        MountFindingGroup.RUNTIME -> 1
+        MountFindingGroup.FILESYSTEM -> 2
+        MountFindingGroup.CONSISTENCY -> 3
     }
 
-    private fun coveragePercent(snapshot: MountNativeSnapshot): Int {
-        return if (snapshot.permissionTotal <= 0) {
-            100
-        } else {
-            ((snapshot.permissionAccessible.toDouble() / snapshot.permissionTotal.toDouble()) * 100.0).toInt()
-        }
+    private fun coveragePercent(snapshot: MountNativeSnapshot): Int = if (snapshot.permissionTotal <= 0) {
+        100
+    } else {
+        ((snapshot.permissionAccessible.toDouble() / snapshot.permissionTotal.toDouble()) * 100.0).toInt()
     }
 
     private companion object {

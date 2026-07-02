@@ -32,8 +32,8 @@ import com.eltavine.duckdetector.features.zygisk.domain.ZygiskSignalGroup
 import com.eltavine.duckdetector.features.zygisk.domain.ZygiskSignalSeverity
 import com.eltavine.duckdetector.features.zygisk.domain.ZygiskStage
 import kotlinx.coroutines.Dispatchers
-import java.io.File
 import kotlinx.coroutines.withContext
+import java.io.File
 
 class ZygiskRepository(
     context: Context,
@@ -243,67 +243,53 @@ class ZygiskRepository(
         )
     }
 
-    private fun String.toSignalGroup(): ZygiskSignalGroup {
-        return when (uppercase()) {
-            "CROSS_PROCESS" -> ZygiskSignalGroup.CROSS_PROCESS
-            "RUNTIME" -> ZygiskSignalGroup.RUNTIME
-            "LINKER" -> ZygiskSignalGroup.LINKER
-            "HEAP" -> ZygiskSignalGroup.HEAP
-            "THREADS" -> ZygiskSignalGroup.THREADS
-            "FD" -> ZygiskSignalGroup.FD
-            else -> ZygiskSignalGroup.MAPS
-        }
+    private fun String.toSignalGroup(): ZygiskSignalGroup = when (uppercase()) {
+        "CROSS_PROCESS" -> ZygiskSignalGroup.CROSS_PROCESS
+        "RUNTIME" -> ZygiskSignalGroup.RUNTIME
+        "LINKER" -> ZygiskSignalGroup.LINKER
+        "HEAP" -> ZygiskSignalGroup.HEAP
+        "THREADS" -> ZygiskSignalGroup.THREADS
+        "FD" -> ZygiskSignalGroup.FD
+        else -> ZygiskSignalGroup.MAPS
     }
 
-    private fun String.toSignalSeverity(): ZygiskSignalSeverity {
-        return when (uppercase()) {
-            "DANGER" -> ZygiskSignalSeverity.DANGER
-            else -> ZygiskSignalSeverity.WARNING
-        }
+    private fun String.toSignalSeverity(): ZygiskSignalSeverity = when (uppercase()) {
+        "DANGER" -> ZygiskSignalSeverity.DANGER
+        else -> ZygiskSignalSeverity.WARNING
     }
 
-    private fun String.toSignalValue(): String {
-        return when (uppercase()) {
-            "DANGER" -> "Danger"
-            else -> "Review"
-        }
+    private fun String.toSignalValue(): String = when (uppercase()) {
+        "DANGER" -> "Danger"
+        else -> "Review"
     }
 
-    private fun ZygiskNativeTrace.isDirectRuntimeSignal(): Boolean {
-        return label in DIRECT_RUNTIME_LABELS
-    }
+    private fun ZygiskNativeTrace.isDirectRuntimeSignal(): Boolean = label in DIRECT_RUNTIME_LABELS
 
-    private fun String.shouldUseMonospace(): Boolean {
-        return contains("0x") ||
-                contains("/proc/") ||
-                contains("/data/") ||
-                contains("/system/") ||
-                contains(".so") ||
-                contains("memfd:") ||
-                contains("(deleted)")
-    }
+    private fun String.shouldUseMonospace(): Boolean = contains("0x") ||
+        contains("/proc/") ||
+        contains("/data/") ||
+        contains("/system/") ||
+        contains(".so") ||
+        contains("memfd:") ||
+        contains("(deleted)")
 
     private fun severityPriority(
         severity: ZygiskSignalSeverity,
-    ): Int {
-        return when (severity) {
-            ZygiskSignalSeverity.DANGER -> 0
-            ZygiskSignalSeverity.WARNING -> 1
-        }
+    ): Int = when (severity) {
+        ZygiskSignalSeverity.DANGER -> 0
+        ZygiskSignalSeverity.WARNING -> 1
     }
 
     private fun groupPriority(
         group: ZygiskSignalGroup,
-    ): Int {
-        return when (group) {
-            ZygiskSignalGroup.CROSS_PROCESS -> 0
-            ZygiskSignalGroup.RUNTIME -> 1
-            ZygiskSignalGroup.LINKER -> 2
-            ZygiskSignalGroup.MAPS -> 3
-            ZygiskSignalGroup.HEAP -> 4
-            ZygiskSignalGroup.THREADS -> 5
-            ZygiskSignalGroup.FD -> 6
-        }
+    ): Int = when (group) {
+        ZygiskSignalGroup.CROSS_PROCESS -> 0
+        ZygiskSignalGroup.RUNTIME -> 1
+        ZygiskSignalGroup.LINKER -> 2
+        ZygiskSignalGroup.MAPS -> 3
+        ZygiskSignalGroup.HEAP -> 4
+        ZygiskSignalGroup.THREADS -> 5
+        ZygiskSignalGroup.FD -> 6
     }
 
     companion object {
@@ -325,8 +311,8 @@ class ZygiskRepository(
             File("/proc/self/maps").useLines { lines ->
                 lines.any { line ->
                     line.contains("startup_agents") ||
-                            line.contains(".studio/instruments") ||
-                            line.contains("agent.so")
+                        line.contains(".studio/instruments") ||
+                        line.contains("agent.so")
                 }
             }
         }.getOrDefault(false)

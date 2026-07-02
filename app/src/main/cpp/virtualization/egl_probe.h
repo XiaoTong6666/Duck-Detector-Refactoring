@@ -20,13 +20,13 @@
 
 namespace duckdetector::virtualization {
 
-    struct RendererSnapshot {
-        bool available = false;
-        std::string vendor;
-        std::string renderer;
-        std::string version;
-    };
+struct RendererSnapshot {
+    bool available = false;
+    std::string vendor;
+    std::string renderer;
+    std::string version;
+};
 
-    RendererSnapshot collect_renderer_snapshot();
+RendererSnapshot collect_renderer_snapshot();
 
 }  // namespace duckdetector::virtualization

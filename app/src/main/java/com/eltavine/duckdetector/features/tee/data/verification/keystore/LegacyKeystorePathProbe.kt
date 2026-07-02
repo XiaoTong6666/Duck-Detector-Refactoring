@@ -110,9 +110,7 @@ class LegacyKeystorePathProbe {
         return out
     }
 
-    private fun chainsEqualDer(left: List<ByteArray>, right: List<ByteArray>): Boolean {
-        return left.size == right.size && left.zip(right).all { (a, b) -> a.contentEquals(b) }
-    }
+    private fun chainsEqualDer(left: List<ByteArray>, right: List<ByteArray>): Boolean = left.size == right.size && left.zip(right).all { (a, b) -> a.contentEquals(b) }
 
     private fun describeChainMismatch(keystoreChain: List<ByteArray>, legacyChain: List<ByteArray>): String {
         val min = minOf(keystoreChain.size, legacyChain.size)
@@ -128,12 +126,10 @@ class LegacyKeystorePathProbe {
         }
     }
 
-    private fun tryGetSerialHex(certDer: ByteArray): String {
-        return runCatching {
-            val certificate = certificateFactory.generateCertificate(ByteArrayInputStream(certDer)) as X509Certificate
-            certificate.serialNumber.toString(16).lowercase(Locale.US)
-        }.getOrDefault("parse_failed")
-    }
+    private fun tryGetSerialHex(certDer: ByteArray): String = runCatching {
+        val certificate = certificateFactory.generateCertificate(ByteArrayInputStream(certDer)) as X509Certificate
+        certificate.serialNumber.toString(16).lowercase(Locale.US)
+    }.getOrDefault("parse_failed")
 }
 
 data class LegacyKeystorePathResult(

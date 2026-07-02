@@ -104,14 +104,12 @@ data class EarlyMountPreloadResult(
     val hasWarningSignal: Boolean
         get() = minorDevGapDetected || peerGroupGapDetected
 
-    fun messagesFor(signal: EarlyMountPreloadSignal): List<String> {
-        return findings.mapNotNull { finding ->
-            val type = finding.substringBefore('|')
-            if (type == signal.key) {
-                finding.split('|').getOrNull(1)?.takeIf { it.isNotBlank() }
-            } else {
-                null
-            }
+    fun messagesFor(signal: EarlyMountPreloadSignal): List<String> = findings.mapNotNull { finding ->
+        val type = finding.substringBefore('|')
+        if (type == signal.key) {
+            finding.split('|').getOrNull(1)?.takeIf { it.isNotBlank() }
+        } else {
+            null
         }
     }
 
@@ -158,13 +156,9 @@ data class EarlyMountPreloadResult(
         const val KEY_MNT_STRINGS_TARGET = "early_mnt_strings_target"
         const val KEY_MNT_STRINGS_FS = "early_mnt_strings_fs"
 
-        fun empty(source: EarlyMountPreloadSource = EarlyMountPreloadSource.NONE): EarlyMountPreloadResult {
-            return EarlyMountPreloadResult(source = source)
-        }
+        fun empty(source: EarlyMountPreloadSource = EarlyMountPreloadSource.NONE): EarlyMountPreloadResult = EarlyMountPreloadResult(source = source)
 
-        fun fromIntent(intent: Intent?): EarlyMountPreloadResult {
-            return fromBundle(intent?.extras)
-        }
+        fun fromIntent(intent: Intent?): EarlyMountPreloadResult = fromBundle(intent?.extras)
 
         fun fromBundle(bundle: Bundle?): EarlyMountPreloadResult {
             if (bundle == null) {
@@ -172,14 +166,14 @@ data class EarlyMountPreloadResult(
             }
 
             val inferredHasRun = bundle.getBoolean(KEY_HAS_RUN, false) ||
-                    bundle.containsKey(KEY_DETECTED) ||
-                    bundle.containsKey(KEY_DETECTION_METHOD) ||
-                    bundle.containsKey(KEY_DETAILS) ||
-                    bundle.containsKey(KEY_FUTILE_HIDE) ||
-                    bundle.containsKey(KEY_MNT_STRINGS) ||
-                    bundle.containsKey(KEY_MOUNT_ID_GAP) ||
-                    bundle.containsKey(KEY_MINOR_DEV_GAP) ||
-                    bundle.containsKey(KEY_PEER_GROUP_GAP)
+                bundle.containsKey(KEY_DETECTED) ||
+                bundle.containsKey(KEY_DETECTION_METHOD) ||
+                bundle.containsKey(KEY_DETAILS) ||
+                bundle.containsKey(KEY_FUTILE_HIDE) ||
+                bundle.containsKey(KEY_MNT_STRINGS) ||
+                bundle.containsKey(KEY_MOUNT_ID_GAP) ||
+                bundle.containsKey(KEY_MINOR_DEV_GAP) ||
+                bundle.containsKey(KEY_PEER_GROUP_GAP)
 
             return fromCapturedExtras(
                 EarlyMountPreloadCapturedExtras(
@@ -206,37 +200,35 @@ data class EarlyMountPreloadResult(
             )
         }
 
-        internal fun fromCapturedExtras(extras: EarlyMountPreloadCapturedExtras): EarlyMountPreloadResult {
-            return EarlyMountPreloadResult(
-                hasRun = extras.hasRun,
-                detected = extras.detected,
-                detectionMethod = extras.detectionMethod,
-                details = extras.details,
-                futileHideDetected = extras.futileHideDetected,
-                mntStringsDetected = extras.mntStringsDetected,
-                mountIdGapDetected = extras.mountIdGapDetected,
-                minorDevGapDetected = extras.minorDevGapDetected,
-                peerGroupGapDetected = extras.peerGroupGapDetected,
-                nsMntCtimeDeltaNs = extras.nsMntCtimeDeltaNs,
-                mountInfoCtimeDeltaNs = extras.mountInfoCtimeDeltaNs,
-                mntStringsSource = extras.mntStringsSource,
-                mntStringsTarget = extras.mntStringsTarget,
-                mntStringsFs = extras.mntStringsFs,
-                isContextValid = extras.contextValid,
-                source = EarlyMountPreloadSource.INTENT,
-            ).normalize()
-        }
+        internal fun fromCapturedExtras(extras: EarlyMountPreloadCapturedExtras): EarlyMountPreloadResult = EarlyMountPreloadResult(
+            hasRun = extras.hasRun,
+            detected = extras.detected,
+            detectionMethod = extras.detectionMethod,
+            details = extras.details,
+            futileHideDetected = extras.futileHideDetected,
+            mntStringsDetected = extras.mntStringsDetected,
+            mountIdGapDetected = extras.mountIdGapDetected,
+            minorDevGapDetected = extras.minorDevGapDetected,
+            peerGroupGapDetected = extras.peerGroupGapDetected,
+            nsMntCtimeDeltaNs = extras.nsMntCtimeDeltaNs,
+            mountInfoCtimeDeltaNs = extras.mountInfoCtimeDeltaNs,
+            mntStringsSource = extras.mntStringsSource,
+            mntStringsTarget = extras.mntStringsTarget,
+            mntStringsFs = extras.mntStringsFs,
+            isContextValid = extras.contextValid,
+            source = EarlyMountPreloadSource.INTENT,
+        ).normalize()
 
         internal fun fromCapturedValues(values: Map<String, Any?>): EarlyMountPreloadResult {
             val inferredHasRun = values.boolean(KEY_HAS_RUN) ||
-                    values.containsKey(KEY_DETECTED) ||
-                    values.containsKey(KEY_DETECTION_METHOD) ||
-                    values.containsKey(KEY_DETAILS) ||
-                    values.containsKey(KEY_FUTILE_HIDE) ||
-                    values.containsKey(KEY_MNT_STRINGS) ||
-                    values.containsKey(KEY_MOUNT_ID_GAP) ||
-                    values.containsKey(KEY_MINOR_DEV_GAP) ||
-                    values.containsKey(KEY_PEER_GROUP_GAP)
+                values.containsKey(KEY_DETECTED) ||
+                values.containsKey(KEY_DETECTION_METHOD) ||
+                values.containsKey(KEY_DETAILS) ||
+                values.containsKey(KEY_FUTILE_HIDE) ||
+                values.containsKey(KEY_MNT_STRINGS) ||
+                values.containsKey(KEY_MOUNT_ID_GAP) ||
+                values.containsKey(KEY_MINOR_DEV_GAP) ||
+                values.containsKey(KEY_PEER_GROUP_GAP)
 
             return fromCapturedExtras(
                 EarlyMountPreloadCapturedExtras(
@@ -284,8 +276,6 @@ data class EarlyMountPreloadResult(
             }
         }
 
-        private fun Map<String, Any?>.string(key: String): String {
-            return (this[key] as? String).orEmpty()
-        }
+        private fun Map<String, Any?>.string(key: String): String = (this[key] as? String).orEmpty()
     }
 }

@@ -21,11 +21,9 @@ import com.eltavine.duckdetector.features.customrom.domain.CustomRomModification
 
 class CustomRomNativeBridge {
 
-    fun collectSnapshot(): CustomRomNativeSnapshot {
-        return runCatching {
-            parse(nativeCollectSnapshot())
-        }.getOrDefault(CustomRomNativeSnapshot())
-    }
+    fun collectSnapshot(): CustomRomNativeSnapshot = runCatching {
+        parse(nativeCollectSnapshot())
+    }.getOrDefault(CustomRomNativeSnapshot())
 
     internal fun parse(raw: String): CustomRomNativeSnapshot {
         if (raw.isBlank()) {
@@ -54,20 +52,33 @@ class CustomRomNativeBridge {
                 val value = line.substringAfter('=')
                 when (key) {
                     "AVAILABLE" -> available = value != "0"
+
                     "PROPAREA_AVAILABLE" -> propertyAreaAvailable = value != "0"
+
                     "PROPAREA_CONTEXTS" -> propertyAreaContextCount = value.toIntOrNull() ?: 0
+
                     "PROPAREA_AREA_ANOMALIES",
-                    "PROPAREA_AREA_COUNT" -> propertyAreaAnomalyCount = value.toIntOrNull() ?: 0
+                    "PROPAREA_AREA_COUNT",
+                    -> propertyAreaAnomalyCount = value.toIntOrNull() ?: 0
 
                     "PROPAREA_ITEM_ANOMALIES",
-                    "PROPAREA_ITEM_COUNT" -> propertyAreaItemCount = value.toIntOrNull() ?: 0
+                    "PROPAREA_ITEM_COUNT",
+                    -> propertyAreaItemCount = value.toIntOrNull() ?: 0
+
                     "SYMBOL_AVAILABLE" -> symbolScanAvailable = value != "0"
+
                     "PLATFORM" -> parseFinding(value)?.let(platformFiles::add)
+
                     "MODIFICATION" -> parseModificationFinding(value)?.let(modificationFindings::add)
+
                     "MAP" -> parseMapFinding(value)?.let(resourceInjectionFindings::add)
+
                     "SCRIPT" -> if (value.isNotBlank()) recoveryScripts += value
+
                     "POLICY" -> parsePolicyFinding(value)?.let(policyFindings::add)
+
                     "OVERLAY" -> parseFinding(value)?.let(overlayFindings::add)
+
                     "SYMBOL" -> parseSymbolFinding(value)?.let(symbolFindings::add)
                 }
             }
@@ -157,11 +168,9 @@ class CustomRomNativeBridge {
         )
     }
 
-    private fun String.decodeValue(): String {
-        return replace("\\n", "\n")
-            .replace("\\r", "\r")
-            .replace("\\u007c", "|")
-    }
+    private fun String.decodeValue(): String = replace("\\n", "\n")
+        .replace("\\r", "\r")
+        .replace("\\u007c", "|")
 
     private external fun nativeCollectSnapshot(): String
 

@@ -57,8 +57,8 @@ class LSPosedStackProbe {
     ): List<LSPosedSignal> {
         val filteredFrames = frames.filterNot { frame ->
             frame.className.startsWith("java.lang.Thread") ||
-                    frame.className.startsWith("java.lang.Throwable") ||
-                    frame.className.startsWith(javaClass.name)
+                frame.className.startsWith("java.lang.Throwable") ||
+                frame.className.startsWith(javaClass.name)
         }
         val rendered = filteredFrames.joinToString(separator = "\n") { it.toString() }
         val token = STACK_SIGNATURES.firstOrNull { signature ->

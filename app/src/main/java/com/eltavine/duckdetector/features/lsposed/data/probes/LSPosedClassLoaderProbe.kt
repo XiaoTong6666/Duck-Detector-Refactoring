@@ -27,14 +27,12 @@ data class LSPosedClassLoaderProbeResult(
 
 class LSPosedClassLoaderProbe {
 
-    fun run(): LSPosedClassLoaderProbeResult {
-        return evaluate(
-            startingLoaders = listOf(
-                javaClass.classLoader,
-                Thread.currentThread().contextClassLoader,
-            ),
-        )
-    }
+    fun run(): LSPosedClassLoaderProbeResult = evaluate(
+        startingLoaders = listOf(
+            javaClass.classLoader,
+            Thread.currentThread().contextClassLoader,
+        ),
+    )
 
     internal fun evaluate(
         startingLoaders: List<ClassLoader?>,

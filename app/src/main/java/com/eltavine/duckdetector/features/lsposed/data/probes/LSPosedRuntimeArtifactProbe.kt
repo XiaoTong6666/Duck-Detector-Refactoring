@@ -127,7 +127,7 @@ class LSPosedRuntimeArtifactProbe(
         return LSPosedRuntimeArtifactProbeResult(
             signals = signals,
             available = available,
-            failureReason = if (available) null else "Runtime artifact inputs were not readable from the current app context."
+            failureReason = if (available) null else "Runtime artifact inputs were not readable from the current app context.",
         )
     }
 
@@ -152,11 +152,9 @@ class LSPosedRuntimeArtifactProbe(
 
     private fun buildExcludePatterns(
         appPackageName: String,
-    ): List<String> {
-        return buildList {
-            addAll(LSPosedProbeSupport.runtimeExcludePatterns)
-            add(appPackageName.lowercase())
-        }
+    ): List<String> = buildList {
+        addAll(LSPosedProbeSupport.runtimeExcludePatterns)
+        add(appPackageName.lowercase())
     }
 
     private fun shouldExclude(

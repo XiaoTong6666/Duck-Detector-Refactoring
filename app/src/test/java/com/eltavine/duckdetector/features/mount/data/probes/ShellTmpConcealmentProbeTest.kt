@@ -66,7 +66,7 @@ class ShellTmpConcealmentProbeTest {
         assertTrue(result.hasWarning)
         assertEquals(
             MountFindingSeverity.WARNING,
-            result.findings.single { it.label == "Shell tmp view" }.severity
+            result.findings.single { it.label == "Shell tmp view" }.severity,
         )
     }
 

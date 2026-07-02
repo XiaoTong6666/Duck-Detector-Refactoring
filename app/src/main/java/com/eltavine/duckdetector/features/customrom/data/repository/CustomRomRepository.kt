@@ -23,15 +23,15 @@ import android.os.IBinder
 import com.eltavine.duckdetector.features.customrom.data.native.CustomRomNativeBridge
 import com.eltavine.duckdetector.features.customrom.data.rules.CustomRomCatalog
 import com.eltavine.duckdetector.features.customrom.domain.CustomRomFinding
-import com.eltavine.duckdetector.features.customrom.domain.CustomRomModificationFinding
 import com.eltavine.duckdetector.features.customrom.domain.CustomRomMethodOutcome
 import com.eltavine.duckdetector.features.customrom.domain.CustomRomMethodResult
+import com.eltavine.duckdetector.features.customrom.domain.CustomRomModificationFinding
 import com.eltavine.duckdetector.features.customrom.domain.CustomRomPackageVisibility
 import com.eltavine.duckdetector.features.customrom.domain.CustomRomReport
 import com.eltavine.duckdetector.features.customrom.domain.CustomRomStage
-import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
 
 class CustomRomRepository(
     private val context: Context,
@@ -183,9 +183,10 @@ class CustomRomRepository(
                 val value = rawValue?.takeIf { it.isNotBlank() } ?: return@forEach
                 val lower = value.lowercase()
                 CustomRomCatalog.buildFieldKeywords.forEach { signature ->
-                    if (lower.contains(signature.keyword) && !shouldSkip(
+                    if (lower.contains(signature.keyword) &&
+                        !shouldSkip(
                             signature.romName,
-                            isPixel
+                            isPixel,
                         )
                     ) {
                         add(
@@ -206,9 +207,10 @@ class CustomRomRepository(
         isPixel: Boolean,
     ): List<CustomRomFinding> {
         return CustomRomCatalog.packageSignatures.mapNotNull { signature ->
-            if (signature.packageName !in installedPackages || shouldSkip(
+            if (signature.packageName !in installedPackages ||
+                shouldSkip(
                     signature.romName,
-                    isPixel
+                    isPixel,
                 )
             ) {
                 return@mapNotNull null
@@ -440,7 +442,7 @@ class CustomRomRepository(
                 detail = buildNativeFilesDetail(
                     platformFileFindings,
                     recoveryScripts,
-                    overlayFindings
+                    overlayFindings,
                 ),
             ),
             CustomRomMethodResult(
@@ -499,25 +501,23 @@ class CustomRomRepository(
     private fun buildCleanModificationDetail(
         checkedModificationPropertyCount: Int,
         propertyAreaContextCount: Int,
-    ): String {
-        return buildString {
-            append("Tracked property area, serial, and residual value checks were clean")
-            if (checkedModificationPropertyCount > 0 || propertyAreaContextCount > 0) {
-                append("; checked ")
-                if (checkedModificationPropertyCount > 0) {
-                    append(checkedModificationPropertyCount)
-                    append(" tracked property name(s)")
-                } else {
-                    append("tracked property names")
-                }
+    ): String = buildString {
+        append("Tracked property area, serial, and residual value checks were clean")
+        if (checkedModificationPropertyCount > 0 || propertyAreaContextCount > 0) {
+            append("; checked ")
+            if (checkedModificationPropertyCount > 0) {
+                append(checkedModificationPropertyCount)
+                append(" tracked property name(s)")
+            } else {
+                append("tracked property names")
             }
-            if (propertyAreaContextCount > 0) {
-                append(" across ")
-                append(propertyAreaContextCount)
-                append(" property-area context(s)")
-            }
-            append('.')
         }
+        if (propertyAreaContextCount > 0) {
+            append(" across ")
+            append(propertyAreaContextCount)
+            append(" property-area context(s)")
+        }
+        append('.')
     }
 
     private fun detectBootloaderFinding(): List<CustomRomModificationFinding> {
@@ -547,45 +547,37 @@ class CustomRomRepository(
         platformFileFindings: List<CustomRomFinding>,
         recoveryScripts: List<String>,
         overlayFindings: List<CustomRomFinding>,
-    ): String? {
-        return buildString {
-            platformFileFindings.forEach { finding ->
-                appendLine("${finding.romName}: ${finding.detail}")
-            }
-            recoveryScripts.forEach { script ->
-                appendLine("Script: $script")
-            }
-            overlayFindings.forEach { finding ->
-                appendLine("${finding.romName}: ${finding.detail}")
-            }
-        }.trim().ifBlank { null }
-    }
+    ): String? = buildString {
+        platformFileFindings.forEach { finding ->
+            appendLine("${finding.romName}: ${finding.detail}")
+        }
+        recoveryScripts.forEach { script ->
+            appendLine("Script: $script")
+        }
+        overlayFindings.forEach { finding ->
+            appendLine("${finding.romName}: ${finding.detail}")
+        }
+    }.trim().ifBlank { null }
 
     private fun shouldSkip(
         romName: String,
         isPixel: Boolean,
-    ): Boolean {
-        return isPixel && romName == "PixelExperience"
-    }
+    ): Boolean = isPixel && romName == "PixelExperience"
 
-    private fun isPixelDevice(): Boolean {
-        return Build.BRAND.equals("google", ignoreCase = true) &&
-                Build.MODEL.startsWith("Pixel", ignoreCase = true)
-    }
+    private fun isPixelDevice(): Boolean = Build.BRAND.equals("google", ignoreCase = true) &&
+        Build.MODEL.startsWith("Pixel", ignoreCase = true)
 
     @Suppress("DEPRECATION")
-    private fun getInstalledPackages(): Set<String> {
-        return runCatching {
-            val applications = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                context.packageManager.getInstalledApplications(
-                    PackageManager.ApplicationInfoFlags.of(PackageManager.GET_META_DATA.toLong()),
-                )
-            } else {
-                context.packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
-            }
-            applications.mapTo(linkedSetOf()) { it.packageName }
-        }.getOrDefault(emptySet())
-    }
+    private fun getInstalledPackages(): Set<String> = runCatching {
+        val applications = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.packageManager.getInstalledApplications(
+                PackageManager.ApplicationInfoFlags.of(PackageManager.GET_META_DATA.toLong()),
+            )
+        } else {
+            context.packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
+        }
+        applications.mapTo(linkedSetOf()) { it.packageName }
+    }.getOrDefault(emptySet())
 
     private fun detectPackageVisibility(
         installedPackageCount: Int,

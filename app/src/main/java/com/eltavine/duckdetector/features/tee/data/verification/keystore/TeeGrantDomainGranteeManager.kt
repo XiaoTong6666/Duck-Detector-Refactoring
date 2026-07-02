@@ -44,89 +44,88 @@ class TeeGrantDomainGranteeManager(
         )
     }
 
-    private suspend fun bindGrantee(context: Context): TeeGrantDomainGranteeSessionResult =
-        suspendCancellableCoroutine { continuation ->
-            var bound = false
-            lateinit var connection: ServiceConnection
+    private suspend fun bindGrantee(context: Context): TeeGrantDomainGranteeSessionResult = suspendCancellableCoroutine { continuation ->
+        var bound = false
+        lateinit var connection: ServiceConnection
 
-            fun finish(
-                result: TeeGrantDomainGranteeSessionResult,
-                keepBoundForSession: Boolean = false,
+        fun finish(
+            result: TeeGrantDomainGranteeSessionResult,
+            keepBoundForSession: Boolean = false,
+        ) {
+            if (!continuation.isActive) {
+                return
+            }
+            if (bound && !keepBoundForSession) {
+                runCatching { context.unbindService(connection) }
+                bound = false
+            }
+            continuation.resume(result)
+        }
+
+        connection = object : ServiceConnection {
+            override fun onServiceConnected(
+                name: ComponentName?,
+                service: IBinder?,
             ) {
-                if (!continuation.isActive) {
+                if (service == null) {
+                    finish(
+                        TeeGrantDomainGranteeSessionResult(
+                            detail = "Grant-domain isolated grantee returned a null binder.",
+                        ),
+                    )
                     return
                 }
-                if (bound && !keepBoundForSession) {
-                    runCatching { context.unbindService(connection) }
+                runCatching {
+                    val proxy = TeeGrantDomainGranteeProxy(service)
+                    val uid = proxy.getUid()
+                    TeeGrantDomainGranteeSession(
+                        context = context,
+                        connection = connection,
+                        proxy = proxy,
+                        uid = uid,
+                        bound = true,
+                    )
+                }.onSuccess { session ->
                     bound = false
+                    finish(
+                        TeeGrantDomainGranteeSessionResult(
+                            available = true,
+                            session = session,
+                            detail = "Grant-domain isolated grantee bound with uid=${session.uid}.",
+                        ),
+                        keepBoundForSession = true,
+                    )
+                }.onFailure { throwable ->
+                    finish(
+                        TeeGrantDomainGranteeSessionResult(
+                            detail = "Grant-domain isolated grantee handshake failed: ${GrantDomainFullChainSplitProbe.describeThrowable(throwable)}",
+                        ),
+                    )
                 }
-                continuation.resume(result)
             }
 
-            connection = object : ServiceConnection {
-                override fun onServiceConnected(
-                    name: ComponentName?,
-                    service: IBinder?,
-                ) {
-                    if (service == null) {
-                        finish(
-                            TeeGrantDomainGranteeSessionResult(
-                                detail = "Grant-domain isolated grantee returned a null binder.",
-                            ),
-                        )
-                        return
-                    }
-                    runCatching {
-                        val proxy = TeeGrantDomainGranteeProxy(service)
-                        val uid = proxy.getUid()
-                        TeeGrantDomainGranteeSession(
-                            context = context,
-                            connection = connection,
-                            proxy = proxy,
-                            uid = uid,
-                            bound = true,
-                        )
-                    }.onSuccess { session ->
-                        bound = false
-                        finish(
-                            TeeGrantDomainGranteeSessionResult(
-                                available = true,
-                                session = session,
-                                detail = "Grant-domain isolated grantee bound with uid=${session.uid}.",
-                            ),
-                            keepBoundForSession = true,
-                        )
-                    }.onFailure { throwable ->
-                        finish(
-                            TeeGrantDomainGranteeSessionResult(
-                                detail = "Grant-domain isolated grantee handshake failed: ${GrantDomainFullChainSplitProbe.describeThrowable(throwable)}",
-                            ),
-                        )
-                    }
-                }
+            override fun onServiceDisconnected(name: ComponentName?) = Unit
+        }
 
-                override fun onServiceDisconnected(name: ComponentName?) = Unit
-            }
+        val intent = Intent(context, serviceClass)
+        bound = runCatching {
+            bindIsolatedService(context, intent, connection)
+        }.getOrDefault(false)
+        if (!bound) {
+            finish(
+                TeeGrantDomainGranteeSessionResult(
+                    detail = "Grant-domain isolated grantee could not be bound.",
+                ),
+            )
+        }
 
-            val intent = Intent(context, serviceClass)
-            bound = runCatching {
-                bindIsolatedService(context, intent, connection)
-            }.getOrDefault(false)
-            if (!bound) {
-                finish(
-                    TeeGrantDomainGranteeSessionResult(
-                        detail = "Grant-domain isolated grantee could not be bound.",
-                    ),
-                )
-            }
-
-            continuation.invokeOnCancellation {
-                if (bound) {
-                    runCatching { context.unbindService(connection) }
-                    bound = false
-                }
+        continuation.invokeOnCancellation {
+            if (bound) {
+                runCatching { context.unbindService(connection) }
+                bound = false
             }
         }
+    }
 
     companion object {
         private const val DETECTION_TIMEOUT_MS = 6_000L
@@ -135,15 +134,13 @@ class TeeGrantDomainGranteeManager(
             context: Context,
             intent: Intent,
             connection: ServiceConnection,
-        ): Boolean {
-            return context.bindIsolatedService(
-                intent,
-                Context.BIND_AUTO_CREATE,
-                "duck_grant_domain_${System.nanoTime()}",
-                Runnable::run,
-                connection,
-            )
-        }
+        ): Boolean = context.bindIsolatedService(
+            intent,
+            Context.BIND_AUTO_CREATE,
+            "duck_grant_domain_${System.nanoTime()}",
+            Runnable::run,
+            connection,
+        )
     }
 }
 
@@ -182,18 +179,16 @@ class TeeGrantDomainGranteeSession(
     fun readGrantedCertificateChain(
         grantId: Long,
         keystore2Binder: IBinder,
-    ): TeeGrantDomainGranteeChainResult {
-        return runCatching {
-            proxy.readGrantedCertificateChain(grantId, keystore2Binder)
-        }.getOrElse { throwable ->
-            // A failed isolated private call is a transport/permission boundary, not a split by itself.
-            // isolated private 调用失败只是传输/权限边界问题，本身不等价于证书链 split。
-            TeeGrantDomainGranteeChainResult(
-                available = false,
-                detail = "isolated binder call blocked: ${GrantDomainFullChainSplitProbe.describeThrowable(throwable)}",
-                diagnosticCopyText = throwable.stackTraceToString().trim(),
-            )
-        }
+    ): TeeGrantDomainGranteeChainResult = runCatching {
+        proxy.readGrantedCertificateChain(grantId, keystore2Binder)
+    }.getOrElse { throwable ->
+        // A failed isolated private call is a transport/permission boundary, not a split by itself.
+        // isolated private 调用失败只是传输/权限边界问题，本身不等价于证书链 split。
+        TeeGrantDomainGranteeChainResult(
+            available = false,
+            detail = "isolated binder call blocked: ${GrantDomainFullChainSplitProbe.describeThrowable(throwable)}",
+            diagnosticCopyText = throwable.stackTraceToString().trim(),
+        )
     }
 
     override fun close() {

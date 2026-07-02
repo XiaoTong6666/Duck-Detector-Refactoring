@@ -151,50 +151,48 @@ class SyntheticGrantGetKeyEntryAccessVectorBlindnessProbe(
     }
 
     companion object {
-        fun skippedAfterExistingGrantDanger(): SyntheticGrantGetKeyEntryAccessVectorBlindnessResult {
-            return SyntheticGrantGetKeyEntryAccessVectorBlindnessResult(
-                anomalyKind = SyntheticGrantGetKeyEntryAccessVectorBlindnessAnomalyKind.SKIPPED_AFTER_EXISTING_GRANT_DANGER,
-                detail = "Skipped because an existing grant detector already reported danger.",
-            )
-        }
+        fun skippedAfterExistingGrantDanger(): SyntheticGrantGetKeyEntryAccessVectorBlindnessResult = SyntheticGrantGetKeyEntryAccessVectorBlindnessResult(
+            anomalyKind = SyntheticGrantGetKeyEntryAccessVectorBlindnessAnomalyKind.SKIPPED_AFTER_EXISTING_GRANT_DANGER,
+            detail = "Skipped because an existing grant detector already reported danger.",
+        )
 
         internal fun evaluateGranteeReadback(
             granteeUid: Int,
             accessVector: Int,
             granteeRead: TeeGrantDomainGranteeChainResult,
-        ): SyntheticGrantGetKeyEntryAccessVectorBlindnessResult {
-            return when {
-                granteeRead.available -> SyntheticGrantGetKeyEntryAccessVectorBlindnessResult(
+        ): SyntheticGrantGetKeyEntryAccessVectorBlindnessResult = when {
+            granteeRead.available -> SyntheticGrantGetKeyEntryAccessVectorBlindnessResult(
+                executed = true,
+                available = true,
+                grantCreated = true,
+                granteeUid = granteeUid,
+                accessVector = accessVector,
+                granteeReadSucceeded = true,
+                granteeReadErrorKind = Keystore2PrivateGrantErrorKind.NONE,
+                anomalyKind = SyntheticGrantGetKeyEntryAccessVectorBlindnessAnomalyKind.GET_KEY_ENTRY_WITHOUT_GET_INFO_ALLOWED,
+                detail = "Private: grantee getKeyEntry(GRANT) succeeded without GET_INFO.",
+            )
+
+            granteeRead.errorKind == Keystore2PrivateGrantErrorKind.PERMISSION_DENIED ->
+                SyntheticGrantGetKeyEntryAccessVectorBlindnessResult(
                     executed = true,
                     available = true,
                     grantCreated = true,
                     granteeUid = granteeUid,
                     accessVector = accessVector,
-                    granteeReadSucceeded = true,
-                    granteeReadErrorKind = Keystore2PrivateGrantErrorKind.NONE,
-                    anomalyKind = SyntheticGrantGetKeyEntryAccessVectorBlindnessAnomalyKind.GET_KEY_ENTRY_WITHOUT_GET_INFO_ALLOWED,
-                    detail = "Private: grantee getKeyEntry(GRANT) succeeded without GET_INFO.",
-                )
-                granteeRead.errorKind == Keystore2PrivateGrantErrorKind.PERMISSION_DENIED ->
-                    SyntheticGrantGetKeyEntryAccessVectorBlindnessResult(
-                        executed = true,
-                        available = true,
-                        grantCreated = true,
-                        granteeUid = granteeUid,
-                        accessVector = accessVector,
-                        granteeReadErrorKind = granteeRead.errorKind,
-                        anomalyKind = SyntheticGrantGetKeyEntryAccessVectorBlindnessAnomalyKind.NONE,
-                        detail = "Private: grantee getKeyEntry(GRANT) rejected with PERMISSION_DENIED.",
-                    )
-                else -> SyntheticGrantGetKeyEntryAccessVectorBlindnessResult(
-                    executed = true,
-                    grantCreated = true,
-                    granteeUid = granteeUid,
-                    accessVector = accessVector,
                     granteeReadErrorKind = granteeRead.errorKind,
-                    detail = "Private: grantee readback unavailable (${visibleGrantDetail(granteeRead.detail)}).",
+                    anomalyKind = SyntheticGrantGetKeyEntryAccessVectorBlindnessAnomalyKind.NONE,
+                    detail = "Private: grantee getKeyEntry(GRANT) rejected with PERMISSION_DENIED.",
                 )
-            }
+
+            else -> SyntheticGrantGetKeyEntryAccessVectorBlindnessResult(
+                executed = true,
+                grantCreated = true,
+                granteeUid = granteeUid,
+                accessVector = accessVector,
+                granteeReadErrorKind = granteeRead.errorKind,
+                detail = "Private: grantee readback unavailable (${visibleGrantDetail(granteeRead.detail)}).",
+            )
         }
     }
 }

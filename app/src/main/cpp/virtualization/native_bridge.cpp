@@ -23,61 +23,49 @@
 
 namespace {
 
-    jstring to_jstring(JNIEnv *env, const std::string &value) {
-        return env->NewStringUTF(value.c_str());
-    }
+jstring to_jstring(JNIEnv* env, const std::string& value) {
+    return env->NewStringUTF(value.c_str());
+}
 
 }  // namespace
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_eltavine_duckdetector_features_virtualization_data_native_VirtualizationNativeBridge_nativeCollectSnapshot(
-        JNIEnv *env,
-        jobject
-) {
+    JNIEnv* env, jobject) {
     return to_jstring(env, duckdetector::virtualization::encode_snapshot(
-            duckdetector::virtualization::collect_snapshot()));
+                               duckdetector::virtualization::collect_snapshot()));
 }
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_eltavine_duckdetector_features_virtualization_data_native_VirtualizationNativeBridge_nativeRunTimingTrap(
-        JNIEnv *env,
-        jobject
-) {
+    JNIEnv* env, jobject) {
     return to_jstring(env, duckdetector::virtualization::encode_trap(
-            duckdetector::virtualization::run_timing_trap()));
+                               duckdetector::virtualization::run_timing_trap()));
 }
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_eltavine_duckdetector_features_virtualization_data_native_VirtualizationNativeBridge_nativeRunSyscallParityTrap(
-        JNIEnv *env,
-        jobject
-) {
+    JNIEnv* env, jobject) {
     return to_jstring(env, duckdetector::virtualization::encode_trap(
-            duckdetector::virtualization::run_syscall_parity_trap()));
+                               duckdetector::virtualization::run_syscall_parity_trap()));
 }
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_eltavine_duckdetector_features_virtualization_data_native_VirtualizationNativeBridge_nativeRunAsmCounterTrap(
-        JNIEnv *env,
-        jobject
-) {
+    JNIEnv* env, jobject) {
     return to_jstring(env, duckdetector::virtualization::encode_trap(
-            duckdetector::virtualization::run_asm_counter_trap()));
+                               duckdetector::virtualization::run_asm_counter_trap()));
 }
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_eltavine_duckdetector_features_virtualization_data_native_VirtualizationNativeBridge_nativeRunAsmRawSyscallTrap(
-        JNIEnv *env,
-        jobject
-) {
+    JNIEnv* env, jobject) {
     return to_jstring(env, duckdetector::virtualization::encode_trap(
-            duckdetector::virtualization::run_asm_raw_syscall_trap()));
+                               duckdetector::virtualization::run_asm_raw_syscall_trap()));
 }
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_eltavine_duckdetector_features_virtualization_data_native_VirtualizationNativeBridge_nativeRunSacrificialSyscallPack(
-        JNIEnv *env,
-        jobject
-) {
+    JNIEnv* env, jobject) {
     return to_jstring(env, duckdetector::virtualization::run_sacrificial_syscall_pack());
 }

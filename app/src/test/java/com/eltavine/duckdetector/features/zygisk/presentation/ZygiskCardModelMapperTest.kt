@@ -104,20 +104,18 @@ class ZygiskCardModelMapperTest {
         nativeStrongHitCount: Int = 0,
         heuristicHitCount: Int = 0,
         signals: List<ZygiskSignal> = emptyList(),
-    ): ZygiskReport {
-        return ZygiskReport(
-            stage = ZygiskStage.READY,
-            fdTrapAvailable = fdTrapAvailable,
-            fdTrapDetected = fdTrapDetected,
-            nativeAvailable = nativeAvailable,
-            heapAvailable = true,
-            seccompSupported = true,
-            nativeStrongHitCount = nativeStrongHitCount,
-            heuristicHitCount = heuristicHitCount,
-            tracerPid = 0,
-            signals = signals,
-            methods = emptyList(),
-            references = ZygiskReport.defaultReferences(),
-        )
-    }
+    ): ZygiskReport = ZygiskReport(
+        stage = ZygiskStage.READY,
+        fdTrapAvailable = fdTrapAvailable,
+        fdTrapDetected = fdTrapDetected,
+        nativeAvailable = nativeAvailable,
+        heapAvailable = true,
+        seccompSupported = true,
+        nativeStrongHitCount = nativeStrongHitCount,
+        heuristicHitCount = heuristicHitCount,
+        tracerPid = 0,
+        signals = signals,
+        methods = emptyList(),
+        references = ZygiskReport.defaultReferences(),
+    )
 }

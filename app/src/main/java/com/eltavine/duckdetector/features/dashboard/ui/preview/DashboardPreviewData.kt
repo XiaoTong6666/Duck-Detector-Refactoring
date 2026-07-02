@@ -20,8 +20,6 @@ import com.eltavine.duckdetector.features.bootloader.domain.BootloaderReport
 import com.eltavine.duckdetector.features.bootloader.presentation.BootloaderCardModelMapper
 import com.eltavine.duckdetector.features.customrom.domain.CustomRomReport
 import com.eltavine.duckdetector.features.customrom.presentation.CustomRomCardModelMapper
-import com.eltavine.duckdetector.features.deviceinfo.domain.DeviceInfoReport
-import com.eltavine.duckdetector.features.deviceinfo.presentation.DeviceInfoCardModelMapper
 import com.eltavine.duckdetector.features.dangerousapps.data.rules.DangerousAppsCatalog
 import com.eltavine.duckdetector.features.dangerousapps.domain.DangerousAppsReport
 import com.eltavine.duckdetector.features.dangerousapps.presentation.DangerousAppsCardModelMapper
@@ -32,6 +30,8 @@ import com.eltavine.duckdetector.features.dashboard.ui.model.DashboardUiState
 import com.eltavine.duckdetector.features.dashboard.ui.model.buildDashboardFindings
 import com.eltavine.duckdetector.features.dashboard.ui.model.buildDashboardOverview
 import com.eltavine.duckdetector.features.dashboard.ui.model.sortDashboardDetectorCards
+import com.eltavine.duckdetector.features.deviceinfo.domain.DeviceInfoReport
+import com.eltavine.duckdetector.features.deviceinfo.presentation.DeviceInfoCardModelMapper
 import com.eltavine.duckdetector.features.kernelcheck.domain.KernelCheckReport
 import com.eltavine.duckdetector.features.kernelcheck.presentation.KernelCheckCardModelMapper
 import com.eltavine.duckdetector.features.lsposed.domain.LSPosedReport
@@ -243,8 +243,5 @@ object DashboardPreviewData {
         )
     }
 
-    fun dangerousAppsCard(): DangerousAppsCardModel {
-        return dangerousAppsMapper.map(DangerousAppsReport.loading(DangerousAppsCatalog.targets))
-    }
-
+    fun dangerousAppsCard(): DangerousAppsCardModel = dangerousAppsMapper.map(DangerousAppsReport.loading(DangerousAppsCatalog.targets))
 }

@@ -18,10 +18,10 @@ package com.eltavine.duckdetector.features.tee.data.verification.keystore
 
 import com.eltavine.duckdetector.features.tee.data.attestation.AttestationSnapshot
 import com.eltavine.duckdetector.features.tee.domain.TeeTier
-import java.nio.file.Files
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.nio.file.Files
 
 class VintfKeyMintVersionProbeTest {
 
@@ -92,22 +92,20 @@ class VintfKeyMintVersionProbeTest {
         }
     }
 
-    private fun snapshot(attestationVersion: Int?, keymasterVersion: Int?): AttestationSnapshot {
-        return AttestationSnapshot(
-            tier = TeeTier.TEE,
-            attestationVersion = attestationVersion,
-            keymasterVersion = keymasterVersion,
-            attestationTier = TeeTier.TEE,
-            keymasterTier = TeeTier.TEE,
-            challengeVerified = true,
-            challengeSummary = "ok",
-            rootOfTrust = null,
-            osVersion = null,
-            osPatchLevel = null,
-            vendorPatchLevel = null,
-            bootPatchLevel = null,
-            rawCertificates = emptyList(),
-            displayCertificates = emptyList(),
-        )
-    }
+    private fun snapshot(attestationVersion: Int?, keymasterVersion: Int?): AttestationSnapshot = AttestationSnapshot(
+        tier = TeeTier.TEE,
+        attestationVersion = attestationVersion,
+        keymasterVersion = keymasterVersion,
+        attestationTier = TeeTier.TEE,
+        keymasterTier = TeeTier.TEE,
+        challengeVerified = true,
+        challengeSummary = "ok",
+        rootOfTrust = null,
+        osVersion = null,
+        osPatchLevel = null,
+        vendorPatchLevel = null,
+        bootPatchLevel = null,
+        rawCertificates = emptyList(),
+        displayCertificates = emptyList(),
+    )
 }

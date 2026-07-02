@@ -73,13 +73,9 @@ class MountViewModel(
     }
 
     companion object {
-        fun factory(): ViewModelProvider.Factory {
-            return object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return MountViewModel(MountRepository()) as T
-                }
-            }
+        fun factory(): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T = MountViewModel(MountRepository()) as T
         }
     }
 }

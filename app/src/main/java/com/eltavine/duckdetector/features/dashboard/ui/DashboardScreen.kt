@@ -14,24 +14,21 @@
  * limitations under the License.
  */
 
+@file:Suppress("ktlint:standard:function-naming")
+
 package com.eltavine.duckdetector.features.dashboard.ui
 
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Timer
-import androidx.compose.material.icons.rounded.Badge
-import androidx.compose.material.icons.rounded.FileDownload
-import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -41,6 +38,11 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Timer
+import androidx.compose.material.icons.rounded.Badge
+import androidx.compose.material.icons.rounded.FileDownload
+import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
@@ -61,8 +63,8 @@ import androidx.compose.ui.unit.dp
 import com.eltavine.duckdetector.BuildConfig
 import com.eltavine.duckdetector.R
 import com.eltavine.duckdetector.core.ui.components.WrapSafeText
-import com.eltavine.duckdetector.core.ui.openExternalUri
 import com.eltavine.duckdetector.core.ui.model.DetectionSeverity
+import com.eltavine.duckdetector.core.ui.openExternalUri
 import com.eltavine.duckdetector.core.ui.presentation.formatBuildTimeUtc
 import com.eltavine.duckdetector.core.ui.presentation.rememberStatusAppearance
 import com.eltavine.duckdetector.features.bootloader.ui.card.BootloaderDetectorCard
@@ -802,11 +804,9 @@ private fun DashboardFindingRow(
 
 private fun findingSeverityLabel(
     finding: DashboardFindingModel,
-): String {
-    return when (finding.status.severity) {
-        DetectionSeverity.DANGER -> "High"
-        DetectionSeverity.WARNING -> "Warn"
-        DetectionSeverity.INFO -> "Check"
-        DetectionSeverity.ALL_CLEAR -> "Clear"
-    }
+): String = when (finding.status.severity) {
+    DetectionSeverity.DANGER -> "High"
+    DetectionSeverity.WARNING -> "Warn"
+    DetectionSeverity.INFO -> "Check"
+    DetectionSeverity.ALL_CLEAR -> "Clear"
 }

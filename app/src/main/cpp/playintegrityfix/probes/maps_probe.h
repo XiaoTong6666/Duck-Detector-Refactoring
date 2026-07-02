@@ -23,7 +23,7 @@
 
 namespace duckdetector::playintegrityfix {
 
-    std::vector<RuntimeTrace> scan_runtime_maps();
+std::vector<RuntimeTrace> scan_runtime_maps();
 
 }  // namespace duckdetector::playintegrityfix
 

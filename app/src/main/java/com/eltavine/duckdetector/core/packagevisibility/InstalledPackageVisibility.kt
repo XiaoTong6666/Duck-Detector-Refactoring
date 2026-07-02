@@ -54,20 +54,18 @@ object InstalledPackageVisibilityChecker {
             return false
         }
         return visibility == InstalledPackageVisibility.FULL &&
-                installedPackageCount < SUSPICIOUSLY_LOW_VISIBLE_PACKAGE_COUNT
+            installedPackageCount < SUSPICIOUSLY_LOW_VISIBLE_PACKAGE_COUNT
     }
 
     @Suppress("DEPRECATION")
-    fun getInstalledPackages(context: Context): Set<String> {
-        return runCatching {
-            val applications = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                context.packageManager.getInstalledApplications(
-                    PackageManager.ApplicationInfoFlags.of(PackageManager.GET_META_DATA.toLong()),
-                )
-            } else {
-                context.packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
-            }
-            applications.mapTo(linkedSetOf()) { it.packageName }
-        }.getOrDefault(emptySet())
-    }
+    fun getInstalledPackages(context: Context): Set<String> = runCatching {
+        val applications = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.packageManager.getInstalledApplications(
+                PackageManager.ApplicationInfoFlags.of(PackageManager.GET_META_DATA.toLong()),
+            )
+        } else {
+            context.packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
+        }
+        applications.mapTo(linkedSetOf()) { it.packageName }
+    }.getOrDefault(emptySet())
 }

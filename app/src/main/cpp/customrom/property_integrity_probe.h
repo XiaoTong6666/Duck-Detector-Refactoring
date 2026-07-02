@@ -21,21 +21,21 @@
 
 namespace customrom {
 
-    struct PropertyIntegrityFinding {
-        std::string category;
-        std::string signal;
-        std::string summary;
-        std::string detail;
-    };
+struct PropertyIntegrityFinding {
+    std::string category;
+    std::string signal;
+    std::string summary;
+    std::string detail;
+};
 
-    struct PropertyIntegritySnapshot {
-        bool available = false;
-        int context_count = 0;
-        int area_anomaly_count = 0;
-        int item_anomaly_count = 0;
-        std::vector<PropertyIntegrityFinding> findings;
-    };
+struct PropertyIntegritySnapshot {
+    bool available = false;
+    int context_count = 0;
+    int area_anomaly_count = 0;
+    int item_anomaly_count = 0;
+    std::vector<PropertyIntegrityFinding> findings;
+};
 
-    PropertyIntegritySnapshot scan_property_integrity();
+PropertyIntegritySnapshot scan_property_integrity();
 
 }  // namespace customrom

@@ -44,10 +44,10 @@ class SystemPropertyConsistencyUtils {
 
             val severity = when {
                 populatedSources.containsKey(SystemPropertySource.NATIVE_LIBC) &&
-                        read.property in criticalSourceMismatchProperties -> SystemPropertySeverity.DANGER
+                    read.property in criticalSourceMismatchProperties -> SystemPropertySeverity.DANGER
 
                 read.property.startsWith("ro.boot.") &&
-                        populatedSources.containsKey(SystemPropertySource.NATIVE_LIBC) -> SystemPropertySeverity.DANGER
+                    populatedSources.containsKey(SystemPropertySource.NATIVE_LIBC) -> SystemPropertySeverity.DANGER
 
                 else -> SystemPropertySeverity.WARNING
             }
@@ -71,15 +71,13 @@ class SystemPropertyConsistencyUtils {
     fun buildConsistencySignals(
         readsByProperty: Map<String, MultiSourcePropertyRead>,
         nativeSnapshot: SystemPropertiesNativeSnapshot,
-    ): List<SystemPropertySignal> {
-        return buildList {
-            addAll(buildRawBootSignals(readsByProperty, nativeSnapshot))
-            addAll(buildFrameworkConsistencySignals(readsByProperty))
-            addAll(buildBuildFingerprintTailSignals(readsByProperty))
-            buildVerifiedBootLockSignal(readsByProperty)?.let(::add)
-            buildUserBuildDebugSignal(readsByProperty)?.let(::add)
-            buildPartitionVerificationSignal(readsByProperty)?.let(::add)
-        }
+    ): List<SystemPropertySignal> = buildList {
+        addAll(buildRawBootSignals(readsByProperty, nativeSnapshot))
+        addAll(buildFrameworkConsistencySignals(readsByProperty))
+        addAll(buildBuildFingerprintTailSignals(readsByProperty))
+        buildVerifiedBootLockSignal(readsByProperty)?.let(::add)
+        buildUserBuildDebugSignal(readsByProperty)?.let(::add)
+        buildPartitionVerificationSignal(readsByProperty)?.let(::add)
     }
 
     private fun buildRawBootSignals(
@@ -96,7 +94,7 @@ class SystemPropertyConsistencyUtils {
                 ?: return@mapNotNull null
             if (normalizeForComparison(property, propertyValue) == normalizeForComparison(
                     property,
-                    rawValue
+                    rawValue,
                 )
             ) {
                 return@mapNotNull null
@@ -161,7 +159,7 @@ class SystemPropertyConsistencyUtils {
 
         if (normalizeForComparison(
                 "Build.TYPE",
-                Build.TYPE.orEmpty()
+                Build.TYPE.orEmpty(),
             ) != normalizeForComparison("Build.TYPE", parsed.type)
         ) {
             findings += SystemPropertySignal(
@@ -177,7 +175,7 @@ class SystemPropertyConsistencyUtils {
 
         if (normalizeForComparison(
                 "Build.TAGS",
-                Build.TAGS.orEmpty()
+                Build.TAGS.orEmpty(),
             ) != normalizeForComparison("Build.TAGS", parsed.tags)
         ) {
             findings += SystemPropertySignal(
@@ -195,7 +193,7 @@ class SystemPropertyConsistencyUtils {
         if (roBuildType.isNotBlank() &&
             normalizeForComparison(
                 "ro.build.type",
-                roBuildType
+                roBuildType,
             ) != normalizeForComparison("ro.build.type", parsed.type)
         ) {
             findings += SystemPropertySignal(
@@ -214,7 +212,7 @@ class SystemPropertyConsistencyUtils {
         if (roBuildTags.isNotBlank() &&
             normalizeForComparison(
                 "ro.build.tags",
-                roBuildTags
+                roBuildTags,
             ) != normalizeForComparison("ro.build.tags", parsed.tags)
         ) {
             findings += SystemPropertySignal(
@@ -245,7 +243,7 @@ class SystemPropertyConsistencyUtils {
 
         val contradiction = when {
             verifiedBootState.equals("green", ignoreCase = true) ||
-                    verifiedBootState.equals("yellow", ignoreCase = true) -> {
+                verifiedBootState.equals("yellow", ignoreCase = true) -> {
                 isUnlockedValue(flashLocked) || vbmetaState.equals("unlocked", ignoreCase = true)
             }
 
@@ -360,7 +358,7 @@ class SystemPropertyConsistencyUtils {
         }
         if (normalizeForComparison(propertyName, propertyValue) == normalizeForComparison(
                 propertyName,
-                frameworkValue
+                frameworkValue,
             )
         ) {
             return null
@@ -378,9 +376,7 @@ class SystemPropertyConsistencyUtils {
 
     private fun shouldEvaluateSourceMismatch(
         category: SystemPropertyCategory,
-    ): Boolean {
-        return category != SystemPropertyCategory.DEVICE_INFO
-    }
+    ): Boolean = category != SystemPropertyCategory.DEVICE_INFO
 
     private fun parseBuildFingerprint(
         fingerprint: String,
@@ -427,52 +423,42 @@ class SystemPropertyConsistencyUtils {
 
     private fun isUnlockedValue(
         value: String,
-    ): Boolean {
-        return normalizeForComparison("lock", value) == "false"
-    }
+    ): Boolean = normalizeForComparison("lock", value) == "false"
 
     private fun isLockedValue(
         value: String,
-    ): Boolean {
-        return normalizeForComparison("lock", value) == "true"
-    }
+    ): Boolean = normalizeForComparison("lock", value) == "true"
 
     private fun sourcePriority(
         source: SystemPropertySource,
-    ): Int {
-        return when (source) {
-            SystemPropertySource.REFLECTION -> 0
-            SystemPropertySource.GETPROP -> 1
-            SystemPropertySource.NATIVE_LIBC -> 2
-            SystemPropertySource.JVM -> 3
-            SystemPropertySource.BUILD -> 4
-            SystemPropertySource.BOOTCONFIG -> 5
-            SystemPropertySource.CMDLINE -> 6
-        }
+    ): Int = when (source) {
+        SystemPropertySource.REFLECTION -> 0
+        SystemPropertySource.GETPROP -> 1
+        SystemPropertySource.NATIVE_LIBC -> 2
+        SystemPropertySource.JVM -> 3
+        SystemPropertySource.BUILD -> 4
+        SystemPropertySource.BOOTCONFIG -> 5
+        SystemPropertySource.CMDLINE -> 6
     }
 
     private fun sourceLabel(
         source: SystemPropertySource,
-    ): String {
-        return when (source) {
-            SystemPropertySource.REFLECTION -> "Reflection"
-            SystemPropertySource.GETPROP -> "getprop"
-            SystemPropertySource.JVM -> "System.getProperty"
-            SystemPropertySource.BUILD -> "Build constant"
-            SystemPropertySource.NATIVE_LIBC -> "Native libc"
-            SystemPropertySource.CMDLINE -> "/proc/cmdline"
-            SystemPropertySource.BOOTCONFIG -> "/proc/bootconfig"
-        }
+    ): String = when (source) {
+        SystemPropertySource.REFLECTION -> "Reflection"
+        SystemPropertySource.GETPROP -> "getprop"
+        SystemPropertySource.JVM -> "System.getProperty"
+        SystemPropertySource.BUILD -> "Build constant"
+        SystemPropertySource.NATIVE_LIBC -> "Native libc"
+        SystemPropertySource.CMDLINE -> "/proc/cmdline"
+        SystemPropertySource.BOOTCONFIG -> "/proc/bootconfig"
     }
 
     private fun bootSourceLabel(
         source: SystemPropertySource,
-    ): String {
-        return when (source) {
-            SystemPropertySource.BOOTCONFIG -> "androidboot.* from /proc/bootconfig"
-            SystemPropertySource.CMDLINE -> "androidboot.* from /proc/cmdline"
-            else -> sourceLabel(source)
-        }
+    ): String = when (source) {
+        SystemPropertySource.BOOTCONFIG -> "androidboot.* from /proc/bootconfig"
+        SystemPropertySource.CMDLINE -> "androidboot.* from /proc/cmdline"
+        else -> sourceLabel(source)
     }
 
     private data class ParsedBuildFingerprint(

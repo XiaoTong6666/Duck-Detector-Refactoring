@@ -672,8 +672,7 @@ class KeyMintCapabilityProbe {
         }
     }
 
-    private fun rsaPublicKey(keyPair: KeyPair): PublicKey =
-        KeyFactory.getInstance("RSA").generatePublic(X509EncodedKeySpec(keyPair.public.encoded))
+    private fun rsaPublicKey(keyPair: KeyPair): PublicKey = KeyFactory.getInstance("RSA").generatePublic(X509EncodedKeySpec(keyPair.public.encoded))
 
     private fun encrypt(
         key: Key,
@@ -697,28 +696,25 @@ class KeyMintCapabilityProbe {
         }.doFinal(payload)
     }.getOrNull()
 
-    private fun oaepSha256Mgf1Sha256(): OAEPParameterSpec =
-        OAEPParameterSpec(
-            "SHA-256",
-            "MGF1",
-            MGF1ParameterSpec.SHA256,
-            PSource.PSpecified.DEFAULT,
-        )
+    private fun oaepSha256Mgf1Sha256(): OAEPParameterSpec = OAEPParameterSpec(
+        "SHA-256",
+        "MGF1",
+        MGF1ParameterSpec.SHA256,
+        PSource.PSpecified.DEFAULT,
+    )
 
-    private fun oaepSha256Mgf1Sha1(): OAEPParameterSpec =
-        OAEPParameterSpec(
-            "SHA-256",
-            "MGF1",
-            MGF1ParameterSpec.SHA1,
-            PSource.PSpecified.DEFAULT,
-        )
+    private fun oaepSha256Mgf1Sha1(): OAEPParameterSpec = OAEPParameterSpec(
+        "SHA-256",
+        "MGF1",
+        MGF1ParameterSpec.SHA1,
+        PSource.PSpecified.DEFAULT,
+    )
 
-    private fun skipped(name: String, throwable: Throwable): CheckResult =
-        CheckResult(
-            ok = true,
-            detail = "${throwable.message ?: "$name unavailable."}",
-            executed = false,
-        )
+    private fun skipped(name: String, throwable: Throwable): CheckResult = CheckResult(
+        ok = true,
+        detail = "${throwable.message ?: "$name unavailable."}",
+        executed = false,
+    )
 
     private data class CheckResult(
         val ok: Boolean,

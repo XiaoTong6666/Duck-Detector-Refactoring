@@ -105,7 +105,7 @@ data class VirtualizationReport(
     val environmentRows: List<VirtualizationSignal>
         get() = signals.filter {
             it.group == VirtualizationSignalGroup.ENVIRONMENT ||
-                    it.group == VirtualizationSignalGroup.TRANSLATION
+                it.group == VirtualizationSignalGroup.TRANSLATION
         }
 
     val runtimeRows: List<VirtualizationSignal>
@@ -123,7 +123,7 @@ data class VirtualizationReport(
     val dangerSignals: List<VirtualizationSignal>
         get() = signals.filter {
             it.severity == VirtualizationSignalSeverity.DANGER &&
-                    it.group != VirtualizationSignalGroup.HOST_APPS
+                it.group != VirtualizationSignalGroup.HOST_APPS
         }
 
     val warningSignals: List<VirtualizationSignal>
@@ -131,50 +131,46 @@ data class VirtualizationReport(
 
     val onlyHostAppCorroboration: Boolean
         get() = hostAppCorroborationCount > 0 &&
-                dangerSignals.isEmpty() &&
-                warningSignals.isEmpty()
+            dangerSignals.isEmpty() &&
+            warningSignals.isEmpty()
 
     companion object {
-        fun loading(): VirtualizationReport {
-            return VirtualizationReport(
-                stage = VirtualizationStage.LOADING,
-                nativeAvailable = true,
-                startupPreloadAvailable = false,
-                startupPreloadContextValid = false,
-                crossProcessAvailable = false,
-                isolatedProcessAvailable = false,
-                asmSupported = false,
-                eglAvailable = false,
-                packageVisibility = InstalledPackageVisibility.UNKNOWN,
-                dexPathEntryCount = 0,
-                dexPathHitCount = 0,
-                uidIdentityHitCount = 0,
-                environmentHitCount = 0,
-                translationHitCount = 0,
-                runtimeArtifactHitCount = 0,
-                consistencyHitCount = 0,
-                isolatedConsistencyHitCount = 0,
-                mountAnchorDriftCount = 0,
-                mountNamespaceAvailable = false,
-                honeypotHitCount = 0,
-                syscallPackSupported = false,
-                syscallPackHitCount = 0,
-                hostAppCorroborationCount = 0,
-                mapLineCount = 0,
-                fdCount = 0,
-                mountInfoCount = 0,
-                signals = emptyList(),
-                methods = emptyList(),
-                impacts = emptyList(),
-            )
-        }
+        fun loading(): VirtualizationReport = VirtualizationReport(
+            stage = VirtualizationStage.LOADING,
+            nativeAvailable = true,
+            startupPreloadAvailable = false,
+            startupPreloadContextValid = false,
+            crossProcessAvailable = false,
+            isolatedProcessAvailable = false,
+            asmSupported = false,
+            eglAvailable = false,
+            packageVisibility = InstalledPackageVisibility.UNKNOWN,
+            dexPathEntryCount = 0,
+            dexPathHitCount = 0,
+            uidIdentityHitCount = 0,
+            environmentHitCount = 0,
+            translationHitCount = 0,
+            runtimeArtifactHitCount = 0,
+            consistencyHitCount = 0,
+            isolatedConsistencyHitCount = 0,
+            mountAnchorDriftCount = 0,
+            mountNamespaceAvailable = false,
+            honeypotHitCount = 0,
+            syscallPackSupported = false,
+            syscallPackHitCount = 0,
+            hostAppCorroborationCount = 0,
+            mapLineCount = 0,
+            fdCount = 0,
+            mountInfoCount = 0,
+            signals = emptyList(),
+            methods = emptyList(),
+            impacts = emptyList(),
+        )
 
-        fun failed(message: String): VirtualizationReport {
-            return loading().copy(
-                stage = VirtualizationStage.FAILED,
-                nativeAvailable = false,
-                errorMessage = message,
-            )
-        }
+        fun failed(message: String): VirtualizationReport = loading().copy(
+            stage = VirtualizationStage.FAILED,
+            nativeAvailable = false,
+            errorMessage = message,
+        )
     }
 }

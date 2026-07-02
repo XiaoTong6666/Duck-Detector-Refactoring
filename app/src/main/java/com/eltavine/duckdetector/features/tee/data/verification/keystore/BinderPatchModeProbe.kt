@@ -119,9 +119,7 @@ class BinderPatchModeProbe(
         return out
     }
 
-    private fun chainsEqualDer(left: List<ByteArray>, right: List<ByteArray>): Boolean {
-        return left.size == right.size && left.zip(right).all { (a, b) -> a.contentEquals(b) }
-    }
+    private fun chainsEqualDer(left: List<ByteArray>, right: List<ByteArray>): Boolean = left.size == right.size && left.zip(right).all { (a, b) -> a.contentEquals(b) }
 }
 
 data class BinderPatchModeResult(

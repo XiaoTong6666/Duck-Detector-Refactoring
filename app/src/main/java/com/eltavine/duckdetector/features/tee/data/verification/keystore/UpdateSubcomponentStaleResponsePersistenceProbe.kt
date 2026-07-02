@@ -20,7 +20,6 @@ import android.content.Context
 import com.eltavine.duckdetector.features.tee.data.keystore.AndroidKeyStoreTools
 import java.io.ByteArrayInputStream
 import java.security.Key
-import java.security.KeyStore
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.security.cert.Certificate
@@ -113,9 +112,7 @@ class UpdateSubcomponentStaleResponsePersistenceProbe internal constructor(
         fun readPostUpdateMetadataSnapshots(alias: String): List<PostUpdateMetadata>
         fun cleanup(alias: String)
 
-        fun describeThrowable(throwable: Throwable): String {
-            return throwable.message ?: "UpdateSubcomponent stale response persistence probe failed."
-        }
+        fun describeThrowable(throwable: Throwable): String = throwable.message ?: "UpdateSubcomponent stale response persistence probe failed."
     }
 
     internal data class CertificateUpdateSupportResult(
@@ -173,38 +170,30 @@ class UpdateSubcomponentStaleResponsePersistenceProbe internal constructor(
                 .map(X509Certificate::getEncoded)
         }
 
-        override fun readExistingKey(alias: String): Key? {
-            return keyStore.getKey(alias, null)
+        override fun readExistingKey(alias: String): Key? = keyStore.getKey(alias, null)
+
+        override fun updateExistingKeyWithMarker(alias: String, key: Key): UpdateAttemptResult = runCatching {
+            // Existing AndroidKeyStorePrivateKey is important: framework converts this path to KEY_ID + alias=null updateSubcomponents.
+            // 这里必须使用已有 AndroidKeyStorePrivateKey：framework 会把该路径转换成 KEY_ID + alias=null 的 updateSubcomponents。
+            keyStore.setKeyEntry(alias, key, null, arrayOf<Certificate>(markerCertificate()))
+            UpdateAttemptResult(
+                succeeded = true,
+                detail = "setKeyEntry(existing AndroidKeyStorePrivateKey, markerChain) completed.",
+            )
+        }.getOrElse { throwable ->
+            UpdateAttemptResult(
+                succeeded = false,
+                detail = "setKeyEntry(existing AndroidKeyStorePrivateKey, markerChain) failed: ${describeThrowable(throwable)}",
+            )
         }
 
-        override fun updateExistingKeyWithMarker(alias: String, key: Key): UpdateAttemptResult {
-            return runCatching {
-                // Existing AndroidKeyStorePrivateKey is important: framework converts this path to KEY_ID + alias=null updateSubcomponents.
-                // 这里必须使用已有 AndroidKeyStorePrivateKey：framework 会把该路径转换成 KEY_ID + alias=null 的 updateSubcomponents。
-                keyStore.setKeyEntry(alias, key, null, arrayOf<Certificate>(markerCertificate()))
-                UpdateAttemptResult(
-                    succeeded = true,
-                    detail = "setKeyEntry(existing AndroidKeyStorePrivateKey, markerChain) completed.",
-                )
-            }.getOrElse { throwable ->
-                UpdateAttemptResult(
-                    succeeded = false,
-                    detail = "setKeyEntry(existing AndroidKeyStorePrivateKey, markerChain) failed: ${describeThrowable(throwable)}",
-                )
-            }
-        }
-
-        override fun readPostUpdateMetadataSnapshots(alias: String): List<PostUpdateMetadata> {
-            return listOfNotNull(readMetadata(alias), readMetadata(alias))
-        }
+        override fun readPostUpdateMetadataSnapshots(alias: String): List<PostUpdateMetadata> = listOfNotNull(readMetadata(alias), readMetadata(alias))
 
         override fun cleanup(alias: String) {
             AndroidKeyStoreTools.safeDelete(keyStore, alias)
         }
 
-        override fun describeThrowable(throwable: Throwable): String {
-            return binderClient.describeThrowable(throwable)
-        }
+        override fun describeThrowable(throwable: Throwable): String = binderClient.describeThrowable(throwable)
 
         private fun readMetadata(alias: String): PostUpdateMetadata? {
             val service = binderClient.getKeystoreService() ?: return null
@@ -223,13 +212,9 @@ class UpdateSubcomponentStaleResponsePersistenceProbe internal constructor(
             )
         }
 
-        private fun markerCertificate(): X509Certificate {
-            return KeyboxFixtureLoader(appContext).load().certificate
-        }
+        private fun markerCertificate(): X509Certificate = KeyboxFixtureLoader(appContext).load().certificate
 
-        private fun buildFullChain(leafBlob: ByteArray?, chainBlob: ByteArray?): List<ByteArray> {
-            return listOfNotNull(leafBlob?.takeIf { it.isNotEmpty() }) + parseCertificates(chainBlob)
-        }
+        private fun buildFullChain(leafBlob: ByteArray?, chainBlob: ByteArray?): List<ByteArray> = listOfNotNull(leafBlob?.takeIf { it.isNotEmpty() }) + parseCertificates(chainBlob)
 
         private fun parseCertificates(blob: ByteArray?): List<ByteArray> {
             if (blob == null || blob.isEmpty()) {
@@ -313,32 +298,28 @@ class UpdateSubcomponentStaleResponsePersistenceProbe internal constructor(
             priorChainLength: Int = 0,
             postChainLength: Int = 0,
             postLeafMatchesMarker: Boolean = false,
-        ): UpdateSubcomponentStaleResponsePersistenceResult {
-            return UpdateSubcomponentStaleResponsePersistenceResult(
-                executed = false,
-                available = false,
-                supportGateClean = supportGateClean,
-                updateSucceeded = updateSucceeded,
-                staleNarrativeDetected = false,
-                priorChainLength = priorChainLength,
-                postChainLength = postChainLength,
-                retainedCertificateCount = 0,
-                postLeafMatchesMarker = postLeafMatchesMarker,
-                anomalyKind = anomalyKind,
-                detail = detail,
-            )
-        }
+        ): UpdateSubcomponentStaleResponsePersistenceResult = UpdateSubcomponentStaleResponsePersistenceResult(
+            executed = false,
+            available = false,
+            supportGateClean = supportGateClean,
+            updateSucceeded = updateSucceeded,
+            staleNarrativeDetected = false,
+            priorChainLength = priorChainLength,
+            postChainLength = postChainLength,
+            retainedCertificateCount = 0,
+            postLeafMatchesMarker = postLeafMatchesMarker,
+            anomalyKind = anomalyKind,
+            detail = detail,
+        )
 
-        private fun fingerprintChain(chain: List<ByteArray>): List<UpdateSubcomponentCertificateFingerprint> {
-            return chain.mapIndexed { index, der ->
-                val sha256 = der.sha256Hex()
-                UpdateSubcomponentCertificateFingerprint(
-                    index = index,
-                    derLength = der.size,
-                    sha256 = sha256,
-                    shortSha256 = sha256.take(12),
-                )
-            }
+        private fun fingerprintChain(chain: List<ByteArray>): List<UpdateSubcomponentCertificateFingerprint> = chain.mapIndexed { index, der ->
+            val sha256 = der.sha256Hex()
+            UpdateSubcomponentCertificateFingerprint(
+                index = index,
+                derLength = der.size,
+                sha256 = sha256,
+                shortSha256 = sha256.take(12),
+            )
         }
 
         private fun ByteArray.sha256Hex(): String {

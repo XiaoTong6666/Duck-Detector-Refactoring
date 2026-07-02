@@ -36,57 +36,49 @@ class PlayIntegrityPropertyReadUtils(
 
     fun collectNativeSnapshot(
         propertyNames: Collection<String>,
-    ): PlayIntegrityFixNativeSnapshot {
-        return nativeBridge.collectSnapshot(propertyNames)
-    }
+    ): PlayIntegrityFixNativeSnapshot = nativeBridge.collectSnapshot(propertyNames)
 
     fun readProperty(
         rule: PlayIntegrityFixPropertyRule,
         cache: MutableMap<String, PlayIntegrityMultiSourceRead>,
         nativeSnapshot: PlayIntegrityFixNativeSnapshot,
-    ): PlayIntegrityMultiSourceRead {
-        return cache.getOrPut(rule.property) {
-            val sourceValues = linkedMapOf<PlayIntegrityFixSource, String>()
-            sourceValues[PlayIntegrityFixSource.REFLECTION] = readViaReflection(rule.property)
-            sourceValues[PlayIntegrityFixSource.GETPROP] = readViaGetprop(rule.property)
-            sourceValues[PlayIntegrityFixSource.JVM] = readViaJvm(rule.property)
-            sourceValues[PlayIntegrityFixSource.NATIVE_LIBC] =
-                nativeSnapshot.nativeProperties[rule.property].orEmpty()
+    ): PlayIntegrityMultiSourceRead = cache.getOrPut(rule.property) {
+        val sourceValues = linkedMapOf<PlayIntegrityFixSource, String>()
+        sourceValues[PlayIntegrityFixSource.REFLECTION] = readViaReflection(rule.property)
+        sourceValues[PlayIntegrityFixSource.GETPROP] = readViaGetprop(rule.property)
+        sourceValues[PlayIntegrityFixSource.JVM] = readViaJvm(rule.property)
+        sourceValues[PlayIntegrityFixSource.NATIVE_LIBC] =
+            nativeSnapshot.nativeProperties[rule.property].orEmpty()
 
-            val preferredSource = listOf(
-                PlayIntegrityFixSource.REFLECTION,
-                PlayIntegrityFixSource.GETPROP,
-                PlayIntegrityFixSource.NATIVE_LIBC,
-                PlayIntegrityFixSource.JVM,
-            ).firstOrNull { sourceValues[it].isNullOrBlank().not() }
-                ?: PlayIntegrityFixSource.REFLECTION
+        val preferredSource = listOf(
+            PlayIntegrityFixSource.REFLECTION,
+            PlayIntegrityFixSource.GETPROP,
+            PlayIntegrityFixSource.NATIVE_LIBC,
+            PlayIntegrityFixSource.JVM,
+        ).firstOrNull { sourceValues[it].isNullOrBlank().not() }
+            ?: PlayIntegrityFixSource.REFLECTION
 
-            PlayIntegrityMultiSourceRead(
-                rule = rule,
-                preferredValue = sourceValues[preferredSource].orEmpty(),
-                preferredSource = preferredSource,
-                sourceValues = sourceValues,
-            )
-        }
+        PlayIntegrityMultiSourceRead(
+            rule = rule,
+            preferredValue = sourceValues[preferredSource].orEmpty(),
+            preferredSource = preferredSource,
+            sourceValues = sourceValues,
+        )
     }
 
-    private fun readViaReflection(property: String): String {
-        return runCatching {
-            val clazz = Class.forName("android.os.SystemProperties")
-            val method = clazz.getMethod("get", String::class.java)
-            (method.invoke(null, property) as? String)?.trim().orEmpty()
-        }.getOrDefault("")
-    }
+    private fun readViaReflection(property: String): String = runCatching {
+        val clazz = Class.forName("android.os.SystemProperties")
+        val method = clazz.getMethod("get", String::class.java)
+        (method.invoke(null, property) as? String)?.trim().orEmpty()
+    }.getOrDefault("")
 
     private fun readViaGetprop(property: String): String {
         val snapshot = getpropSnapshot ?: readGetpropSnapshot().also { getpropSnapshot = it }
         return snapshot[property].orEmpty()
     }
 
-    private fun readViaJvm(property: String): String {
-        return runCatching { System.getProperty(property)?.trim().orEmpty() }
-            .getOrDefault("")
-    }
+    private fun readViaJvm(property: String): String = runCatching { System.getProperty(property)?.trim().orEmpty() }
+        .getOrDefault("")
 
     private fun readGetpropSnapshot(): Map<String, String> {
         var process: Process? = null

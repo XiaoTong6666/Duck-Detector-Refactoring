@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("ktlint:standard:function-naming")
+
 package com.eltavine.duckdetector.ui.shell
 
 import android.os.Build
@@ -404,49 +406,47 @@ private fun notificationPolicyCard(
     permissionState: ScanNotificationPermissionState,
     onAllowNotifications: () -> Unit,
     onSkipNotifications: () -> Unit,
-): StartupPolicyCardUi {
-    return when {
-        permissionState.notificationsGranted -> StartupPolicyCardUi(
-            icon = Icons.Rounded.NotificationsActive,
-            title = stringResource(R.string.startup_notifications_title),
-            statusLabel = stringResource(R.string.startup_status_ready),
-            headline = stringResource(R.string.startup_notifications_ready_headline),
-            detail = stringResource(R.string.startup_notifications_ready_detail),
-            tone = StartupPolicyTone.READY,
-            requiresAction = false,
-        )
+): StartupPolicyCardUi = when {
+    permissionState.notificationsGranted -> StartupPolicyCardUi(
+        icon = Icons.Rounded.NotificationsActive,
+        title = stringResource(R.string.startup_notifications_title),
+        statusLabel = stringResource(R.string.startup_status_ready),
+        headline = stringResource(R.string.startup_notifications_ready_headline),
+        detail = stringResource(R.string.startup_notifications_ready_detail),
+        tone = StartupPolicyTone.READY,
+        requiresAction = false,
+    )
 
-        !notificationPrefs.notificationsPrompted -> StartupPolicyCardUi(
-            icon = Icons.Rounded.NotificationsActive,
-            title = stringResource(R.string.startup_notifications_title),
-            statusLabel = stringResource(R.string.startup_status_action_required),
-            headline = stringResource(R.string.startup_notifications_prompt_headline),
-            detail = if (Build.VERSION.SDK_INT >= 33) {
-                stringResource(
-                    R.string.startup_notifications_prompt_detail_api33,
-                    Build.VERSION.SDK_INT,
-                )
-            } else {
-                stringResource(R.string.startup_notifications_prompt_detail_legacy)
-            },
-            tone = StartupPolicyTone.REQUIRED,
-            requiresAction = true,
-            primaryActionLabel = stringResource(R.string.startup_notifications_allow),
-            secondaryActionLabel = stringResource(R.string.startup_notifications_skip),
-            onPrimaryAction = onAllowNotifications,
-            onSecondaryAction = onSkipNotifications,
-        )
+    !notificationPrefs.notificationsPrompted -> StartupPolicyCardUi(
+        icon = Icons.Rounded.NotificationsActive,
+        title = stringResource(R.string.startup_notifications_title),
+        statusLabel = stringResource(R.string.startup_status_action_required),
+        headline = stringResource(R.string.startup_notifications_prompt_headline),
+        detail = if (Build.VERSION.SDK_INT >= 33) {
+            stringResource(
+                R.string.startup_notifications_prompt_detail_api33,
+                Build.VERSION.SDK_INT,
+            )
+        } else {
+            stringResource(R.string.startup_notifications_prompt_detail_legacy)
+        },
+        tone = StartupPolicyTone.REQUIRED,
+        requiresAction = true,
+        primaryActionLabel = stringResource(R.string.startup_notifications_allow),
+        secondaryActionLabel = stringResource(R.string.startup_notifications_skip),
+        onPrimaryAction = onAllowNotifications,
+        onSecondaryAction = onSkipNotifications,
+    )
 
-        else -> StartupPolicyCardUi(
-            icon = Icons.Rounded.NotificationsActive,
-            title = stringResource(R.string.startup_notifications_title),
-            statusLabel = stringResource(R.string.startup_status_skipped),
-            headline = stringResource(R.string.startup_notifications_skipped_headline),
-            detail = stringResource(R.string.startup_notifications_skipped_detail),
-            tone = StartupPolicyTone.ACKNOWLEDGED,
-            requiresAction = false,
-        )
-    }
+    else -> StartupPolicyCardUi(
+        icon = Icons.Rounded.NotificationsActive,
+        title = stringResource(R.string.startup_notifications_title),
+        statusLabel = stringResource(R.string.startup_status_skipped),
+        headline = stringResource(R.string.startup_notifications_skipped_headline),
+        detail = stringResource(R.string.startup_notifications_skipped_detail),
+        tone = StartupPolicyTone.ACKNOWLEDGED,
+        requiresAction = false,
+    )
 }
 
 @Composable
@@ -455,62 +455,60 @@ private fun liveUpdatePolicyCard(
     permissionState: ScanNotificationPermissionState,
     onOpenLiveUpdateSettings: () -> Unit,
     onUseRegularNotifications: () -> Unit,
-): StartupPolicyCardUi {
-    return when {
-        !permissionState.liveUpdatesSupported -> StartupPolicyCardUi(
-            icon = Icons.Rounded.Update,
-            title = stringResource(R.string.startup_live_update_title),
-            statusLabel = stringResource(R.string.startup_status_unsupported),
-            headline = stringResource(R.string.startup_live_update_unsupported_headline),
-            detail = stringResource(R.string.startup_live_update_unsupported_detail),
-            tone = StartupPolicyTone.SUPPORT,
-            requiresAction = false,
-        )
+): StartupPolicyCardUi = when {
+    !permissionState.liveUpdatesSupported -> StartupPolicyCardUi(
+        icon = Icons.Rounded.Update,
+        title = stringResource(R.string.startup_live_update_title),
+        statusLabel = stringResource(R.string.startup_status_unsupported),
+        headline = stringResource(R.string.startup_live_update_unsupported_headline),
+        detail = stringResource(R.string.startup_live_update_unsupported_detail),
+        tone = StartupPolicyTone.SUPPORT,
+        requiresAction = false,
+    )
 
-        !permissionState.notificationsGranted -> StartupPolicyCardUi(
-            icon = Icons.Rounded.Update,
-            title = stringResource(R.string.startup_live_update_title),
-            statusLabel = stringResource(R.string.startup_status_waiting),
-            headline = stringResource(R.string.startup_live_update_waiting_headline),
-            detail = stringResource(R.string.startup_live_update_waiting_detail),
-            tone = StartupPolicyTone.SUPPORT,
-            requiresAction = false,
-        )
+    !permissionState.notificationsGranted -> StartupPolicyCardUi(
+        icon = Icons.Rounded.Update,
+        title = stringResource(R.string.startup_live_update_title),
+        statusLabel = stringResource(R.string.startup_status_waiting),
+        headline = stringResource(R.string.startup_live_update_waiting_headline),
+        detail = stringResource(R.string.startup_live_update_waiting_detail),
+        tone = StartupPolicyTone.SUPPORT,
+        requiresAction = false,
+    )
 
-        permissionState.liveUpdatesGranted -> StartupPolicyCardUi(
-            icon = Icons.Rounded.Update,
-            title = stringResource(R.string.startup_live_update_title),
-            statusLabel = stringResource(R.string.startup_status_ready),
-            headline = stringResource(R.string.startup_live_update_ready_headline),
-            detail = stringResource(R.string.startup_live_update_ready_detail),
-            tone = StartupPolicyTone.READY,
-            requiresAction = false,
-        )
+    permissionState.liveUpdatesGranted -> StartupPolicyCardUi(
+        icon = Icons.Rounded.Update,
+        title = stringResource(R.string.startup_live_update_title),
+        statusLabel = stringResource(R.string.startup_status_ready),
+        headline = stringResource(R.string.startup_live_update_ready_headline),
+        detail = stringResource(R.string.startup_live_update_ready_detail),
+        tone = StartupPolicyTone.READY,
+        requiresAction = false,
+    )
 
-        !notificationPrefs.liveUpdatesPrompted -> StartupPolicyCardUi(
-            icon = Icons.Rounded.Update,
-            title = stringResource(R.string.startup_live_update_title),
-            statusLabel = stringResource(R.string.startup_status_action_required),
-            headline = stringResource(R.string.startup_live_update_prompt_headline),
-            detail = stringResource(R.string.startup_live_update_prompt_detail),
-            tone = StartupPolicyTone.REQUIRED,
-            requiresAction = true,
-            primaryActionLabel = stringResource(R.string.startup_live_update_open_settings),
-            secondaryActionLabel = stringResource(R.string.startup_live_update_use_regular),
-            onPrimaryAction = onOpenLiveUpdateSettings,
-            onSecondaryAction = onUseRegularNotifications,
-        )
+    !notificationPrefs.liveUpdatesPrompted -> StartupPolicyCardUi(
+        icon = Icons.Rounded.Update,
+        title = stringResource(R.string.startup_live_update_title),
+        statusLabel = stringResource(R.string.startup_status_action_required),
+        headline = stringResource(R.string.startup_live_update_prompt_headline),
+        detail = stringResource(R.string.startup_live_update_prompt_detail),
+        tone = StartupPolicyTone.REQUIRED,
+        requiresAction = true,
+        primaryActionLabel = stringResource(R.string.startup_live_update_open_settings),
+        secondaryActionLabel = stringResource(R.string.startup_live_update_use_regular),
+        onPrimaryAction = onOpenLiveUpdateSettings,
+        onSecondaryAction = onUseRegularNotifications,
+    )
 
-        else -> StartupPolicyCardUi(
-            icon = Icons.Rounded.Update,
-            title = stringResource(R.string.startup_live_update_title),
-            statusLabel = stringResource(R.string.startup_status_regular),
-            headline = stringResource(R.string.startup_live_update_regular_headline),
-            detail = stringResource(R.string.startup_live_update_regular_detail),
-            tone = StartupPolicyTone.ACKNOWLEDGED,
-            requiresAction = false,
-        )
-    }
+    else -> StartupPolicyCardUi(
+        icon = Icons.Rounded.Update,
+        title = stringResource(R.string.startup_live_update_title),
+        statusLabel = stringResource(R.string.startup_status_regular),
+        headline = stringResource(R.string.startup_live_update_regular_headline),
+        detail = stringResource(R.string.startup_live_update_regular_detail),
+        tone = StartupPolicyTone.ACKNOWLEDGED,
+        requiresAction = false,
+    )
 }
 
 @Composable
@@ -518,42 +516,40 @@ private fun crlPolicyCard(
     teePrefs: TeeNetworkPrefs,
     onAllowCrlNetwork: () -> Unit,
     onUseLocalCrlOnly: () -> Unit,
-): StartupPolicyCardUi {
-    return if (!teePrefs.consentAsked) {
-        StartupPolicyCardUi(
-            icon = Icons.Rounded.CloudSync,
-            title = stringResource(R.string.startup_crl_title),
-            statusLabel = stringResource(R.string.startup_status_optional),
-            headline = stringResource(R.string.startup_crl_prompt_headline),
-            detail = stringResource(R.string.startup_crl_prompt_detail),
-            tone = StartupPolicyTone.SUPPORT,
-            requiresAction = false,
-            primaryActionLabel = stringResource(R.string.startup_crl_allow_network),
-            secondaryActionLabel = stringResource(R.string.startup_crl_local_only),
-            onPrimaryAction = onAllowCrlNetwork,
-            onSecondaryAction = onUseLocalCrlOnly,
-        )
-    } else if (teePrefs.consentGranted) {
-        StartupPolicyCardUi(
-            icon = Icons.Rounded.CloudSync,
-            title = stringResource(R.string.startup_crl_title),
-            statusLabel = stringResource(R.string.startup_status_ready),
-            headline = stringResource(R.string.startup_crl_ready_headline),
-            detail = stringResource(R.string.startup_crl_ready_detail),
-            tone = StartupPolicyTone.READY,
-            requiresAction = false,
-        )
-    } else {
-        StartupPolicyCardUi(
-            icon = Icons.Rounded.CloudSync,
-            title = stringResource(R.string.startup_crl_title),
-            statusLabel = stringResource(R.string.startup_status_local),
-            headline = stringResource(R.string.startup_crl_local_headline),
-            detail = stringResource(R.string.startup_crl_local_detail),
-            tone = StartupPolicyTone.ACKNOWLEDGED,
-            requiresAction = false,
-        )
-    }
+): StartupPolicyCardUi = if (!teePrefs.consentAsked) {
+    StartupPolicyCardUi(
+        icon = Icons.Rounded.CloudSync,
+        title = stringResource(R.string.startup_crl_title),
+        statusLabel = stringResource(R.string.startup_status_optional),
+        headline = stringResource(R.string.startup_crl_prompt_headline),
+        detail = stringResource(R.string.startup_crl_prompt_detail),
+        tone = StartupPolicyTone.SUPPORT,
+        requiresAction = false,
+        primaryActionLabel = stringResource(R.string.startup_crl_allow_network),
+        secondaryActionLabel = stringResource(R.string.startup_crl_local_only),
+        onPrimaryAction = onAllowCrlNetwork,
+        onSecondaryAction = onUseLocalCrlOnly,
+    )
+} else if (teePrefs.consentGranted) {
+    StartupPolicyCardUi(
+        icon = Icons.Rounded.CloudSync,
+        title = stringResource(R.string.startup_crl_title),
+        statusLabel = stringResource(R.string.startup_status_ready),
+        headline = stringResource(R.string.startup_crl_ready_headline),
+        detail = stringResource(R.string.startup_crl_ready_detail),
+        tone = StartupPolicyTone.READY,
+        requiresAction = false,
+    )
+} else {
+    StartupPolicyCardUi(
+        icon = Icons.Rounded.CloudSync,
+        title = stringResource(R.string.startup_crl_title),
+        statusLabel = stringResource(R.string.startup_status_local),
+        headline = stringResource(R.string.startup_crl_local_headline),
+        detail = stringResource(R.string.startup_crl_local_detail),
+        tone = StartupPolicyTone.ACKNOWLEDGED,
+        requiresAction = false,
+    )
 }
 
 @Composable
@@ -561,63 +557,61 @@ private fun packageManagerPolicyCard(
     packageVisibilityState: StartupPackageVisibilityState,
     packageVisibilityReviewAcknowledged: Boolean,
     onAcknowledgePackageVisibility: () -> Unit,
-): StartupPolicyCardUi {
-    return when {
-        packageVisibilityState.visibility == InstalledPackageVisibility.RESTRICTED &&
-                !packageVisibilityReviewAcknowledged -> StartupPolicyCardUi(
-            icon = Icons.Rounded.Inventory2,
-            title = stringResource(R.string.startup_package_manager_title),
-            statusLabel = stringResource(R.string.startup_status_action_required),
-            headline = stringResource(R.string.startup_package_restricted_headline),
-            detail = stringResource(
-                R.string.startup_package_restricted_detail,
-                packageVisibilityState.visiblePackageCount,
-            ),
-            tone = StartupPolicyTone.REQUIRED,
-            requiresAction = true,
-            primaryActionLabel = stringResource(R.string.startup_package_continue_anyway),
-            onPrimaryAction = onAcknowledgePackageVisibility,
-        )
+): StartupPolicyCardUi = when {
+    packageVisibilityState.visibility == InstalledPackageVisibility.RESTRICTED &&
+        !packageVisibilityReviewAcknowledged -> StartupPolicyCardUi(
+        icon = Icons.Rounded.Inventory2,
+        title = stringResource(R.string.startup_package_manager_title),
+        statusLabel = stringResource(R.string.startup_status_action_required),
+        headline = stringResource(R.string.startup_package_restricted_headline),
+        detail = stringResource(
+            R.string.startup_package_restricted_detail,
+            packageVisibilityState.visiblePackageCount,
+        ),
+        tone = StartupPolicyTone.REQUIRED,
+        requiresAction = true,
+        primaryActionLabel = stringResource(R.string.startup_package_continue_anyway),
+        onPrimaryAction = onAcknowledgePackageVisibility,
+    )
 
-        packageVisibilityState.visibility == InstalledPackageVisibility.RESTRICTED -> StartupPolicyCardUi(
-            icon = Icons.Rounded.Inventory2,
-            title = stringResource(R.string.startup_package_manager_title),
-            statusLabel = stringResource(R.string.startup_status_acknowledged),
-            headline = stringResource(R.string.startup_package_ack_headline),
-            detail = stringResource(
-                R.string.startup_package_ack_detail,
-                packageVisibilityState.visiblePackageCount,
-            ),
-            tone = StartupPolicyTone.ACKNOWLEDGED,
-            requiresAction = false,
-        )
+    packageVisibilityState.visibility == InstalledPackageVisibility.RESTRICTED -> StartupPolicyCardUi(
+        icon = Icons.Rounded.Inventory2,
+        title = stringResource(R.string.startup_package_manager_title),
+        statusLabel = stringResource(R.string.startup_status_acknowledged),
+        headline = stringResource(R.string.startup_package_ack_headline),
+        detail = stringResource(
+            R.string.startup_package_ack_detail,
+            packageVisibilityState.visiblePackageCount,
+        ),
+        tone = StartupPolicyTone.ACKNOWLEDGED,
+        requiresAction = false,
+    )
 
-        packageVisibilityState.suspiciouslyLowInventory -> StartupPolicyCardUi(
-            icon = Icons.Rounded.Inventory2,
-            title = stringResource(R.string.startup_package_manager_title),
-            statusLabel = stringResource(R.string.startup_status_review_later),
-            headline = stringResource(R.string.startup_package_low_inventory_headline),
-            detail = stringResource(
-                R.string.startup_package_low_inventory_detail,
-                packageVisibilityState.visiblePackageCount,
-            ),
-            tone = StartupPolicyTone.SUPPORT,
-            requiresAction = false,
-        )
+    packageVisibilityState.suspiciouslyLowInventory -> StartupPolicyCardUi(
+        icon = Icons.Rounded.Inventory2,
+        title = stringResource(R.string.startup_package_manager_title),
+        statusLabel = stringResource(R.string.startup_status_review_later),
+        headline = stringResource(R.string.startup_package_low_inventory_headline),
+        detail = stringResource(
+            R.string.startup_package_low_inventory_detail,
+            packageVisibilityState.visiblePackageCount,
+        ),
+        tone = StartupPolicyTone.SUPPORT,
+        requiresAction = false,
+    )
 
-        else -> StartupPolicyCardUi(
-            icon = Icons.Rounded.Inventory2,
-            title = stringResource(R.string.startup_package_manager_title),
-            statusLabel = stringResource(R.string.startup_status_ready),
-            headline = stringResource(R.string.startup_package_ready_headline),
-            detail = stringResource(
-                R.string.startup_package_ready_detail,
-                packageVisibilityState.visiblePackageCount,
-            ),
-            tone = StartupPolicyTone.READY,
-            requiresAction = false,
-        )
-    }
+    else -> StartupPolicyCardUi(
+        icon = Icons.Rounded.Inventory2,
+        title = stringResource(R.string.startup_package_manager_title),
+        statusLabel = stringResource(R.string.startup_status_ready),
+        headline = stringResource(R.string.startup_package_ready_headline),
+        detail = stringResource(
+            R.string.startup_package_ready_detail,
+            packageVisibilityState.visiblePackageCount,
+        ),
+        tone = StartupPolicyTone.READY,
+        requiresAction = false,
+    )
 }
 
 private data class StartupPolicyCardUi(
@@ -646,26 +640,24 @@ private data class StartupPolicyColors(
     val content: Color,
 )
 
-private fun StartupPolicyTone.colors(): StartupPolicyColors {
-    return when (this) {
-        StartupPolicyTone.REQUIRED -> StartupPolicyColors(
-            container = Color(0xFFFDE7D9),
-            content = Color(0xFF9A3412),
-        )
+private fun StartupPolicyTone.colors(): StartupPolicyColors = when (this) {
+    StartupPolicyTone.REQUIRED -> StartupPolicyColors(
+        container = Color(0xFFFDE7D9),
+        content = Color(0xFF9A3412),
+    )
 
-        StartupPolicyTone.READY -> StartupPolicyColors(
-            container = Color(0xFFDDF4E4),
-            content = Color(0xFF166534),
-        )
+    StartupPolicyTone.READY -> StartupPolicyColors(
+        container = Color(0xFFDDF4E4),
+        content = Color(0xFF166534),
+    )
 
-        StartupPolicyTone.ACKNOWLEDGED -> StartupPolicyColors(
-            container = Color(0xFFE8ECF8),
-            content = Color(0xFF334155),
-        )
+    StartupPolicyTone.ACKNOWLEDGED -> StartupPolicyColors(
+        container = Color(0xFFE8ECF8),
+        content = Color(0xFF334155),
+    )
 
-        StartupPolicyTone.SUPPORT -> StartupPolicyColors(
-            container = Color(0xFFE9E7FF),
-            content = Color(0xFF5B43B5),
-        )
-    }
+    StartupPolicyTone.SUPPORT -> StartupPolicyColors(
+        container = Color(0xFFE9E7FF),
+        content = Color(0xFF5B43B5),
+    )
 }

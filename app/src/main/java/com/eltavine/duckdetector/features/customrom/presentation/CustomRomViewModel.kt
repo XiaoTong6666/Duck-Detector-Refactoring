@@ -78,9 +78,7 @@ class CustomRomViewModel(
             val appContext = context.applicationContext
             return object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return CustomRomViewModel(CustomRomRepository(appContext)) as T
-                }
+                override fun <T : ViewModel> create(modelClass: Class<T>): T = CustomRomViewModel(CustomRomRepository(appContext)) as T
             }
         }
     }

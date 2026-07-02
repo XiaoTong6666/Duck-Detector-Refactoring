@@ -57,6 +57,7 @@ class SystemPropertiesNativeBridge {
                 val value = line.substringAfter('=')
                 when (key) {
                     "AVAILABLE" -> available = value != "0"
+
                     "PROP" -> {
                         val parts = value.split('|', limit = 2)
                         if (parts.size == 2) {
@@ -79,12 +80,19 @@ class SystemPropertiesNativeBridge {
                     }
 
                     "RAW_CMDLINE" -> rawCmdline = value.decodeValue()
+
                     "RAW_BOOTCONFIG" -> rawBootconfig = value.decodeValue()
+
                     "PROP_AREA_AVAILABLE" -> propAreaAvailable = value != "0"
+
                     "PROP_AREA_CONTEXTS" -> propAreaContextCount = value.toIntOrNull() ?: 0
+
                     "PROP_AREA_HOLES" -> propAreaHoleCount = value.toIntOrNull() ?: 0
+
                     "RO_HANDLE_AVAILABLE" -> readOnlyPropertyHandleAvailable = value != "0"
+
                     "RO_HANDLE_CHECKED" -> readOnlyPropertyHandleCheckedCount = value.toIntOrNull() ?: 0
+
                     "PROP_AREA_FINDING" -> {
                         val parts = value.split('|', limit = 3)
                         val holeCount = parts.getOrNull(1)?.toIntOrNull()
@@ -117,10 +125,8 @@ class SystemPropertiesNativeBridge {
         )
     }
 
-    private fun String.decodeValue(): String {
-        return replace("\\n", "\n")
-            .replace("\\r", "\r")
-    }
+    private fun String.decodeValue(): String = replace("\\n", "\n")
+        .replace("\\r", "\r")
 
     private external fun nativeCollectSnapshot(propertyNames: Array<String>): String
 

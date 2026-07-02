@@ -23,6 +23,11 @@ import com.eltavine.duckdetector.features.tee.data.preferences.TeeNetworkPrefs
 import com.eltavine.duckdetector.features.tee.data.preferences.TeeNetworkPrefsStore
 import com.eltavine.duckdetector.features.tee.domain.TeeNetworkMode
 import com.eltavine.duckdetector.features.tee.domain.TeeNetworkState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
+import org.json.JSONException
+import org.json.JSONObject
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
@@ -30,11 +35,6 @@ import java.net.URL
 import java.net.UnknownHostException
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withContext
-import org.json.JSONException
-import org.json.JSONObject
 
 fun interface CrlNetworkStatusProvider {
     fun isNetworkAvailable(): Boolean
@@ -163,33 +163,29 @@ class CrlStatusService(
         }
     }
 
-    private suspend fun loadEmbeddedSnapshot(): CrlSnapshotResult {
-        return withContext(Dispatchers.IO) {
-            runCatching {
-                val json = embeddedStatusProvider.load()
-                val entries = parseStatusJson(
-                    json = json,
-                    defaultSource = CrlEntrySource.EMBEDDED,
-                )
-                CrlSnapshotResult.Success(entries)
-            }.getOrElse { throwable ->
-                CrlSnapshotResult.Failure(classifyEmbeddedFailure(throwable))
-            }
+    private suspend fun loadEmbeddedSnapshot(): CrlSnapshotResult = withContext(Dispatchers.IO) {
+        runCatching {
+            val json = embeddedStatusProvider.load()
+            val entries = parseStatusJson(
+                json = json,
+                defaultSource = CrlEntrySource.EMBEDDED,
+            )
+            CrlSnapshotResult.Success(entries)
+        }.getOrElse { throwable ->
+            CrlSnapshotResult.Failure(classifyEmbeddedFailure(throwable))
         }
     }
 
-    private suspend fun downloadSnapshot(): CrlSnapshotResult {
-        return withContext(Dispatchers.IO) {
-            runCatching {
-                val json = feedFetcher.fetch()
-                val entries = parseStatusJson(
-                    json = json,
-                    defaultSource = CrlEntrySource.ONLINE,
-                )
-                CrlSnapshotResult.Success(entries)
-            }.getOrElse { throwable ->
-                CrlSnapshotResult.Failure(classifyFailure(throwable))
-            }
+    private suspend fun downloadSnapshot(): CrlSnapshotResult = withContext(Dispatchers.IO) {
+        runCatching {
+            val json = feedFetcher.fetch()
+            val entries = parseStatusJson(
+                json = json,
+                defaultSource = CrlEntrySource.ONLINE,
+            )
+            CrlSnapshotResult.Success(entries)
+        }.getOrElse { throwable ->
+            CrlSnapshotResult.Failure(classifyFailure(throwable))
         }
     }
 
@@ -301,92 +297,80 @@ class CrlStatusService(
         return result
     }
 
-    private fun classifyFailure(throwable: Throwable): CrlFailure {
-        return when (throwable) {
-            is SocketTimeoutException -> CrlFailure(
-                summary = "CRL refresh timed out.",
-                detail = "Google's revocation feed did not respond within ${NETWORK_TIMEOUT_MS / 1000}s.",
-            )
+    private fun classifyFailure(throwable: Throwable): CrlFailure = when (throwable) {
+        is SocketTimeoutException -> CrlFailure(
+            summary = "CRL refresh timed out.",
+            detail = "Google's revocation feed did not respond within ${NETWORK_TIMEOUT_MS / 1000}s.",
+        )
 
-            is UnknownHostException -> CrlFailure(
-                summary = "CRL host lookup failed.",
-                detail = throwable.message ?: "The revocation host could not be resolved.",
-            )
+        is UnknownHostException -> CrlFailure(
+            summary = "CRL host lookup failed.",
+            detail = throwable.message ?: "The revocation host could not be resolved.",
+        )
 
-            is HttpStatusException -> CrlFailure(
-                summary = "CRL server returned HTTP ${throwable.statusCode}.",
-                detail = throwable.responseSnippet ?: throwable.statusMessage,
-            )
+        is HttpStatusException -> CrlFailure(
+            summary = "CRL server returned HTTP ${throwable.statusCode}.",
+            detail = throwable.responseSnippet ?: throwable.statusMessage,
+        )
 
-            is JSONException -> CrlFailure(
-                summary = "CRL response could not be parsed.",
-                detail = throwable.message,
-            )
+        is JSONException -> CrlFailure(
+            summary = "CRL response could not be parsed.",
+            detail = throwable.message,
+        )
 
-            is SSLException -> CrlFailure(
-                summary = "CRL TLS handshake failed.",
-                detail = throwable.message,
-            )
+        is SSLException -> CrlFailure(
+            summary = "CRL TLS handshake failed.",
+            detail = throwable.message,
+        )
 
-            is IOException -> CrlFailure(
-                summary = "CRL connection failed.",
-                detail = throwable.message,
-            )
+        is IOException -> CrlFailure(
+            summary = "CRL connection failed.",
+            detail = throwable.message,
+        )
 
-            else -> CrlFailure(
-                summary = "CRL refresh failed.",
-                detail = throwable.message,
-            )
-        }
+        else -> CrlFailure(
+            summary = "CRL refresh failed.",
+            detail = throwable.message,
+        )
     }
 
-    private fun classifyEmbeddedFailure(throwable: Throwable): CrlFailure {
-        return when (throwable) {
-            is JSONException -> CrlFailure(
-                summary = "Built-in CRL snapshot could not be parsed.",
-                detail = throwable.message,
-            )
+    private fun classifyEmbeddedFailure(throwable: Throwable): CrlFailure = when (throwable) {
+        is JSONException -> CrlFailure(
+            summary = "Built-in CRL snapshot could not be parsed.",
+            detail = throwable.message,
+        )
 
-            is IOException -> CrlFailure(
-                summary = "Built-in CRL snapshot could not be loaded.",
-                detail = throwable.message,
-            )
+        is IOException -> CrlFailure(
+            summary = "Built-in CRL snapshot could not be loaded.",
+            detail = throwable.message,
+        )
 
-            else -> CrlFailure(
-                summary = "Built-in CRL snapshot failed.",
-                detail = throwable.message,
-            )
-        }
+        else -> CrlFailure(
+            summary = "Built-in CRL snapshot failed.",
+            detail = throwable.message,
+        )
     }
 
-    private fun CrlEntry.evidenceKind(serialHex: String): RevokedCertificateEvidenceKind {
-        return if (isLocalMassAbuseOverride(serialHex)) {
-            RevokedCertificateEvidenceKind.LOCAL_MASS_ABUSE
-        } else {
-            RevokedCertificateEvidenceKind.STANDARD_REVOCATION
-        }
+    private fun CrlEntry.evidenceKind(serialHex: String): RevokedCertificateEvidenceKind = if (isLocalMassAbuseOverride(serialHex)) {
+        RevokedCertificateEvidenceKind.LOCAL_MASS_ABUSE
+    } else {
+        RevokedCertificateEvidenceKind.STANDARD_REVOCATION
     }
 
-    private fun CrlEntry.isRevokedOrSuspended(): Boolean {
-        return status == STATUS_REVOKED || status == STATUS_SUSPENDED
-    }
+    private fun CrlEntry.isRevokedOrSuspended(): Boolean = status == STATUS_REVOKED || status == STATUS_SUSPENDED
 
-    private fun CrlEntry.isLocalMassAbuseOverride(serial: String): Boolean {
-        return source == CrlEntrySource.EMBEDDED &&
-            status == STATUS_REVOKED &&
-            serial.trimStart('0').ifBlank { "0" } == LOCAL_MASS_ABUSE_SERIAL
-    }
+    private fun CrlEntry.isLocalMassAbuseOverride(serial: String): Boolean = source == CrlEntrySource.EMBEDDED &&
+        status == STATUS_REVOKED &&
+        serial.trimStart('0').ifBlank { "0" } == LOCAL_MASS_ABUSE_SERIAL
 
     private fun joinDetails(
         vararg parts: String?,
-    ): String? {
-        return parts
-            .filterNotNull()
-            .map(String::trim)
-            .filter(String::isNotBlank)
-            .joinToString(separator = " ")
-            .takeIf { it.isNotBlank() }
-    }
+    ): String? = parts
+        .filterNotNull()
+        .map(String::trim)
+        .filter(String::isNotBlank)
+        .joinToString(separator = " ")
+        .takeIf { it.isNotBlank() }
 
     private suspend fun clearLegacyCacheIfNeeded(prefs: TeeNetworkPrefs) {
         if (!prefs.crlCacheJson.isNullOrBlank() || prefs.crlFetchedAt > 0L) {
@@ -508,7 +492,7 @@ private data class CrlFailure(
             return this
         }
         return copy(
-            detail = listOf(preflightDetail, detail).filterNotNull().joinToString(separator = " ")
+            detail = listOf(preflightDetail, detail).filterNotNull().joinToString(separator = " "),
         )
     }
 }

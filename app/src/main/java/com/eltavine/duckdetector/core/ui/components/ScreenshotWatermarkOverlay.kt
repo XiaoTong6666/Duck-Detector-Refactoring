@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("ktlint:standard:function-naming")
+
 package com.eltavine.duckdetector.core.ui.components
 
 import androidx.compose.foundation.Canvas
@@ -38,14 +40,13 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-
 @Composable
 fun ScreenshotWatermarkOverlay(
     modifier: Modifier = Modifier,
     alpha: Float = 0.05f,
     textSizeSp: Float = 11f,
     spacingDp: Float = 180f,
-    rotationDegrees: Float = -30f
+    rotationDegrees: Float = -30f,
 ) {
     val density = LocalDensity.current
     val textSizePx = with(density) { textSizeSp.sp.toPx() }
@@ -65,7 +66,16 @@ fun ScreenshotWatermarkOverlay(
         val date = Date(currentTimeMillis)
         val day = dateFormat.format(date)
         val d = java.util.Calendar.getInstance().apply { time = date }.get(java.util.Calendar.DAY_OF_MONTH)
-        val suffix = if (d in 11..13) "ᵗʰ" else when (d % 10) { 1 -> "ˢᵗ"; 2 -> "ⁿᵈ"; 3 -> "ʳᵈ"; else -> "ᵗʰ" }
+        val suffix = if (d in 11..13) {
+            "ᵗʰ"
+        } else {
+            when (d % 10) {
+                1 -> "ˢᵗ"
+                2 -> "ⁿᵈ"
+                3 -> "ʳᵈ"
+                else -> "ᵗʰ"
+            }
+        }
         day.replaceFirst(Regex("""\d+\."""), "$d$suffix")
     }
     val versionPrefix = remember(BuildConfig.VERSION_NAME) {
@@ -76,7 +86,7 @@ fun ScreenshotWatermarkOverlay(
     val isDarkTheme = isSystemInDarkTheme()
 
     Canvas(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize(),
     ) {
         val canvasWidth = size.width
         val canvasHeight = size.height
@@ -88,7 +98,9 @@ fun ScreenshotWatermarkOverlay(
             val paint = android.graphics.Paint().apply {
                 color = android.graphics.Color.argb(
                     (alpha * 255).toInt(),
-                    colorValue, colorValue, colorValue
+                    colorValue,
+                    colorValue,
+                    colorValue,
                 )
                 textSize = textSizePx
                 isAntiAlias = true
@@ -104,13 +116,15 @@ fun ScreenshotWatermarkOverlay(
             val suffixBgPaint = android.graphics.Paint().apply {
                 color = android.graphics.Color.argb(
                     (alpha * 0.1f * 255).toInt(),
-                    colorValue, colorValue, colorValue
+                    colorValue,
+                    colorValue,
+                    colorValue,
                 )
                 style = android.graphics.Paint.Style.FILL
             }
             val maxTextWidth = maxOf(
                 prefixWidth + suffixWidth,
-                paint.measureText(timeString)
+                paint.measureText(timeString),
             )
             val safeHSpacing = maxOf(spacingPx, maxTextWidth * 1.3f)
             val safeVSpacing = maxOf(spacingPx * 0.6f, lineHeight * 2.5f)
@@ -130,7 +144,7 @@ fun ScreenshotWatermarkOverlay(
                         y - lineHeight * 0.45f,
                         x + prefixWidth + suffixWidth * 1.05f,
                         y + lineHeight * 0.1f,
-                        suffixBgPaint
+                        suffixBgPaint,
                     )
                     drawContext.canvas.nativeCanvas.drawText(versionSuffix, x + prefixWidth, y, smallPaint)
                     drawContext.canvas.nativeCanvas.drawText(timeString, x + prefixWidth * 0.3f, y + lineHeight, paint)

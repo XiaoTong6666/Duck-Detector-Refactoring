@@ -23,7 +23,7 @@
 
 namespace duckdetector::memory {
 
-    VdsoSignals detect_vdso_anomalies(const std::vector<MapEntry> &maps);
+VdsoSignals detect_vdso_anomalies(const std::vector<MapEntry>& maps);
 
 }  // namespace duckdetector::memory
 

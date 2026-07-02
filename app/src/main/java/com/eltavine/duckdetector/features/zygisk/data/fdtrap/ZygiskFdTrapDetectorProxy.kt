@@ -37,7 +37,7 @@ class ZygiskFdTrapDetectorProxy(
                 ZygiskFdTrapDetectorService.TRANSACTION_PERFORM_DETECTION,
                 data,
                 reply,
-                0
+                0,
             )
             reply.readException()
             reply.readInt()
@@ -70,7 +70,7 @@ class ZygiskFdTrapDetectorProxy(
                 ZygiskFdTrapDetectorService.TRANSACTION_IS_NATIVE_AVAILABLE,
                 data,
                 reply,
-                0
+                0,
             )
             reply.readException()
             reply.readInt() != 0

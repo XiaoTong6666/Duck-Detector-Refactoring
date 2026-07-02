@@ -17,11 +17,11 @@
 package com.eltavine.duckdetector.features.virtualization.data.probes
 
 import android.content.Context
-import dalvik.system.BaseDexClassLoader
 import com.eltavine.duckdetector.features.virtualization.data.rules.VirtualizationHostAppsCatalog
 import com.eltavine.duckdetector.features.virtualization.domain.VirtualizationSignal
 import com.eltavine.duckdetector.features.virtualization.domain.VirtualizationSignalGroup
 import com.eltavine.duckdetector.features.virtualization.domain.VirtualizationSignalSeverity
+import dalvik.system.BaseDexClassLoader
 import java.io.File
 import java.lang.reflect.Field
 
@@ -101,9 +101,9 @@ open class DexPathProbe(
             }
 
             val looksLikeDexContainer = entry.endsWith(".apk") ||
-                    entry.endsWith(".jar") ||
-                    entry.endsWith(".dex") ||
-                    entry.endsWith(".zip")
+                entry.endsWith(".jar") ||
+                entry.endsWith(".dex") ||
+                entry.endsWith(".zip")
             if (!looksLikeDexContainer) {
                 return@forEachIndexed
             }
@@ -167,7 +167,7 @@ open class DexPathProbe(
             entryCount = normalizedEntries.size,
             hitCount = signals.count {
                 it.severity == VirtualizationSignalSeverity.DANGER ||
-                        it.severity == VirtualizationSignalSeverity.WARNING
+                    it.severity == VirtualizationSignalSeverity.WARNING
             },
             signals = signals,
             sourceDir = normalizedSourceDir,
@@ -249,16 +249,14 @@ open class DexPathProbe(
         error("Field $name not found on ${type.name}")
     }
 
-    private fun isSystemPath(path: String): Boolean {
-        return path.startsWith("/system/") ||
-                path.startsWith("/apex/") ||
-                path.startsWith("/product/") ||
-                path.startsWith("/vendor/") ||
-                path.startsWith("/system_ext/") ||
-                path.endsWith(".oat") ||
-                path.endsWith(".vdex") ||
-                path.endsWith(".art")
-    }
+    private fun isSystemPath(path: String): Boolean = path.startsWith("/system/") ||
+        path.startsWith("/apex/") ||
+        path.startsWith("/product/") ||
+        path.startsWith("/vendor/") ||
+        path.startsWith("/system_ext/") ||
+        path.endsWith(".oat") ||
+        path.endsWith(".vdex") ||
+        path.endsWith(".art")
 
     private fun isOwnOverlayPath(path: String, packageName: String): Boolean {
         if (packageName.isBlank()) {
@@ -266,17 +264,20 @@ open class DexPathProbe(
         }
         val overlayMarker = "/$packageName/code_cache/.overlay/"
         return path.contains(overlayMarker) &&
-                (path.endsWith(".dex") || path.endsWith(".jar") || path.endsWith(".zip") || path.endsWith(
-                    ".apk"
-                ))
+            (
+                path.endsWith(".dex") ||
+                    path.endsWith(".jar") ||
+                    path.endsWith(".zip") ||
+                    path.endsWith(
+                        ".apk",
+                    )
+                )
     }
 
-    private fun normalizePath(path: String): String {
-        return path.trim()
-            .replace('\\', '/')
-            .substringBefore("!/")
-            .ifBlank { "" }
-    }
+    private fun normalizePath(path: String): String = path.trim()
+        .replace('\\', '/')
+        .substringBefore("!/")
+        .ifBlank { "" }
 
     private fun String.stableId(): String = hashCode().toUInt().toString(16)
 }

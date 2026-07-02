@@ -23,7 +23,7 @@
 
 namespace duckdetector::nativeroot {
 
-    std::string encode_snapshot(const Snapshot &snapshot);
+std::string encode_snapshot(const Snapshot& snapshot);
 
 }  // namespace duckdetector::nativeroot
 

@@ -212,25 +212,23 @@ class GenerateKeyReplyParcelParserTest {
         lastTag: Int = 0x00000001,
         lastUnionTag: Int = 32,
         modificationTimeMs: Long = 4_294_967_297L,
-    ): ByteArray {
-        return buildList {
-            addIntLe(0)
-            addKeyDescriptorHeader(totalPayloadBytes = 0)
-            addIntLe(1)
-            addIntLe(2)
-            addAuthorization(secLevel = 1, tag = 0x00000020, unionTag = firstUnionTag, value = 1)
-            addAuthorization(secLevel = lastSecLevel, tag = lastTag, unionTag = lastUnionTag, value = 1)
-            addIntLe(1)
-            addIntLe(1)
-            add(0xAA.toByte())
-            padToParcelWord()
-            addIntLe(1)
-            addIntLe(1)
-            add(0xBB.toByte())
-            padToParcelWord()
-            addLongLe(modificationTimeMs)
-        }.toByteArray()
-    }
+    ): ByteArray = buildList {
+        addIntLe(0)
+        addKeyDescriptorHeader(totalPayloadBytes = 0)
+        addIntLe(1)
+        addIntLe(2)
+        addAuthorization(secLevel = 1, tag = 0x00000020, unionTag = firstUnionTag, value = 1)
+        addAuthorization(secLevel = lastSecLevel, tag = lastTag, unionTag = lastUnionTag, value = 1)
+        addIntLe(1)
+        addIntLe(1)
+        add(0xAA.toByte())
+        padToParcelWord()
+        addIntLe(1)
+        addIntLe(1)
+        add(0xBB.toByte())
+        padToParcelWord()
+        addLongLe(modificationTimeMs)
+    }.toByteArray()
 
     private fun MutableList<Byte>.addKeyDescriptorHeader(totalPayloadBytes: Int) {
         addIntLe(totalPayloadBytes)

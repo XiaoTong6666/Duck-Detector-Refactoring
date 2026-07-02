@@ -122,49 +122,45 @@ data class BootloaderReport(
         get() = findings.filter { it.group == BootloaderFindingGroup.CONSISTENCY }
 
     companion object {
-        fun loading(): BootloaderReport {
-            return BootloaderReport(
-                stage = BootloaderStage.LOADING,
-                state = BootloaderState.UNKNOWN,
-                evidenceMode = BootloaderEvidenceMode.UNAVAILABLE,
-                trustRoot = TeeTrustRoot.UNKNOWN,
-                tier = TeeTier.UNKNOWN,
-                attestationAvailable = false,
-                hardwareBacked = false,
-                attestationChainLength = 0,
-                checkedPropertyCount = 0,
-                observedPropertyCount = 0,
-                nativePropertyHitCount = 0,
-                rawBootParamHitCount = 0,
-                sourceMismatchCount = 0,
-                consistencyFindingCount = 0,
-                findings = emptyList(),
-                impacts = emptyList(),
-                methods = emptyList(),
-            )
-        }
+        fun loading(): BootloaderReport = BootloaderReport(
+            stage = BootloaderStage.LOADING,
+            state = BootloaderState.UNKNOWN,
+            evidenceMode = BootloaderEvidenceMode.UNAVAILABLE,
+            trustRoot = TeeTrustRoot.UNKNOWN,
+            tier = TeeTier.UNKNOWN,
+            attestationAvailable = false,
+            hardwareBacked = false,
+            attestationChainLength = 0,
+            checkedPropertyCount = 0,
+            observedPropertyCount = 0,
+            nativePropertyHitCount = 0,
+            rawBootParamHitCount = 0,
+            sourceMismatchCount = 0,
+            consistencyFindingCount = 0,
+            findings = emptyList(),
+            impacts = emptyList(),
+            methods = emptyList(),
+        )
 
-        fun failed(message: String): BootloaderReport {
-            return BootloaderReport(
-                stage = BootloaderStage.FAILED,
-                state = BootloaderState.UNKNOWN,
-                evidenceMode = BootloaderEvidenceMode.UNAVAILABLE,
-                trustRoot = TeeTrustRoot.UNKNOWN,
-                tier = TeeTier.UNKNOWN,
-                attestationAvailable = false,
-                hardwareBacked = false,
-                attestationChainLength = 0,
-                checkedPropertyCount = 0,
-                observedPropertyCount = 0,
-                nativePropertyHitCount = 0,
-                rawBootParamHitCount = 0,
-                sourceMismatchCount = 0,
-                consistencyFindingCount = 0,
-                findings = emptyList(),
-                impacts = emptyList(),
-                methods = emptyList(),
-                errorMessage = message,
-            )
-        }
+        fun failed(message: String): BootloaderReport = BootloaderReport(
+            stage = BootloaderStage.FAILED,
+            state = BootloaderState.UNKNOWN,
+            evidenceMode = BootloaderEvidenceMode.UNAVAILABLE,
+            trustRoot = TeeTrustRoot.UNKNOWN,
+            tier = TeeTier.UNKNOWN,
+            attestationAvailable = false,
+            hardwareBacked = false,
+            attestationChainLength = 0,
+            checkedPropertyCount = 0,
+            observedPropertyCount = 0,
+            nativePropertyHitCount = 0,
+            rawBootParamHitCount = 0,
+            sourceMismatchCount = 0,
+            consistencyFindingCount = 0,
+            findings = emptyList(),
+            impacts = emptyList(),
+            methods = emptyList(),
+            errorMessage = message,
+        )
     }
 }

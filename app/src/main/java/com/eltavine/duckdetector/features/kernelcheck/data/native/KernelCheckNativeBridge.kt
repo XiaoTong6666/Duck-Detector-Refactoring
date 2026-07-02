@@ -18,12 +18,9 @@ package com.eltavine.duckdetector.features.kernelcheck.data.native
 
 class KernelCheckNativeBridge {
 
-    fun collectSnapshot(
-    ): KernelCheckNativeSnapshot {
-        return runCatching {
-            parse(nativeCollectSnapshot())
-        }.getOrDefault(KernelCheckNativeSnapshot())
-    }
+    fun collectSnapshot(): KernelCheckNativeSnapshot = runCatching {
+        parse(nativeCollectSnapshot())
+    }.getOrDefault(KernelCheckNativeSnapshot())
 
     internal fun parse(
         raw: String,
@@ -50,10 +47,8 @@ class KernelCheckNativeBridge {
         )
     }
 
-    private fun String.decodeValue(): String {
-        return replace("\\n", "\n")
-            .replace("\\r", "\r")
-    }
+    private fun String.decodeValue(): String = replace("\\n", "\n")
+        .replace("\\r", "\r")
 
     private external fun nativeCollectSnapshot(): String
 

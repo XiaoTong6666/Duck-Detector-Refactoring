@@ -95,7 +95,7 @@ abstract class GenerateTeeCrlAssetTask : DefaultTask() {
             val json = result.getOrNull()
             if (json != null) {
                 logger.lifecycle(
-                    "Fetched TEE CRL snapshot from ${endpointUrl.get()} on attempt $attempt/$attempts."
+                    "Fetched TEE CRL snapshot from ${endpointUrl.get()} on attempt $attempt/$attempts.",
                 )
                 return json
             }
@@ -103,7 +103,7 @@ abstract class GenerateTeeCrlAssetTask : DefaultTask() {
             lastFailure = result.exceptionOrNull()
             logger.warn(
                 "TEE CRL snapshot fetch attempt $attempt/$attempts failed: " +
-                    "${lastFailure?.message ?: lastFailure?.javaClass?.simpleName.orEmpty()}"
+                    "${lastFailure?.message ?: lastFailure?.javaClass?.simpleName.orEmpty()}",
             )
             if (attempt < attempts) {
                 Thread.sleep((250L * attempt).coerceAtMost(1_250L))
@@ -147,7 +147,7 @@ abstract class GenerateTeeCrlAssetTask : DefaultTask() {
         val fallback = fallbackAsset.orNull?.asFile
             ?: throw GradleException(
                 "TEE CRL fallback asset is not configured. Expected " +
-                    "src/main/assets/$TEE_CRL_FALLBACK_ASSET_FILE_NAME."
+                    "src/main/assets/$TEE_CRL_FALLBACK_ASSET_FILE_NAME.",
             )
         if (!fallback.isFile) {
             throw GradleException("TEE CRL fallback asset is missing: ${fallback.absolutePath}")
@@ -214,11 +214,9 @@ private fun isLocalMassAbuseSerial(key: String): Boolean {
         }.getOrDefault(false)
 }
 
-private fun JSONObject.isRevokedOrSuspended(): Boolean {
-    return when (optString("status")) {
-        "REVOKED", "SUSPENDED" -> true
-        else -> false
-    }
+private fun JSONObject.isRevokedOrSuspended(): Boolean = when (optString("status")) {
+    "REVOKED", "SUSPENDED" -> true
+    else -> false
 }
 
 private const val LOCAL_MASS_ABUSE_SERIAL = "8616ef30679ed43cc2b43e3c97a2319e"

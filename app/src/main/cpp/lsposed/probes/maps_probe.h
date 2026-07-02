@@ -21,7 +21,7 @@
 
 namespace duckdetector::lsposed {
 
-    ProbeResult scan_runtime_maps();
+ProbeResult scan_runtime_maps();
 
 }  // namespace duckdetector::lsposed
 

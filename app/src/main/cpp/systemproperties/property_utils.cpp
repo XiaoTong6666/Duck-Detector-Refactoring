@@ -25,112 +25,101 @@
 
 namespace systemproperties {
 
-    namespace {
+namespace {
 
-        struct PropertyReadContext {
-            std::string value;
-        };
+struct PropertyReadContext {
+    std::string value;
+};
 
-        void property_read_callback(
-                void *cookie,
-                const char *,
-                const char *value,
-                uint32_t
-        ) {
-            auto *context = static_cast<PropertyReadContext *>(cookie);
-            if (context == nullptr) {
-                return;
-            }
-            context->value = value != nullptr ? value : "";
+void property_read_callback(void* cookie, const char*, const char* value, uint32_t) {
+    auto* context = static_cast<PropertyReadContext*>(cookie);
+    if (context == nullptr) {
+        return;
+    }
+    context->value = value != nullptr ? value : "";
+}
+
+}  // namespace
+
+std::string trim_copy(const std::string& value) {
+    const auto begin = std::find_if_not(value.begin(), value.end(),
+                                        [](unsigned char ch) { return std::isspace(ch) != 0; });
+    const auto end = std::find_if_not(value.rbegin(), value.rend(), [](unsigned char ch) {
+                         return std::isspace(ch) != 0;
+                     }).base();
+    if (begin >= end) {
+        return "";
+    }
+    return std::string(begin, end);
+}
+
+std::string escape_value(std::string value) {
+    for (char& ch : value) {
+        if (ch == '\0') {
+            ch = ' ';
         }
-
-    }  // namespace
-
-    std::string trim_copy(const std::string &value) {
-        const auto begin = std::find_if_not(value.begin(), value.end(), [](unsigned char ch) {
-            return std::isspace(ch) != 0;
-        });
-        const auto end = std::find_if_not(value.rbegin(), value.rend(), [](unsigned char ch) {
-            return std::isspace(ch) != 0;
-        }).base();
-        if (begin >= end) {
-            return "";
-        }
-        return std::string(begin, end);
     }
 
-    std::string escape_value(std::string value) {
-        for (char &ch: value) {
-            if (ch == '\0') {
-                ch = ' ';
-            }
-        }
-
-        std::string escaped;
-        escaped.reserve(value.size());
-        for (char ch: value) {
-            switch (ch) {
-                case '\n':
-                    escaped += "\\n";
-                    break;
-                case '\r':
-                    escaped += "\\r";
-                    break;
-                default:
-                    escaped += ch;
-                    break;
-            }
-        }
-        return escaped;
-    }
-
-    std::string read_text_file(const char *path, size_t max_bytes) {
-        const int fd = open(path, O_RDONLY | O_CLOEXEC);
-        if (fd < 0) {
-            return "";
-        }
-
-        std::string content;
-        content.reserve(4096);
-        char buffer[4096];
-        ssize_t bytes_read = 0;
-        while ((bytes_read = read(fd, buffer, sizeof(buffer))) > 0) {
-            content.append(buffer, static_cast<size_t>(bytes_read));
-            if (content.size() >= max_bytes) {
+    std::string escaped;
+    escaped.reserve(value.size());
+    for (char ch : value) {
+        switch (ch) {
+            case '\n':
+                escaped += "\\n";
                 break;
-            }
+            case '\r':
+                escaped += "\\r";
+                break;
+            default:
+                escaped += ch;
+                break;
         }
-        close(fd);
+    }
+    return escaped;
+}
 
-        while (!content.empty() &&
-               (content.back() == '\n' || content.back() == '\r' || content.back() == '\0')) {
-            content.pop_back();
-        }
-        return content;
+std::string read_text_file(const char* path, size_t max_bytes) {
+    const int fd = open(path, O_RDONLY | O_CLOEXEC);
+    if (fd < 0) {
+        return "";
     }
 
-    std::string read_system_property(const std::string &key) {
-        const prop_info *info = __system_property_find(key.c_str());
-        if (info == nullptr) {
-            return "";
+    std::string content;
+    content.reserve(4096);
+    char buffer[4096];
+    ssize_t bytes_read = 0;
+    while ((bytes_read = read(fd, buffer, sizeof(buffer))) > 0) {
+        content.append(buffer, static_cast<size_t>(bytes_read));
+        if (content.size() >= max_bytes) {
+            break;
         }
+    }
+    close(fd);
 
-        PropertyReadContext context;
-        __system_property_read_callback(
-                info,
-                property_read_callback,
-                &context
-        );
-        return context.value;
+    while (!content.empty() &&
+           (content.back() == '\n' || content.back() == '\r' || content.back() == '\0')) {
+        content.pop_back();
+    }
+    return content;
+}
+
+std::string read_system_property(const std::string& key) {
+    const prop_info* info = __system_property_find(key.c_str());
+    if (info == nullptr) {
+        return "";
     }
 
-    std::map<std::string, std::string>
-    read_system_properties(const std::vector<std::string> &keys) {
-        std::map<std::string, std::string> properties;
-        for (const std::string &key: keys) {
-            properties[key] = read_system_property(key);
-        }
-        return properties;
+    PropertyReadContext context;
+    __system_property_read_callback(info, property_read_callback, &context);
+    return context.value;
+}
+
+std::map<std::string, std::string> read_system_properties(const std::vector<std::string>& keys) {
+    std::map<std::string, std::string> properties;
+    for (const std::string& key : keys) {
+        properties[key] = read_system_property(key);
     }
+    return properties;
+}
 
 }  // namespace systemproperties

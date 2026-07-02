@@ -49,6 +49,7 @@ class SelinuxAuditRuntimeProbe(
         )
         val sideChannelHits = when {
             !logcatRead.checked || logcatRead.output.isBlank() -> emptyList()
+
             !nativeSnapshot.probeMarker.isNullOrBlank() && referenceSignatures.isNotEmpty() -> {
                 auditAvcSideChannelProbe.evaluateAgainstReferences(
                     output = logcatRead.output.lineSequence()
@@ -69,10 +70,12 @@ class SelinuxAuditRuntimeProbe(
 
         val failureReason = when {
             logcatRead.checked -> null
+
             directProbeUsed && !logcatRead.failureReason.isNullOrBlank() ->
                 "${logcatRead.failureReason} Direct libselinux callback capture still worked in-process."
 
             !nativeSnapshot.failureReason.isNullOrBlank() -> nativeSnapshot.failureReason
+
             else -> logcatRead.failureReason
         }
 
@@ -123,7 +126,7 @@ class SelinuxAuditRuntimeProbe(
         }
         lines.firstOrNull {
             it.contains(AUDITPATCH_LIBRARY_NAME, ignoreCase = true) ||
-                    it.contains(AUDITPATCH_HOOK_MARKER, ignoreCase = true)
+                it.contains(AUDITPATCH_HOOK_MARKER, ignoreCase = true)
         }?.let { line ->
             hits += SelinuxAuditEvidence(
                 label = "Native hook",
@@ -143,10 +146,13 @@ class SelinuxAuditRuntimeProbe(
         if (referenceSignatures.isEmpty() || probeMarker.isNullOrBlank()) {
             return lines.firstOrNull {
                 it.contains(AUDITPATCH_FAKE_TCONTEXT, ignoreCase = true) &&
-                        (it.contains("avc:", ignoreCase = true) || it.contains(
-                            "audit",
-                            ignoreCase = true
-                        ))
+                    (
+                        it.contains("avc:", ignoreCase = true) ||
+                            it.contains(
+                                "audit",
+                                ignoreCase = true,
+                            )
+                        )
             }?.let { line ->
                 SelinuxAuditEvidence(
                     label = "Fake tcontext",
@@ -183,13 +189,11 @@ class SelinuxAuditRuntimeProbe(
         }
     }
 
-    private fun AuditAvcSignature.matchKey(): String {
-        return listOf(
-            permission.lowercase(),
-            scontext.lowercase(),
-            tclass.lowercase()
-        ).joinToString("|")
-    }
+    private fun AuditAvcSignature.matchKey(): String = listOf(
+        permission.lowercase(),
+        scontext.lowercase(),
+        tclass.lowercase(),
+    ).joinToString("|")
 
     private fun String.trimToPreview(
         maxLength: Int = 180,

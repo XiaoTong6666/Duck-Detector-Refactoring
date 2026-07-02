@@ -77,9 +77,11 @@ class PureCertificateSecurityLevelProbe(
                     topLevelSecurityLevel != null -> {
                         "Certificate-only entry exposed top-level iSecurityLevel: $topLevelSecurityLevel"
                     }
+
                     metadataSecurityLevel != null -> {
                         "Certificate-only entry kept metadata.keySecurityLevel populated: $metadataSecurityLevel"
                     }
+
                     else -> {
                         "Certificate-only entry did not expose top-level securityLevel metadata."
                     }

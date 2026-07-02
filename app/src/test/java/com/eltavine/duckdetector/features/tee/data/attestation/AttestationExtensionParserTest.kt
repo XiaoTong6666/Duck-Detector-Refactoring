@@ -16,6 +16,9 @@
 
 package com.eltavine.duckdetector.features.tee.data.attestation
 
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
 import java.math.BigInteger
 import java.security.Principal
 import java.security.PublicKey
@@ -23,9 +26,6 @@ import java.security.cert.CertificateEncodingException
 import java.security.cert.X509Certificate
 import java.util.Date
 import javax.security.auth.x500.X500Principal
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Test
 
 class AttestationExtensionParserTest {
 
@@ -158,9 +158,7 @@ class AttestationExtensionParserTest {
 
         override fun getCriticalExtensionOIDs(): MutableSet<String>? = null
 
-        override fun getExtensionValue(oid: String?): ByteArray? {
-            return if (oid == "1.3.6.1.4.1.11129.2.1.17") extensionValue else null
-        }
+        override fun getExtensionValue(oid: String?): ByteArray? = if (oid == "1.3.6.1.4.1.11129.2.1.17") extensionValue else null
 
         override fun getNonCriticalExtensionOIDs(): MutableSet<String>? = null
 

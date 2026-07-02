@@ -27,9 +27,7 @@ data class LSPosedBridgeFieldProbeResult(
 
 class LSPosedBridgeFieldProbe {
 
-    fun run(): LSPosedBridgeFieldProbeResult {
-        return evaluate(TARGET_CLASS_NAME)
-    }
+    fun run(): LSPosedBridgeFieldProbeResult = evaluate(TARGET_CLASS_NAME)
 
     internal fun evaluate(
         targetClassName: String,

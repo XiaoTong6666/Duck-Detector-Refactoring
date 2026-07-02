@@ -39,29 +39,25 @@ fun resolveStartupGateState(
     packageVisibilityLoaded: Boolean,
     packageVisibility: InstalledPackageVisibility,
     packageVisibilityReviewAcknowledged: Boolean,
-): StartupGateState {
-    return when {
-        teePrefs == null || notificationPrefs == null || !packageVisibilityLoaded ->
-            StartupGateState.LOADING
+): StartupGateState = when {
+    teePrefs == null || notificationPrefs == null || !packageVisibilityLoaded ->
+        StartupGateState.LOADING
 
-        !notificationPrefs.notificationsPrompted &&
-                !notificationPermissionState.notificationsGranted ->
-            StartupGateState.REQUIRES_POLICY_REVIEW
+    !notificationPrefs.notificationsPrompted &&
+        !notificationPermissionState.notificationsGranted ->
+        StartupGateState.REQUIRES_POLICY_REVIEW
 
-        notificationPermissionState.notificationsGranted &&
-                notificationPermissionState.liveUpdatesSupported &&
-                !notificationPermissionState.liveUpdatesGranted &&
-                !notificationPrefs.liveUpdatesPrompted ->
-            StartupGateState.REQUIRES_POLICY_REVIEW
+    notificationPermissionState.notificationsGranted &&
+        notificationPermissionState.liveUpdatesSupported &&
+        !notificationPermissionState.liveUpdatesGranted &&
+        !notificationPrefs.liveUpdatesPrompted ->
+        StartupGateState.REQUIRES_POLICY_REVIEW
 
-        packageVisibility == InstalledPackageVisibility.RESTRICTED &&
-                !packageVisibilityReviewAcknowledged ->
-            StartupGateState.REQUIRES_POLICY_REVIEW
+    packageVisibility == InstalledPackageVisibility.RESTRICTED &&
+        !packageVisibilityReviewAcknowledged ->
+        StartupGateState.REQUIRES_POLICY_REVIEW
 
-        else -> StartupGateState.READY
-    }
+    else -> StartupGateState.READY
 }
 
-fun shouldCreateDetectorViewModels(gateState: StartupGateState): Boolean {
-    return gateState == StartupGateState.READY
-}
+fun shouldCreateDetectorViewModels(gateState: StartupGateState): Boolean = gateState == StartupGateState.READY

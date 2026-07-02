@@ -23,7 +23,7 @@
 
 namespace duckdetector::memory {
 
-    LinkerSignals detect_linker_anomalies(const std::vector<MapEntry> &maps);
+LinkerSignals detect_linker_anomalies(const std::vector<MapEntry>& maps);
 
 }  // namespace duckdetector::memory
 

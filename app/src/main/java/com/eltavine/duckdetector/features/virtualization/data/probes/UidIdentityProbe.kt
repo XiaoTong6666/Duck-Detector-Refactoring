@@ -138,8 +138,10 @@ open class UidIdentityProbe(
             )
         }
 
-        if (processName.isNotBlank() && packageName.isNotBlank() && !processName.startsWith(
-                packageName
+        if (processName.isNotBlank() &&
+            packageName.isNotBlank() &&
+            !processName.startsWith(
+                packageName,
             )
         ) {
             signals += VirtualizationSignal(
@@ -162,7 +164,7 @@ open class UidIdentityProbe(
             packagesForUid = packagesForUid,
             hitCount = signals.count {
                 it.severity == VirtualizationSignalSeverity.DANGER ||
-                        it.severity == VirtualizationSignalSeverity.WARNING
+                    it.severity == VirtualizationSignalSeverity.WARNING
             },
             signals = signals,
             hostPackageHit = hostPackages.isNotEmpty(),

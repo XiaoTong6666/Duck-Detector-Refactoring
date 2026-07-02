@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("ktlint:standard:function-naming")
+
 package com.eltavine.duckdetector.features.zygisk.ui.card
 
 import androidx.compose.foundation.layout.Arrangement
@@ -269,18 +271,16 @@ private fun ZygiskImpactRow(
 private fun rowIcon(
     row: ZygiskDetailRowModel,
     fallback: ImageVector,
-): ImageVector {
-    return when {
-        row.label.contains("fd trap", ignoreCase = true) ||
-                row.label.contains("cross-process", ignoreCase = true) -> Icons.Rounded.SyncAlt
+): ImageVector = when {
+    row.label.contains("fd trap", ignoreCase = true) ||
+        row.label.contains("cross-process", ignoreCase = true) -> Icons.Rounded.SyncAlt
 
-        row.label.contains("linker", ignoreCase = true) ||
-                row.label.contains("namespace", ignoreCase = true) -> Icons.Rounded.FolderZip
+    row.label.contains("linker", ignoreCase = true) ||
+        row.label.contains("namespace", ignoreCase = true) -> Icons.Rounded.FolderZip
 
-        row.label.contains("heap", ignoreCase = true) ||
-                row.label.contains("maps", ignoreCase = true) ||
-                row.label.contains("smaps", ignoreCase = true) -> Icons.Rounded.Memory
+    row.label.contains("heap", ignoreCase = true) ||
+        row.label.contains("maps", ignoreCase = true) ||
+        row.label.contains("smaps", ignoreCase = true) -> Icons.Rounded.Memory
 
-        else -> fallback
-    }
+    else -> fallback
 }

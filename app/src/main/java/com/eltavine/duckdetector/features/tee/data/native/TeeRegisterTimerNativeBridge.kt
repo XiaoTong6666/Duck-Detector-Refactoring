@@ -74,20 +74,16 @@ class TeeRegisterTimerNativeBridge {
         )
     }
 
-    private fun parseKeyValueLines(raw: String): Map<String, String> {
-        return buildMap {
-            raw.lineSequence()
-                .map { it.trim() }
-                .filter { it.isNotEmpty() && it.contains('=') }
-                .forEach { line ->
-                    put(line.substringBefore('='), line.substringAfter('='))
-                }
-        }
+    private fun parseKeyValueLines(raw: String): Map<String, String> = buildMap {
+        raw.lineSequence()
+            .map { it.trim() }
+            .filter { it.isNotEmpty() && it.contains('=') }
+            .forEach { line ->
+                put(line.substringBefore('='), line.substringAfter('='))
+            }
     }
 
-    private fun String?.asBool(): Boolean {
-        return this == "1" || this.equals("true", ignoreCase = true)
-    }
+    private fun String?.asBool(): Boolean = this == "1" || this.equals("true", ignoreCase = true)
 
     private external fun nativeIsRegisterTimerAvailable(): Boolean
 

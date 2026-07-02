@@ -199,8 +199,7 @@ private class FakeSoterClient(
 
     override fun getAppGlobalSecureKeyModel(): Any? = if (askModelPresent) Any() else null
 
-    override fun generateAuthKey(alias: String): SoterCoreResult? =
-        if (authGenerateSuccess) SoterCoreResult(0) else SoterCoreResult(6, "auth failed")
+    override fun generateAuthKey(alias: String): SoterCoreResult? = if (authGenerateSuccess) SoterCoreResult(0) else SoterCoreResult(6, "auth failed")
 
     override fun hasAuthKey(alias: String): Boolean = hasAuth
 

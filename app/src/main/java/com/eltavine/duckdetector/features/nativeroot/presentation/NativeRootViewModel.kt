@@ -78,9 +78,7 @@ class NativeRootViewModel(
             val appContext = context.applicationContext
             return object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return NativeRootViewModel(NativeRootRepository(appContext)) as T
-                }
+                override fun <T : ViewModel> create(modelClass: Class<T>): T = NativeRootViewModel(NativeRootRepository(appContext)) as T
             }
         }
     }

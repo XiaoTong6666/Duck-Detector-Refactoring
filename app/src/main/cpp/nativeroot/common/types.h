@@ -22,80 +22,80 @@
 
 namespace duckdetector::nativeroot {
 
-    enum class Severity {
-        kDanger,
-        kWarning,
-        kInfo,
-    };
+enum class Severity {
+    kDanger,
+    kWarning,
+    kInfo,
+};
 
-    struct DetectionFlags {
-        bool root = false;
-        bool kernel_su = false;
-        bool apatch = false;
-        bool magisk = false;
-        bool susfs = false;
-    };
+struct DetectionFlags {
+    bool root = false;
+    bool kernel_su = false;
+    bool apatch = false;
+    bool magisk = false;
+    bool susfs = false;
+};
 
-    struct Finding {
-        std::string group;
-        std::string label;
-        std::string value;
-        std::string detail;
-        Severity severity = Severity::kWarning;
-    };
+struct Finding {
+    std::string group;
+    std::string label;
+    std::string value;
+    std::string detail;
+    Severity severity = Severity::kWarning;
+};
 
-    struct ProbeResult {
-        DetectionFlags flags;
-        int hit_count = 0;
-        int checked_count = 0;
-        int denied_count = 0;
-        long numeric_value = 0;
-        long extra_numeric_value = 0;
-        long aux_flags = 0;
-        std::string extra_text;
-        std::vector<Finding> findings;
-    };
+struct ProbeResult {
+    DetectionFlags flags;
+    int hit_count = 0;
+    int checked_count = 0;
+    int denied_count = 0;
+    long numeric_value = 0;
+    long extra_numeric_value = 0;
+    long aux_flags = 0;
+    std::string extra_text;
+    std::vector<Finding> findings;
+};
 
-    struct Snapshot {
-        bool available = false;
-        DetectionFlags flags;
-        long kernel_su_version = 0;
-        bool prctl_probe_hit = false;
-        bool kernelpatch_side_channel_detected = false;
-        std::string kernelpatch_side_channel_detail;
-        bool devpts_abnormal_permission_detected = false;
-        bool devpts_abnormal_permission_available = false;
-        int devpts_abnormal_permission_checked_count = 0;
-        int devpts_abnormal_permission_denied_count = 0;
-        std::string devpts_abnormal_permission_detail;
-        bool ksu_supercall_attempted = false;
-        bool ksu_supercall_probe_hit = false;
-        bool ksu_supercall_blocked = false;
-        bool ksu_supercall_safe_mode = false;
-        bool ksu_supercall_lkm = false;
-        bool ksu_supercall_late_load = false;
-        bool ksu_supercall_pr_build = false;
-        bool ksu_supercall_manager = false;
-        bool susfs_probe_hit = false;
-        bool self_su_domain = false;
-        std::string self_context;
-        int self_ksu_driver_fd_count = 0;
-        int self_ksu_fdwrapper_count = 0;
-        int path_hit_count = 0;
-        int path_check_count = 0;
-        int process_hit_count = 0;
-        int process_checked_count = 0;
-        int process_denied_count = 0;
-        int kernel_hit_count = 0;
-        int kernel_source_count = 0;
-        int property_hit_count = 0;
-        int property_check_count = 0;
-        std::vector<Finding> findings;
-    };
+struct Snapshot {
+    bool available = false;
+    DetectionFlags flags;
+    long kernel_su_version = 0;
+    bool prctl_probe_hit = false;
+    bool kernelpatch_side_channel_detected = false;
+    std::string kernelpatch_side_channel_detail;
+    bool devpts_abnormal_permission_detected = false;
+    bool devpts_abnormal_permission_available = false;
+    int devpts_abnormal_permission_checked_count = 0;
+    int devpts_abnormal_permission_denied_count = 0;
+    std::string devpts_abnormal_permission_detail;
+    bool ksu_supercall_attempted = false;
+    bool ksu_supercall_probe_hit = false;
+    bool ksu_supercall_blocked = false;
+    bool ksu_supercall_safe_mode = false;
+    bool ksu_supercall_lkm = false;
+    bool ksu_supercall_late_load = false;
+    bool ksu_supercall_pr_build = false;
+    bool ksu_supercall_manager = false;
+    bool susfs_probe_hit = false;
+    bool self_su_domain = false;
+    std::string self_context;
+    int self_ksu_driver_fd_count = 0;
+    int self_ksu_fdwrapper_count = 0;
+    int path_hit_count = 0;
+    int path_check_count = 0;
+    int process_hit_count = 0;
+    int process_checked_count = 0;
+    int process_denied_count = 0;
+    int kernel_hit_count = 0;
+    int kernel_source_count = 0;
+    int property_hit_count = 0;
+    int property_check_count = 0;
+    std::vector<Finding> findings;
+};
 
-    const char *to_string(Severity severity);
+const char* to_string(Severity severity);
 
-    void merge_flags(DetectionFlags &target, const DetectionFlags &source);
+void merge_flags(DetectionFlags& target, const DetectionFlags& source);
 
 }  // namespace duckdetector::nativeroot
 

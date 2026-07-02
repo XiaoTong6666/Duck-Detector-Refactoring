@@ -96,6 +96,7 @@ data class VirtualizationRemoteSnapshot(
                             val value = line.substringAfter('=').decodeValue()
                             when (key) {
                                 "AVAILABLE" -> available = value.asBool()
+
                                 "PROFILE" -> {
                                     profile = value.takeIf { it.isNotBlank() }?.let {
                                         runCatching { VirtualizationRemoteProfile.valueOf(it) }
@@ -104,21 +105,37 @@ data class VirtualizationRemoteSnapshot(
                                 }
 
                                 "NATIVE_AVAILABLE" -> nativeAvailable = value.asBool()
+
                                 "UID" -> uid = value.toIntOrNull() ?: -1
+
                                 "PACKAGE_NAME" -> packageName = value
+
                                 "PROCESS_NAME" -> processName = value
+
                                 "UID_NAME" -> uidName = value
+
                                 "PACKAGES_FOR_UID" -> packagesForUid = value.decodeList()
+
                                 "CLASS_PATH_ENTRIES" -> classPathEntries = value.decodeList()
+
                                 "SOURCE_DIR" -> sourceDir = value
+
                                 "SPLIT_SOURCE_DIRS" -> splitSourceDirs = value.decodeList()
+
                                 "MOUNT_NAMESPACE_INODE" -> mountNamespaceInode = value
+
                                 "APEX_MOUNT_KEY" -> apexMountKey = value
+
                                 "SYSTEM_MOUNT_KEY" -> systemMountKey = value
+
                                 "VENDOR_MOUNT_KEY" -> vendorMountKey = value
+
                                 "FILES_DIR" -> filesDir = value
+
                                 "CACHE_DIR" -> cacheDir = value
+
                                 "CODE_PATH" -> codePath = value
+
                                 "ERROR" -> errorDetail = value
                             }
                         }
@@ -149,10 +166,8 @@ data class VirtualizationRemoteSnapshot(
             )
         }
 
-        private fun String.decodeValue(): String {
-            return replace("\\n", "\n")
-                .replace("\\r", "\r")
-        }
+        private fun String.decodeValue(): String = replace("\\n", "\n")
+            .replace("\\r", "\r")
 
         private fun String.decodeList(): List<String> {
             if (isBlank()) {
@@ -164,9 +179,7 @@ data class VirtualizationRemoteSnapshot(
                 .distinct()
         }
 
-        private fun String.asBool(): Boolean {
-            return this == "1" || equals("true", ignoreCase = true)
-        }
+        private fun String.asBool(): Boolean = this == "1" || equals("true", ignoreCase = true)
 
         private const val LIST_SEPARATOR = "\u001f"
     }

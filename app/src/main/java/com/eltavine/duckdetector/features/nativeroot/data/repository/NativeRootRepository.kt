@@ -45,7 +45,7 @@ class NativeRootRepository(
     private val rootProcessAuditProbe: RootProcessAuditProbe = RootProcessAuditProbe(),
     private val cgroupProcessLeakProbe: CgroupProcessLeakProbe = CgroupProcessLeakProbe(),
     private val mountNamespaceDriftProbe: MountNamespaceDriftProbe = MountNamespaceDriftProbe(
-        context?.applicationContext
+        context?.applicationContext,
     ),
     private val kernelSuManagerFingerprintProbe: KernelSuManagerFingerprintProbe =
         KernelSuManagerFingerprintProbe(context?.applicationContext),
@@ -71,11 +71,11 @@ class NativeRootRepository(
         val managerFingerprintResult = kernelSuManagerFingerprintProbe.run()
         val findings =
             nativeFindings +
-                    shellTmpResult.findings +
-                    rootProcessResult.findings +
-                    cgroupResult.findings +
-                    mountNamespaceResult.findings +
-                    managerFingerprintResult.findings
+                shellTmpResult.findings +
+                rootProcessResult.findings +
+                cgroupResult.findings +
+                mountNamespaceResult.findings +
+                managerFingerprintResult.findings
 
         return NativeRootReport(
             stage = NativeRootStage.READY,
@@ -151,8 +151,8 @@ class NativeRootRepository(
         val runtimeFindings =
             findings.filter {
                 it.group == NativeRootGroup.PATH ||
-                        it.group == NativeRootGroup.PROCESS ||
-                        it.group == NativeRootGroup.PACKAGE
+                    it.group == NativeRootGroup.PROCESS ||
+                    it.group == NativeRootGroup.PACKAGE
             }
         val kernelFindings = findings.filter { it.group == NativeRootGroup.KERNEL }
         val propertyFindings = findings.filter { it.group == NativeRootGroup.PROPERTY }
@@ -283,10 +283,11 @@ class NativeRootRepository(
                 },
                 outcome = when {
                     snapshot.selfSuDomain ||
-                            snapshot.selfKsuDriverFdCount + snapshot.selfKsuFdwrapperFdCount > 0 ->
+                        snapshot.selfKsuDriverFdCount + snapshot.selfKsuFdwrapperFdCount > 0 ->
                         NativeRootMethodOutcome.DETECTED
 
                     snapshot.available -> NativeRootMethodOutcome.CLEAN
+
                     else -> NativeRootMethodOutcome.SUPPORT
                 },
                 detail = buildString {
@@ -308,8 +309,11 @@ class NativeRootRepository(
                         "${mountNamespaceResult.mountAnchorDriftCount} anchor(s)"
 
                     mountNamespaceResult.signalCount > 0 -> "${mountNamespaceResult.signalCount} drift hit(s)"
+
                     mountNamespaceResult.isolatedProcessAvailable -> "Clean"
+
                     mountNamespaceResult.available -> "Unavailable"
+
                     else -> "Unavailable"
                 },
                 outcome = when {
@@ -332,8 +336,11 @@ class NativeRootRepository(
                         "${managerFingerprintResult.traitHitCount}/3 traits"
 
                     managerFingerprintResult.packagePresent -> "Present"
+
                     managerFingerprintResult.visibilityRestricted -> "Scoped"
+
                     managerFingerprintResult.available -> "Clean"
+
                     else -> "Unavailable"
                 },
                 outcome = when {
@@ -458,40 +465,34 @@ class NativeRootRepository(
 
     private fun NativeRootNativeFinding.toDomainFinding(
         index: Int,
-    ): NativeRootFinding {
-        return NativeRootFinding(
-            id = "${group.lowercase()}_$index",
-            label = label,
-            value = value,
-            detail = detail,
-            group = groupFromRaw(group),
-            severity = severityFromRaw(severity),
-            detailMonospace = true,
-        )
-    }
+    ): NativeRootFinding = NativeRootFinding(
+        id = "${group.lowercase()}_$index",
+        label = label,
+        value = value,
+        detail = detail,
+        group = groupFromRaw(group),
+        severity = severityFromRaw(severity),
+        detailMonospace = true,
+    )
 
     private fun groupFromRaw(
         raw: String,
-    ): NativeRootGroup {
-        return when (raw) {
-            "SYSCALL" -> NativeRootGroup.SYSCALL
-            "SIDE_CHANNEL" -> NativeRootGroup.SIDE_CHANNEL
-            "PATH" -> NativeRootGroup.PATH
-            "PROCESS" -> NativeRootGroup.PROCESS
-            "PACKAGE" -> NativeRootGroup.PACKAGE
-            "KERNEL" -> NativeRootGroup.KERNEL
-            "PROPERTY" -> NativeRootGroup.PROPERTY
-            else -> NativeRootGroup.KERNEL
-        }
+    ): NativeRootGroup = when (raw) {
+        "SYSCALL" -> NativeRootGroup.SYSCALL
+        "SIDE_CHANNEL" -> NativeRootGroup.SIDE_CHANNEL
+        "PATH" -> NativeRootGroup.PATH
+        "PROCESS" -> NativeRootGroup.PROCESS
+        "PACKAGE" -> NativeRootGroup.PACKAGE
+        "KERNEL" -> NativeRootGroup.KERNEL
+        "PROPERTY" -> NativeRootGroup.PROPERTY
+        else -> NativeRootGroup.KERNEL
     }
 
     private fun severityFromRaw(
         raw: String,
-    ): NativeRootFindingSeverity {
-        return when (raw) {
-            "DANGER" -> NativeRootFindingSeverity.DANGER
-            "WARNING" -> NativeRootFindingSeverity.WARNING
-            else -> NativeRootFindingSeverity.INFO
-        }
+    ): NativeRootFindingSeverity = when (raw) {
+        "DANGER" -> NativeRootFindingSeverity.DANGER
+        "WARNING" -> NativeRootFindingSeverity.WARNING
+        else -> NativeRootFindingSeverity.INFO
     }
 }

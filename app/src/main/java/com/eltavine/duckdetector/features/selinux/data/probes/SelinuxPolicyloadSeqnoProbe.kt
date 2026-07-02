@@ -41,20 +41,18 @@ data class SelinuxPolicyloadSeqnoResult(
 
 class SelinuxPolicyloadSeqnoProbe {
 
-    fun inspect(): SelinuxPolicyloadSeqnoResult {
-        return runCatching {
-            val status = readStatusStable()
-            val access = queryAccessDecision()
-            interpret(status, access)
-        }.getOrElse { throwable ->
-            SelinuxPolicyloadSeqnoResult(
-                state = SelinuxPolicyloadSeqnoState.UNAVAILABLE,
-                available = false,
-                probeAttempted = true,
-                failureReason = throwable.message ?: throwable.javaClass.simpleName,
-                notes = listOf(ZYGOTE_PRELOAD_NOTE),
-            )
-        }
+    fun inspect(): SelinuxPolicyloadSeqnoResult = runCatching {
+        val status = readStatusStable()
+        val access = queryAccessDecision()
+        interpret(status, access)
+    }.getOrElse { throwable ->
+        SelinuxPolicyloadSeqnoResult(
+            state = SelinuxPolicyloadSeqnoState.UNAVAILABLE,
+            available = false,
+            probeAttempted = true,
+            failureReason = throwable.message ?: throwable.javaClass.simpleName,
+            notes = listOf(ZYGOTE_PRELOAD_NOTE),
+        )
     }
 
     internal fun interpret(
@@ -139,18 +137,14 @@ class SelinuxPolicyloadSeqnoProbe {
         }
     }
 
-    private fun readProcessClass(): Int {
-        return FileInputStream(SELINUX_PROCESS_CLASS).use { input ->
-            input.bufferedReader().readText().trim().toIntOrNull()
-        } ?: throw IOException("SELinux process class was unreadable.")
-    }
+    private fun readProcessClass(): Int = FileInputStream(SELINUX_PROCESS_CLASS).use { input ->
+        input.bufferedReader().readText().trim().toIntOrNull()
+    } ?: throw IOException("SELinux process class was unreadable.")
 
-    private fun le32(bytes: ByteArray, offset: Int): Long {
-        return (bytes[offset].toLong() and 0xffL) or
-            ((bytes[offset + 1].toLong() and 0xffL) shl 8) or
-            ((bytes[offset + 2].toLong() and 0xffL) shl 16) or
-            ((bytes[offset + 3].toLong() and 0xffL) shl 24)
-    }
+    private fun le32(bytes: ByteArray, offset: Int): Long = (bytes[offset].toLong() and 0xffL) or
+        ((bytes[offset + 1].toLong() and 0xffL) shl 8) or
+        ((bytes[offset + 2].toLong() and 0xffL) shl 16) or
+        ((bytes[offset + 3].toLong() and 0xffL) shl 24)
 
     internal data class SelinuxStatus(
         val version: Long,

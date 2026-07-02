@@ -57,32 +57,31 @@ class MountRepositoryTest {
     }
 
     @Test
-    fun `preload mount id gap plus runtime mount id loophole yields one merged finding`() =
-        runBlocking {
-            val snapshot = cleanSnapshot().copy(
-                findings = listOf(
-                    MountNativeFinding(
-                        group = "CONSISTENCY",
-                        severity = "DANGER",
-                        label = "Mount ID loophole",
-                        value = "Gap after ART",
-                        detail = "Expected next ID 12, got 15",
-                    ),
+    fun `preload mount id gap plus runtime mount id loophole yields one merged finding`() = runBlocking {
+        val snapshot = cleanSnapshot().copy(
+            findings = listOf(
+                MountNativeFinding(
+                    group = "CONSISTENCY",
+                    severity = "DANGER",
+                    label = "Mount ID loophole",
+                    value = "Gap after ART",
+                    detail = "Expected next ID 12, got 15",
                 ),
-                mountIdLoopholeDetected = true,
-            )
+            ),
+            mountIdLoopholeDetected = true,
+        )
 
-            val report = MountRepository(
-                nativeBridge = FakeMountNativeBridge(snapshot = snapshot),
-                preloadResultProvider = { preloadResult(mountIdGapDetected = true) },
-            ).scan()
+        val report = MountRepository(
+            nativeBridge = FakeMountNativeBridge(snapshot = snapshot),
+            preloadResultProvider = { preloadResult(mountIdGapDetected = true) },
+        ).scan()
 
-            val mountIdFindings = report.findings.filter { it.label == "Mount ID loophole" }
-            assertEquals(1, mountIdFindings.size)
-            assertEquals("mount_id_loophole", mountIdFindings.single().id)
-            assertTrue(mountIdFindings.single().detail.orEmpty().contains("Startup preload:"))
-            assertTrue(mountIdFindings.single().detail.orEmpty().contains("Runtime mountinfo:"))
-        }
+        val mountIdFindings = report.findings.filter { it.label == "Mount ID loophole" }
+        assertEquals(1, mountIdFindings.size)
+        assertEquals("mount_id_loophole", mountIdFindings.single().id)
+        assertTrue(mountIdFindings.single().detail.orEmpty().contains("Startup preload:"))
+        assertTrue(mountIdFindings.single().detail.orEmpty().contains("Runtime mountinfo:"))
+    }
 
     @Test
     fun `no preload result keeps current mount behavior unchanged`() = runBlocking {
@@ -109,121 +108,114 @@ class MountRepositoryTest {
     }
 
     @Test
-    fun `stale preload context still merges stored evidence but marks context as non fresh`() =
-        runBlocking {
-            val report = MountRepository(
-                nativeBridge = FakeMountNativeBridge(snapshot = cleanSnapshot()),
-                preloadResultProvider = {
-                    preloadResult(
-                        futileHideDetected = true,
-                        contextValid = false,
-                    )
-                },
-            ).scan()
+    fun `stale preload context still merges stored evidence but marks context as non fresh`() = runBlocking {
+        val report = MountRepository(
+            nativeBridge = FakeMountNativeBridge(snapshot = cleanSnapshot()),
+            preloadResultProvider = {
+                preloadResult(
+                    futileHideDetected = true,
+                    contextValid = false,
+                )
+            },
+        ).scan()
 
-            assertTrue(report.earlyPreloadAvailable)
-            assertFalse(report.earlyPreloadContextValid)
-            assertTrue(report.findings.any { it.id == "early_preload_futile_hide" })
-        }
-
-    @Test
-    fun `small preload only data mirror mount id gap is suppressed as false positive`() =
-        runBlocking {
-            val report = MountRepository(
-                nativeBridge = FakeMountNativeBridge(snapshot = cleanSnapshot()),
-                preloadResultProvider = {
-                    EarlyMountPreloadResult(
-                        hasRun = true,
-                        detected = true,
-                        detectionMethod = "MountIdGap",
-                        details = "preload",
-                        mountIdGapDetected = true,
-                        findings = listOf(
-                            "MOUNT_ID_GAP|Missing 2 mount IDs before /data_mirror (first gap 12703-12704)|DANGER",
-                        ),
-                        source = EarlyMountPreloadSource.NATIVE,
-                    ).normalize()
-                },
-            ).scan()
-
-            assertTrue(report.earlyPreloadAvailable)
-            assertFalse(report.earlyPreloadDetected)
-            assertTrue(report.findings.none { it.id == "early_preload_mount_id_loophole" })
-        }
-
-    @Test
-    fun `small preload data mirror gap stays when runtime corroborates mount id loophole`() =
-        runBlocking {
-            val snapshot = cleanSnapshot().copy(
-                findings = listOf(
-                    MountNativeFinding(
-                        group = "CONSISTENCY",
-                        severity = "DANGER",
-                        label = "Mount ID loophole",
-                        value = "Gap after ART",
-                        detail = "Expected next ID 12, got 15",
-                    ),
-                ),
-                mountIdLoopholeDetected = true,
-            )
-
-            val report = MountRepository(
-                nativeBridge = FakeMountNativeBridge(snapshot = snapshot),
-                preloadResultProvider = {
-                    EarlyMountPreloadResult(
-                        hasRun = true,
-                        detected = true,
-                        detectionMethod = "MountIdGap",
-                        details = "preload",
-                        mountIdGapDetected = true,
-                        findings = listOf(
-                            "MOUNT_ID_GAP|Missing 2 mount IDs before /data_mirror (first gap 12703-12704)|DANGER",
-                        ),
-                        source = EarlyMountPreloadSource.NATIVE,
-                    ).normalize()
-                },
-            ).scan()
-
-            assertTrue(report.earlyPreloadDetected)
-            assertTrue(report.findings.any { it.label == "Mount ID loophole" })
-        }
-
-    private fun cleanSnapshot(): MountNativeSnapshot {
-        return MountNativeSnapshot(
-            available = true,
-            mountsReadable = true,
-            mountInfoReadable = true,
-            mapsReadable = true,
-            filesystemsReadable = true,
-            initNamespaceReadable = true,
-            statxSupported = true,
-            permissionTotal = 4,
-            permissionDenied = 0,
-            permissionAccessible = 4,
-            mountEntryCount = 32,
-            mountInfoEntryCount = 32,
-            mapLineCount = 128,
-        )
+        assertTrue(report.earlyPreloadAvailable)
+        assertFalse(report.earlyPreloadContextValid)
+        assertTrue(report.findings.any { it.id == "early_preload_futile_hide" })
     }
+
+    @Test
+    fun `small preload only data mirror mount id gap is suppressed as false positive`() = runBlocking {
+        val report = MountRepository(
+            nativeBridge = FakeMountNativeBridge(snapshot = cleanSnapshot()),
+            preloadResultProvider = {
+                EarlyMountPreloadResult(
+                    hasRun = true,
+                    detected = true,
+                    detectionMethod = "MountIdGap",
+                    details = "preload",
+                    mountIdGapDetected = true,
+                    findings = listOf(
+                        "MOUNT_ID_GAP|Missing 2 mount IDs before /data_mirror (first gap 12703-12704)|DANGER",
+                    ),
+                    source = EarlyMountPreloadSource.NATIVE,
+                ).normalize()
+            },
+        ).scan()
+
+        assertTrue(report.earlyPreloadAvailable)
+        assertFalse(report.earlyPreloadDetected)
+        assertTrue(report.findings.none { it.id == "early_preload_mount_id_loophole" })
+    }
+
+    @Test
+    fun `small preload data mirror gap stays when runtime corroborates mount id loophole`() = runBlocking {
+        val snapshot = cleanSnapshot().copy(
+            findings = listOf(
+                MountNativeFinding(
+                    group = "CONSISTENCY",
+                    severity = "DANGER",
+                    label = "Mount ID loophole",
+                    value = "Gap after ART",
+                    detail = "Expected next ID 12, got 15",
+                ),
+            ),
+            mountIdLoopholeDetected = true,
+        )
+
+        val report = MountRepository(
+            nativeBridge = FakeMountNativeBridge(snapshot = snapshot),
+            preloadResultProvider = {
+                EarlyMountPreloadResult(
+                    hasRun = true,
+                    detected = true,
+                    detectionMethod = "MountIdGap",
+                    details = "preload",
+                    mountIdGapDetected = true,
+                    findings = listOf(
+                        "MOUNT_ID_GAP|Missing 2 mount IDs before /data_mirror (first gap 12703-12704)|DANGER",
+                    ),
+                    source = EarlyMountPreloadSource.NATIVE,
+                ).normalize()
+            },
+        ).scan()
+
+        assertTrue(report.earlyPreloadDetected)
+        assertTrue(report.findings.any { it.label == "Mount ID loophole" })
+    }
+
+    private fun cleanSnapshot(): MountNativeSnapshot = MountNativeSnapshot(
+        available = true,
+        mountsReadable = true,
+        mountInfoReadable = true,
+        mapsReadable = true,
+        filesystemsReadable = true,
+        initNamespaceReadable = true,
+        statxSupported = true,
+        permissionTotal = 4,
+        permissionDenied = 0,
+        permissionAccessible = 4,
+        mountEntryCount = 32,
+        mountInfoEntryCount = 32,
+        mapLineCount = 128,
+    )
 
     private fun preloadResult(
         futileHideDetected: Boolean = false,
         mountIdGapDetected: Boolean = false,
         minorDevGapDetected: Boolean = false,
         contextValid: Boolean = true,
-    ): EarlyMountPreloadResult {
-        return EarlyMountPreloadResult(
-            hasRun = true,
-            detected = futileHideDetected || mountIdGapDetected || minorDevGapDetected,
-            detectionMethod = "Preload",
-            details = "preload",
-            futileHideDetected = futileHideDetected,
-            mountIdGapDetected = mountIdGapDetected,
-            minorDevGapDetected = minorDevGapDetected,
-            isContextValid = contextValid,
-            source = EarlyMountPreloadSource.NATIVE,
-        ).normalize()
-    }
+    ): EarlyMountPreloadResult = EarlyMountPreloadResult(
+        hasRun = true,
+        detected = futileHideDetected || mountIdGapDetected || minorDevGapDetected,
+        detectionMethod = "Preload",
+        details = "preload",
+        futileHideDetected = futileHideDetected,
+        mountIdGapDetected = mountIdGapDetected,
+        minorDevGapDetected = minorDevGapDetected,
+        isContextValid = contextValid,
+        source = EarlyMountPreloadSource.NATIVE,
+    ).normalize()
 
     private class FakeMountNativeBridge(
         private val snapshot: MountNativeSnapshot,

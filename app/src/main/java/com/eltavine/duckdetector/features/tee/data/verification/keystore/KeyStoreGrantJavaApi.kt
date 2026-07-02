@@ -19,8 +19,8 @@ package com.eltavine.duckdetector.features.tee.data.verification.keystore
 import android.content.Context
 import android.os.Build
 import android.security.keystore.KeyStoreManager
-import java.security.cert.X509Certificate
 import org.lsposed.hiddenapibypass.HiddenApiBypass
+import java.security.cert.X509Certificate
 
 internal interface KeyStoreGrantJavaApi {
     val stageLabel: String
@@ -89,18 +89,16 @@ internal object KeyStoreGrantJavaApis {
         )
     }
 
-    private fun loadClass(className: String): Class<*> {
-        return try {
-            Class.forName(className)
-        } catch (primary: ClassNotFoundException) {
+    private fun loadClass(className: String): Class<*> = try {
+        Class.forName(className)
+    } catch (primary: ClassNotFoundException) {
+        try {
+            ClassLoader.getSystemClassLoader().loadClass(className)
+        } catch (secondary: ClassNotFoundException) {
             try {
-                ClassLoader.getSystemClassLoader().loadClass(className)
-            } catch (secondary: ClassNotFoundException) {
-                try {
-                    HiddenApiBypass.invoke(Class::class.java, null, "forName", className) as Class<*>
-                } catch (throwable: Throwable) {
-                    throw ClassNotFoundException("Unable to load hidden class $className", throwable)
-                }
+                HiddenApiBypass.invoke(Class::class.java, null, "forName", className) as Class<*>
+            } catch (throwable: Throwable) {
+                throw ClassNotFoundException("Unable to load hidden class $className", throwable)
             }
         }
     }
@@ -116,27 +114,23 @@ internal data class KeyStoreGrantJavaApiResult(
     val throwable: Throwable? = null,
 ) {
     companion object {
-        fun available(api: KeyStoreGrantJavaApi): KeyStoreGrantJavaApiResult {
-            return KeyStoreGrantJavaApiResult(
-                available = true,
-                api = api,
-                stage = api.stageLabel,
-                detail = "${api.stageLabel}: available.",
-            )
-        }
+        fun available(api: KeyStoreGrantJavaApi): KeyStoreGrantJavaApiResult = KeyStoreGrantJavaApiResult(
+            available = true,
+            api = api,
+            stage = api.stageLabel,
+            detail = "${api.stageLabel}: available.",
+        )
 
         fun unavailable(
             stage: String,
             detail: String,
             throwable: Throwable? = null,
-        ): KeyStoreGrantJavaApiResult {
-            return KeyStoreGrantJavaApiResult(
-                available = false,
-                stage = stage,
-                detail = detail,
-                throwable = throwable,
-            )
-        }
+        ): KeyStoreGrantJavaApiResult = KeyStoreGrantJavaApiResult(
+            available = false,
+            stage = stage,
+            detail = detail,
+            throwable = throwable,
+        )
     }
 }
 
@@ -145,14 +139,10 @@ private class PublicKeyStoreGrantJavaApi(
 ) : KeyStoreGrantJavaApi {
     override val stageLabel: String = "Public"
 
-    override fun grantKeyAccess(alias: String, uid: Int): Long {
-        return manager.grantKeyAccess(alias, uid)
-    }
+    override fun grantKeyAccess(alias: String, uid: Int): Long = manager.grantKeyAccess(alias, uid)
 
-    override fun getGrantedCertificateChainFromId(grantId: Long): List<X509Certificate> {
-        return manager.getGrantedCertificateChainFromId(grantId)
-            .filterIsInstance<X509Certificate>()
-    }
+    override fun getGrantedCertificateChainFromId(grantId: Long): List<X509Certificate> = manager.getGrantedCertificateChainFromId(grantId)
+        .filterIsInstance<X509Certificate>()
 
     override fun revokeKeyAccess(alias: String, uid: Int) {
         manager.revokeKeyAccess(alias, uid)
@@ -165,13 +155,13 @@ private class HiddenKeyStoreGrantJavaApi(
 ) : KeyStoreGrantJavaApi {
     override val stageLabel: String = "Hidden"
 
-    override fun grantKeyAccess(alias: String, uid: Int): Long {
-        return (invokeHidden(
+    override fun grantKeyAccess(alias: String, uid: Int): Long = (
+        invokeHidden(
             name = "grantKeyAccess",
             parameterTypes = arrayOf(String::class.java, Int::class.javaPrimitiveType!!),
             args = arrayOf(alias, uid),
-        ) as Number).toLong()
-    }
+        ) as Number
+        ).toLong()
 
     override fun getGrantedCertificateChainFromId(grantId: Long): List<X509Certificate> {
         val raw = invokeHidden(
@@ -194,30 +184,26 @@ private class HiddenKeyStoreGrantJavaApi(
         name: String,
         parameterTypes: Array<Class<*>>,
         args: Array<Any?>,
-    ): Any? {
-        return try {
-            val method = managerClass.getDeclaredMethod(name, *parameterTypes)
-            method.isAccessible = true
-            method.invoke(manager, *args)
-        } catch (throwable: java.lang.reflect.InvocationTargetException) {
-            throw throwable.cause ?: throwable
-        } catch (throwable: Throwable) {
-            // Some Android releases keep these methods hidden from normal reflection even after class
-            // loading succeeds; HiddenApiBypass.invoke is the final Java-layer path before we give up.
-            // 部分 Android 版本即使类加载成功，也会把这些方法挡在普通反射之外；HiddenApiBypass.invoke 是放弃前最后一层 Java 路径。
-            try {
-                HiddenApiBypass.invoke(managerClass, manager, name, *args)
-            } catch (bypassThrowable: java.lang.reflect.InvocationTargetException) {
-                throw bypassThrowable.cause ?: bypassThrowable
-            }
+    ): Any? = try {
+        val method = managerClass.getDeclaredMethod(name, *parameterTypes)
+        method.isAccessible = true
+        method.invoke(manager, *args)
+    } catch (throwable: java.lang.reflect.InvocationTargetException) {
+        throw throwable.cause ?: throwable
+    } catch (throwable: Throwable) {
+        // Some Android releases keep these methods hidden from normal reflection even after class
+        // loading succeeds; HiddenApiBypass.invoke is the final Java-layer path before we give up.
+        // 部分 Android 版本即使类加载成功，也会把这些方法挡在普通反射之外；HiddenApiBypass.invoke 是放弃前最后一层 Java 路径。
+        try {
+            HiddenApiBypass.invoke(managerClass, manager, name, *args)
+        } catch (bypassThrowable: java.lang.reflect.InvocationTargetException) {
+            throw bypassThrowable.cause ?: bypassThrowable
         }
     }
 }
 
-private fun Any?.toX509CertificateList(): List<X509Certificate> {
-    return when (this) {
-        is Collection<*> -> filterIsInstance<X509Certificate>()
-        is Array<*> -> filterIsInstance<X509Certificate>()
-        else -> emptyList()
-    }
+private fun Any?.toX509CertificateList(): List<X509Certificate> = when (this) {
+    is Collection<*> -> filterIsInstance<X509Certificate>()
+    is Array<*> -> filterIsInstance<X509Certificate>()
+    else -> emptyList()
 }

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("ktlint:standard:function-naming")
+
 package com.eltavine.duckdetector.ui
 
 import android.Manifest
@@ -22,9 +24,17 @@ import android.os.SystemClock
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -32,22 +42,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eltavine.duckdetector.BuildConfig
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.CompositionLocalProvider
 import com.eltavine.duckdetector.core.notifications.ScanNotificationPermissions
 import com.eltavine.duckdetector.core.notifications.ScanProgressNotificationSnapshot
 import com.eltavine.duckdetector.core.notifications.ScanProgressNotifier
@@ -70,6 +72,9 @@ import com.eltavine.duckdetector.features.bootloader.presentation.BootloaderView
 import com.eltavine.duckdetector.features.customrom.presentation.CustomRomUiStage
 import com.eltavine.duckdetector.features.customrom.presentation.CustomRomUiState
 import com.eltavine.duckdetector.features.customrom.presentation.CustomRomViewModel
+import com.eltavine.duckdetector.features.dangerousapps.presentation.DangerousAppsUiStage
+import com.eltavine.duckdetector.features.dangerousapps.presentation.DangerousAppsUiState
+import com.eltavine.duckdetector.features.dangerousapps.presentation.DangerousAppsViewModel
 import com.eltavine.duckdetector.features.dashboard.ui.DashboardScreen
 import com.eltavine.duckdetector.features.dashboard.ui.model.DashboardDetectorCardEntry
 import com.eltavine.duckdetector.features.dashboard.ui.model.DashboardDetectorContribution
@@ -78,9 +83,6 @@ import com.eltavine.duckdetector.features.dashboard.ui.model.buildDashboardFindi
 import com.eltavine.duckdetector.features.dashboard.ui.model.buildDashboardOverview
 import com.eltavine.duckdetector.features.dashboard.ui.model.sortDashboardDetectorCards
 import com.eltavine.duckdetector.features.deviceinfo.presentation.DeviceInfoViewModel
-import com.eltavine.duckdetector.features.dangerousapps.presentation.DangerousAppsUiStage
-import com.eltavine.duckdetector.features.dangerousapps.presentation.DangerousAppsUiState
-import com.eltavine.duckdetector.features.dangerousapps.presentation.DangerousAppsViewModel
 import com.eltavine.duckdetector.features.kernelcheck.presentation.KernelCheckUiStage
 import com.eltavine.duckdetector.features.kernelcheck.presentation.KernelCheckUiState
 import com.eltavine.duckdetector.features.kernelcheck.presentation.KernelCheckViewModel
@@ -123,16 +125,15 @@ import com.eltavine.duckdetector.features.zygisk.presentation.ZygiskUiState
 import com.eltavine.duckdetector.features.zygisk.presentation.ZygiskViewModel
 import com.eltavine.duckdetector.ui.shell.AppDestination
 import com.eltavine.duckdetector.ui.shell.DetectorResultNoticeDialog
+import com.eltavine.duckdetector.ui.shell.FloatingAppTabSwitcher
 import com.eltavine.duckdetector.ui.shell.ScreenCaptureNoticeDialog
 import com.eltavine.duckdetector.ui.shell.ScreenCaptureNoticeEffect
-import com.eltavine.duckdetector.ui.shell.attentionDetectorTitles
-import com.eltavine.duckdetector.ui.shell.FloatingAppTabSwitcher
-import com.eltavine.duckdetector.ui.shell.StartupGateState
 import com.eltavine.duckdetector.ui.shell.StartupPackageVisibilityState
 import com.eltavine.duckdetector.ui.shell.StartupPolicyScreen
+import com.eltavine.duckdetector.ui.shell.attentionDetectorTitles
 import com.eltavine.duckdetector.ui.shell.resolveStartupGateState
-import com.eltavine.duckdetector.ui.shell.shouldShowDetectorResultNotice
 import com.eltavine.duckdetector.ui.shell.shouldCreateDetectorViewModels
+import com.eltavine.duckdetector.ui.shell.shouldShowDetectorResultNotice
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -251,11 +252,11 @@ fun DuckDetectorApp() {
             notificationPrefs = notificationPrefs,
             notificationPermissionState = notificationPermissionState,
             packageVisibilityLoaded = packageVisibilityState != null &&
-                    packageVisibilityReviewPrefs != null,
+                packageVisibilityReviewPrefs != null,
             packageVisibility = packageVisibilityState?.visibility
                 ?: com.eltavine.duckdetector.core.packagevisibility.InstalledPackageVisibility.UNKNOWN,
             packageVisibilityReviewAcknowledged =
-                packageVisibilityReviewPrefs?.restrictedInventoryAcknowledged == true,
+            packageVisibilityReviewPrefs?.restrictedInventoryAcknowledged == true,
         )
     }
     val startupPoliciesReady = shouldCreateDetectorViewModels(gateState)
@@ -337,7 +338,7 @@ fun DuckDetectorApp() {
                         teePrefs = teePrefs,
                         packageVisibilityState = packageVisibilityState,
                         packageVisibilityReviewAcknowledged =
-                            packageVisibilityReviewPrefs?.restrictedInventoryAcknowledged == true,
+                        packageVisibilityReviewPrefs?.restrictedInventoryAcknowledged == true,
                         onAllowNotifications = {
                             if (Build.VERSION.SDK_INT >= 33) {
                                 notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -398,9 +399,9 @@ fun DuckDetectorApp() {
 
             AlphaBuildWarningOverlay(
                 forceVisible = agreementAccepted &&
-                        startupPoliciesReady &&
-                        requiresAlphaAcknowledgement &&
-                        !alphaAcknowledged,
+                    startupPoliciesReady &&
+                    requiresAlphaAcknowledgement &&
+                    !alphaAcknowledged,
                 onDismissed = {
                     alphaAcknowledged = true
                 },
@@ -747,196 +748,166 @@ private fun StartupBootstrapLoadingScreen(
 
 private fun buildBootloaderContribution(
     bootloaderUiState: BootloaderUiState,
-): DashboardDetectorContribution {
-    return DashboardDetectorContribution(
-        id = "bootloader",
-        title = bootloaderUiState.cardModel.title,
-        status = bootloaderUiState.cardModel.status,
-        headline = bootloaderUiState.cardModel.verdict,
-        summary = bootloaderUiState.cardModel.summary,
-        ready = bootloaderUiState.stage != BootloaderUiStage.LOADING,
-    )
-}
+): DashboardDetectorContribution = DashboardDetectorContribution(
+    id = "bootloader",
+    title = bootloaderUiState.cardModel.title,
+    status = bootloaderUiState.cardModel.status,
+    headline = bootloaderUiState.cardModel.verdict,
+    summary = bootloaderUiState.cardModel.summary,
+    ready = bootloaderUiState.stage != BootloaderUiStage.LOADING,
+)
 
 private fun buildCustomRomContribution(
     customRomUiState: CustomRomUiState,
-): DashboardDetectorContribution {
-    return DashboardDetectorContribution(
-        id = "custom_rom",
-        title = customRomUiState.cardModel.title,
-        status = customRomUiState.cardModel.status,
-        headline = customRomUiState.cardModel.verdict,
-        summary = customRomUiState.cardModel.summary,
-        ready = customRomUiState.stage != CustomRomUiStage.LOADING,
-    )
-}
+): DashboardDetectorContribution = DashboardDetectorContribution(
+    id = "custom_rom",
+    title = customRomUiState.cardModel.title,
+    status = customRomUiState.cardModel.status,
+    headline = customRomUiState.cardModel.verdict,
+    summary = customRomUiState.cardModel.summary,
+    ready = customRomUiState.stage != CustomRomUiStage.LOADING,
+)
 
 private fun buildSelinuxContribution(
     selinuxUiState: SelinuxUiState,
-): DashboardDetectorContribution {
-    return DashboardDetectorContribution(
-        id = "selinux",
-        title = selinuxUiState.cardModel.title,
-        status = selinuxUiState.cardModel.status,
-        headline = selinuxUiState.cardModel.verdict,
-        summary = selinuxUiState.cardModel.summary,
-        ready = selinuxUiState.stage != SelinuxUiStage.LOADING,
-    )
-}
+): DashboardDetectorContribution = DashboardDetectorContribution(
+    id = "selinux",
+    title = selinuxUiState.cardModel.title,
+    status = selinuxUiState.cardModel.status,
+    headline = selinuxUiState.cardModel.verdict,
+    summary = selinuxUiState.cardModel.summary,
+    ready = selinuxUiState.stage != SelinuxUiStage.LOADING,
+)
 
 private fun buildKernelCheckContribution(
     kernelCheckUiState: KernelCheckUiState,
-): DashboardDetectorContribution {
-    return DashboardDetectorContribution(
-        id = "kernel_check",
-        title = kernelCheckUiState.cardModel.title,
-        status = kernelCheckUiState.cardModel.status,
-        headline = kernelCheckUiState.cardModel.verdict,
-        summary = kernelCheckUiState.cardModel.summary,
-        ready = kernelCheckUiState.stage != KernelCheckUiStage.LOADING,
-    )
-}
+): DashboardDetectorContribution = DashboardDetectorContribution(
+    id = "kernel_check",
+    title = kernelCheckUiState.cardModel.title,
+    status = kernelCheckUiState.cardModel.status,
+    headline = kernelCheckUiState.cardModel.verdict,
+    summary = kernelCheckUiState.cardModel.summary,
+    ready = kernelCheckUiState.stage != KernelCheckUiStage.LOADING,
+)
 
 private fun buildMountContribution(
     mountUiState: MountUiState,
-): DashboardDetectorContribution {
-    return DashboardDetectorContribution(
-        id = "mount",
-        title = mountUiState.cardModel.title,
-        status = mountUiState.cardModel.status,
-        headline = mountUiState.cardModel.verdict,
-        summary = mountUiState.cardModel.summary,
-        ready = mountUiState.stage != MountUiStage.LOADING,
-    )
-}
+): DashboardDetectorContribution = DashboardDetectorContribution(
+    id = "mount",
+    title = mountUiState.cardModel.title,
+    status = mountUiState.cardModel.status,
+    headline = mountUiState.cardModel.verdict,
+    summary = mountUiState.cardModel.summary,
+    ready = mountUiState.stage != MountUiStage.LOADING,
+)
 
 private fun buildMemoryContribution(
     memoryUiState: MemoryUiState,
-): DashboardDetectorContribution {
-    return DashboardDetectorContribution(
-        id = "memory",
-        title = memoryUiState.cardModel.title,
-        status = memoryUiState.cardModel.status,
-        headline = memoryUiState.cardModel.verdict,
-        summary = memoryUiState.cardModel.summary,
-        ready = memoryUiState.stage != MemoryUiStage.LOADING,
-    )
-}
+): DashboardDetectorContribution = DashboardDetectorContribution(
+    id = "memory",
+    title = memoryUiState.cardModel.title,
+    status = memoryUiState.cardModel.status,
+    headline = memoryUiState.cardModel.verdict,
+    summary = memoryUiState.cardModel.summary,
+    ready = memoryUiState.stage != MemoryUiStage.LOADING,
+)
 
 private fun buildLsposedContribution(
     lsposedUiState: LSPosedUiState,
-): DashboardDetectorContribution {
-    return DashboardDetectorContribution(
-        id = "lsposed",
-        title = lsposedUiState.cardModel.title,
-        status = lsposedUiState.cardModel.status,
-        headline = lsposedUiState.cardModel.verdict,
-        summary = lsposedUiState.cardModel.summary,
-        ready = lsposedUiState.stage != LSPosedUiStage.LOADING,
-    )
-}
+): DashboardDetectorContribution = DashboardDetectorContribution(
+    id = "lsposed",
+    title = lsposedUiState.cardModel.title,
+    status = lsposedUiState.cardModel.status,
+    headline = lsposedUiState.cardModel.verdict,
+    summary = lsposedUiState.cardModel.summary,
+    ready = lsposedUiState.stage != LSPosedUiStage.LOADING,
+)
 
 private fun buildPlayIntegrityFixContribution(
     playIntegrityFixUiState: PlayIntegrityFixUiState,
-): DashboardDetectorContribution {
-    return DashboardDetectorContribution(
-        id = "play_integrity_fix",
-        title = playIntegrityFixUiState.cardModel.title,
-        status = playIntegrityFixUiState.cardModel.status,
-        headline = playIntegrityFixUiState.cardModel.verdict,
-        summary = playIntegrityFixUiState.cardModel.summary,
-        ready = playIntegrityFixUiState.stage != PlayIntegrityFixUiStage.LOADING,
-    )
-}
+): DashboardDetectorContribution = DashboardDetectorContribution(
+    id = "play_integrity_fix",
+    title = playIntegrityFixUiState.cardModel.title,
+    status = playIntegrityFixUiState.cardModel.status,
+    headline = playIntegrityFixUiState.cardModel.verdict,
+    summary = playIntegrityFixUiState.cardModel.summary,
+    ready = playIntegrityFixUiState.stage != PlayIntegrityFixUiStage.LOADING,
+)
 
 private fun buildNativeRootContribution(
     nativeRootUiState: NativeRootUiState,
-): DashboardDetectorContribution {
-    return DashboardDetectorContribution(
-        id = "native_root",
-        title = nativeRootUiState.cardModel.title,
-        status = nativeRootUiState.cardModel.status,
-        headline = nativeRootUiState.cardModel.verdict,
-        summary = nativeRootUiState.cardModel.summary,
-        ready = nativeRootUiState.stage != NativeRootUiStage.LOADING,
-    )
-}
+): DashboardDetectorContribution = DashboardDetectorContribution(
+    id = "native_root",
+    title = nativeRootUiState.cardModel.title,
+    status = nativeRootUiState.cardModel.status,
+    headline = nativeRootUiState.cardModel.verdict,
+    summary = nativeRootUiState.cardModel.summary,
+    ready = nativeRootUiState.stage != NativeRootUiStage.LOADING,
+)
 
 private fun buildDangerousAppsContribution(
     dangerousAppsUiState: DangerousAppsUiState,
-): DashboardDetectorContribution {
-    return DashboardDetectorContribution(
-        id = "dangerous_apps",
-        title = dangerousAppsUiState.cardModel.title,
-        status = dangerousAppsUiState.cardModel.status,
-        headline = dangerousAppsUiState.cardModel.verdict,
-        summary = dangerousAppsUiState.cardModel.summary,
-        ready = dangerousAppsUiState.stage != DangerousAppsUiStage.LOADING,
-    )
-}
+): DashboardDetectorContribution = DashboardDetectorContribution(
+    id = "dangerous_apps",
+    title = dangerousAppsUiState.cardModel.title,
+    status = dangerousAppsUiState.cardModel.status,
+    headline = dangerousAppsUiState.cardModel.verdict,
+    summary = dangerousAppsUiState.cardModel.summary,
+    ready = dangerousAppsUiState.stage != DangerousAppsUiStage.LOADING,
+)
 
 private fun buildTeeContribution(
     teeUiState: TeeUiState,
-): DashboardDetectorContribution {
-    return DashboardDetectorContribution(
-        id = "tee",
-        title = teeUiState.cardModel.title,
-        status = teeUiState.cardModel.status,
-        headline = teeUiState.cardModel.verdict,
-        summary = teeUiState.cardModel.summary,
-        findingDetail = teeUiState.cardModel.findingDetail,
-        ready = teeUiState.stage != TeeUiStage.LOADING,
-    )
-}
+): DashboardDetectorContribution = DashboardDetectorContribution(
+    id = "tee",
+    title = teeUiState.cardModel.title,
+    status = teeUiState.cardModel.status,
+    headline = teeUiState.cardModel.verdict,
+    summary = teeUiState.cardModel.summary,
+    findingDetail = teeUiState.cardModel.findingDetail,
+    ready = teeUiState.stage != TeeUiStage.LOADING,
+)
 
 private fun buildSuContribution(
     suUiState: SuUiState,
-): DashboardDetectorContribution {
-    return DashboardDetectorContribution(
-        id = "su",
-        title = suUiState.cardModel.title,
-        status = suUiState.cardModel.status,
-        headline = suUiState.cardModel.verdict,
-        summary = suUiState.cardModel.summary,
-        ready = suUiState.stage != SuUiStage.LOADING,
-    )
-}
+): DashboardDetectorContribution = DashboardDetectorContribution(
+    id = "su",
+    title = suUiState.cardModel.title,
+    status = suUiState.cardModel.status,
+    headline = suUiState.cardModel.verdict,
+    summary = suUiState.cardModel.summary,
+    ready = suUiState.stage != SuUiStage.LOADING,
+)
 
 private fun buildSystemPropertiesContribution(
     systemPropertiesUiState: SystemPropertiesUiState,
-): DashboardDetectorContribution {
-    return DashboardDetectorContribution(
-        id = "system_properties",
-        title = systemPropertiesUiState.cardModel.title,
-        status = systemPropertiesUiState.cardModel.status,
-        headline = systemPropertiesUiState.cardModel.verdict,
-        summary = systemPropertiesUiState.cardModel.summary,
-        ready = systemPropertiesUiState.stage != SystemPropertiesUiStage.LOADING,
-    )
-}
+): DashboardDetectorContribution = DashboardDetectorContribution(
+    id = "system_properties",
+    title = systemPropertiesUiState.cardModel.title,
+    status = systemPropertiesUiState.cardModel.status,
+    headline = systemPropertiesUiState.cardModel.verdict,
+    summary = systemPropertiesUiState.cardModel.summary,
+    ready = systemPropertiesUiState.stage != SystemPropertiesUiStage.LOADING,
+)
 
 private fun buildZygiskContribution(
     zygiskUiState: ZygiskUiState,
-): DashboardDetectorContribution {
-    return DashboardDetectorContribution(
-        id = "zygisk",
-        title = zygiskUiState.cardModel.title,
-        status = zygiskUiState.cardModel.status,
-        headline = zygiskUiState.cardModel.verdict,
-        summary = zygiskUiState.cardModel.summary,
-        ready = zygiskUiState.stage != ZygiskUiStage.LOADING,
-    )
-}
+): DashboardDetectorContribution = DashboardDetectorContribution(
+    id = "zygisk",
+    title = zygiskUiState.cardModel.title,
+    status = zygiskUiState.cardModel.status,
+    headline = zygiskUiState.cardModel.verdict,
+    summary = zygiskUiState.cardModel.summary,
+    ready = zygiskUiState.stage != ZygiskUiStage.LOADING,
+)
 
 private fun buildVirtualizationContribution(
     virtualizationUiState: VirtualizationUiState,
-): DashboardDetectorContribution {
-    return DashboardDetectorContribution(
-        id = "virtualization",
-        title = virtualizationUiState.cardModel.title,
-        status = virtualizationUiState.cardModel.status,
-        headline = virtualizationUiState.cardModel.verdict,
-        summary = virtualizationUiState.cardModel.summary,
-        ready = virtualizationUiState.stage != VirtualizationUiStage.LOADING,
-    )
-}
+): DashboardDetectorContribution = DashboardDetectorContribution(
+    id = "virtualization",
+    title = virtualizationUiState.cardModel.title,
+    status = virtualizationUiState.cardModel.status,
+    headline = virtualizationUiState.cardModel.verdict,
+    summary = virtualizationUiState.cardModel.summary,
+    ready = virtualizationUiState.stage != VirtualizationUiStage.LOADING,
+)

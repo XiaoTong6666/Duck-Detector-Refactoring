@@ -37,54 +37,46 @@ class SystemPropertyReadUtils(
 
     fun collectNativeSnapshot(
         propertyNames: Collection<String>,
-    ): SystemPropertiesNativeSnapshot {
-        return nativeBridge.collectSnapshot(propertyNames)
-    }
+    ): SystemPropertiesNativeSnapshot = nativeBridge.collectSnapshot(propertyNames)
 
     fun readProperty(
         property: String,
         category: SystemPropertyCategory,
         cache: MutableMap<String, MultiSourcePropertyRead>,
         nativeSnapshot: SystemPropertiesNativeSnapshot,
-    ): MultiSourcePropertyRead {
-        return cache.getOrPut(property) {
-            val sourceValues = linkedMapOf<SystemPropertySource, String>()
-            sourceValues[SystemPropertySource.REFLECTION] = readViaReflection(property)
-            sourceValues[SystemPropertySource.GETPROP] = readViaGetprop(property)
-            sourceValues[SystemPropertySource.JVM] = readViaJvm(property)
-            sourceValues[SystemPropertySource.NATIVE_LIBC] = nativeSnapshot.libcValue(property)
+    ): MultiSourcePropertyRead = cache.getOrPut(property) {
+        val sourceValues = linkedMapOf<SystemPropertySource, String>()
+        sourceValues[SystemPropertySource.REFLECTION] = readViaReflection(property)
+        sourceValues[SystemPropertySource.GETPROP] = readViaGetprop(property)
+        sourceValues[SystemPropertySource.JVM] = readViaJvm(property)
+        sourceValues[SystemPropertySource.NATIVE_LIBC] = nativeSnapshot.libcValue(property)
 
-            val preferredSource = preferredSource(sourceValues)
-            MultiSourcePropertyRead(
-                property = property,
-                category = category,
-                preferredValue = sourceValues[preferredSource].orEmpty(),
-                preferredSource = preferredSource,
-                sourceValues = sourceValues,
-            )
-        }
+        val preferredSource = preferredSource(sourceValues)
+        MultiSourcePropertyRead(
+            property = property,
+            category = category,
+            preferredValue = sourceValues[preferredSource].orEmpty(),
+            preferredSource = preferredSource,
+            sourceValues = sourceValues,
+        )
     }
 
     private fun preferredSource(
         sourceValues: Map<SystemPropertySource, String>,
-    ): SystemPropertySource {
-        return listOf(
-            SystemPropertySource.REFLECTION,
-            SystemPropertySource.GETPROP,
-            SystemPropertySource.NATIVE_LIBC,
-            SystemPropertySource.JVM,
-        ).firstOrNull { sourceValues[it].isNullOrBlank().not() } ?: SystemPropertySource.REFLECTION
-    }
+    ): SystemPropertySource = listOf(
+        SystemPropertySource.REFLECTION,
+        SystemPropertySource.GETPROP,
+        SystemPropertySource.NATIVE_LIBC,
+        SystemPropertySource.JVM,
+    ).firstOrNull { sourceValues[it].isNullOrBlank().not() } ?: SystemPropertySource.REFLECTION
 
     private fun readViaReflection(
         property: String,
-    ): String {
-        return runCatching {
-            val clazz = Class.forName("android.os.SystemProperties")
-            val method = clazz.getMethod("get", String::class.java)
-            (method.invoke(null, property) as? String)?.trim().orEmpty()
-        }.getOrDefault("")
-    }
+    ): String = runCatching {
+        val clazz = Class.forName("android.os.SystemProperties")
+        val method = clazz.getMethod("get", String::class.java)
+        (method.invoke(null, property) as? String)?.trim().orEmpty()
+    }.getOrDefault("")
 
     private fun readViaGetprop(
         property: String,
@@ -95,11 +87,9 @@ class SystemPropertyReadUtils(
 
     private fun readViaJvm(
         property: String,
-    ): String {
-        return runCatching {
-            System.getProperty(property)?.trim().orEmpty()
-        }.getOrDefault("")
-    }
+    ): String = runCatching {
+        System.getProperty(property)?.trim().orEmpty()
+    }.getOrDefault("")
 
     private fun readGetpropSnapshot(): Map<String, String> {
         var process: Process? = null

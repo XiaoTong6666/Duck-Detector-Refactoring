@@ -316,13 +316,9 @@ class GrantSelfDomainFullChainSplitProbe(
         internal fun compareChains(
             ownerChain: GrantDomainCertificateChain,
             grantChain: GrantDomainCertificateChain,
-        ): GrantDomainFullChainComparison {
-            return GrantDomainFullChainSplitProbe.compareChains(ownerChain, grantChain)
-        }
+        ): GrantDomainFullChainComparison = GrantDomainFullChainSplitProbe.compareChains(ownerChain, grantChain)
 
-        internal fun appendDetail(detail: String, extra: String): String {
-            return appendGrantDetail(detail, extra)
-        }
+        internal fun appendDetail(detail: String, extra: String): String = appendGrantDetail(detail, extra)
 
         internal fun selectFinalResult(
             publicResult: GrantSelfDomainFullChainSplitResult,
@@ -351,10 +347,8 @@ class GrantSelfDomainFullChainSplitProbe(
     }
 }
 
-private fun GrantSelfDomainFullChainSplitResult.isDanger(): Boolean {
-    return anomalyKind == GrantSelfDomainAnomalyKind.SELF_CHAIN_SPLIT ||
-        anomalyKind == GrantSelfDomainAnomalyKind.SELF_GRANT_KEY_NOT_FOUND_AFTER_OWNER_CHAIN
-}
+private fun GrantSelfDomainFullChainSplitResult.isDanger(): Boolean = anomalyKind == GrantSelfDomainAnomalyKind.SELF_CHAIN_SPLIT ||
+    anomalyKind == GrantSelfDomainAnomalyKind.SELF_GRANT_KEY_NOT_FOUND_AFTER_OWNER_CHAIN
 
 data class GrantSelfDomainFullChainSplitResult(
     val executed: Boolean = false,

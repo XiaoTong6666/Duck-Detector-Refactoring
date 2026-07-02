@@ -59,39 +59,35 @@ data class SuReport(
         get() = suBinaries.isNotEmpty() || daemons.isNotEmpty() || selfContextAbnormal || suspiciousProcesses.isNotEmpty()
 
     companion object {
-        fun loading(): SuReport {
-            return SuReport(
-                stage = SuStage.LOADING,
-                suBinaries = emptyList(),
-                daemons = emptyList(),
-                selfContext = "",
-                selfContextAbnormal = false,
-                suspiciousProcesses = emptyList(),
-                nativeAvailable = true,
-                checkedSuPathCount = 0,
-                checkedDaemonPathCount = 0,
-                checkedProcessCount = 0,
-                deniedProcessCount = 0,
-                methods = emptyList(),
-            )
-        }
+        fun loading(): SuReport = SuReport(
+            stage = SuStage.LOADING,
+            suBinaries = emptyList(),
+            daemons = emptyList(),
+            selfContext = "",
+            selfContextAbnormal = false,
+            suspiciousProcesses = emptyList(),
+            nativeAvailable = true,
+            checkedSuPathCount = 0,
+            checkedDaemonPathCount = 0,
+            checkedProcessCount = 0,
+            deniedProcessCount = 0,
+            methods = emptyList(),
+        )
 
-        fun failed(message: String): SuReport {
-            return SuReport(
-                stage = SuStage.FAILED,
-                suBinaries = emptyList(),
-                daemons = emptyList(),
-                selfContext = "",
-                selfContextAbnormal = false,
-                suspiciousProcesses = emptyList(),
-                nativeAvailable = false,
-                checkedSuPathCount = 0,
-                checkedDaemonPathCount = 0,
-                checkedProcessCount = 0,
-                deniedProcessCount = 0,
-                methods = emptyList(),
-                errorMessage = message,
-            )
-        }
+        fun failed(message: String): SuReport = SuReport(
+            stage = SuStage.FAILED,
+            suBinaries = emptyList(),
+            daemons = emptyList(),
+            selfContext = "",
+            selfContextAbnormal = false,
+            suspiciousProcesses = emptyList(),
+            nativeAvailable = false,
+            checkedSuPathCount = 0,
+            checkedDaemonPathCount = 0,
+            checkedProcessCount = 0,
+            deniedProcessCount = 0,
+            methods = emptyList(),
+            errorMessage = message,
+        )
     }
 }

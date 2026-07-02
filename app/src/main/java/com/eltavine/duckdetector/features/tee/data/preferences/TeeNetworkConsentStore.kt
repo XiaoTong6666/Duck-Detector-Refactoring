@@ -24,10 +24,10 @@ import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStoreFile
-import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import java.io.IOException
 
 interface TeeNetworkPrefsStore {
     val prefs: Flow<TeeNetworkPrefs>
@@ -98,11 +98,9 @@ class TeeNetworkConsentStore private constructor(context: Context) : TeeNetworkP
         private val KEY_CRL_JSON = stringPreferencesKey("tee_crl_cache_json")
         private val KEY_CRL_FETCHED_AT = longPreferencesKey("tee_crl_cache_fetched_at")
 
-        fun getInstance(context: Context): TeeNetworkConsentStore {
-            return instance ?: synchronized(this) {
-                instance ?: TeeNetworkConsentStore(context.applicationContext).also { created ->
-                    instance = created
-                }
+        fun getInstance(context: Context): TeeNetworkConsentStore = instance ?: synchronized(this) {
+            instance ?: TeeNetworkConsentStore(context.applicationContext).also { created ->
+                instance = created
             }
         }
     }

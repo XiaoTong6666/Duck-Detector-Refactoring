@@ -75,7 +75,7 @@ class TimingAnomalyProbe {
                 detail = if (suspicious) {
                     "Signing looked unusually fast and steady (median=${median.toInt()}us, cv=${
                         "%.2f".format(
-                            cv
+                            cv,
                         )
                     }, jitter=${"%.2f".format(jitterRatio)})."
                 } else {

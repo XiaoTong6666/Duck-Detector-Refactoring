@@ -112,7 +112,7 @@ object CustomRomCatalog {
         CustomRomServiceSignature("vendor.lineage.health.IFastCharge/default", "LineageOS"),
         CustomRomServiceSignature(
             "vendor.lineage.livedisplay.IPictureAdjustment/default",
-            "LineageOS"
+            "LineageOS",
         ),
         CustomRomServiceSignature("vendor.lineage.touch.ITouchscreenGesture/default", "LineageOS"),
         CustomRomServiceSignature("vendor.lineage.livedisplay.IDisplayModes/default", "LineageOS"),

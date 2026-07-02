@@ -16,7 +16,6 @@
 
 package com.eltavine.duckdetector.features.tee.data.verification.keystore
 
-import android.os.Build
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -42,8 +41,8 @@ class Keystore2PrivateBinderClientTest {
         val selection = com.eltavine.duckdetector.features.tee.data.native.TeeRegisterTimerNativeBridge()
             .parseSelection(
                 "REGISTER_TIMER_AVAILABLE=1\n" +
-                        "TIMER_SOURCE=arm64_cntvct\n" +
-                        "AFFINITY=bound_cpu0\n"
+                    "TIMER_SOURCE=arm64_cntvct\n" +
+                    "AFFINITY=bound_cpu0\n",
             )
 
         assertTrue(selection.registerTimerAvailable)

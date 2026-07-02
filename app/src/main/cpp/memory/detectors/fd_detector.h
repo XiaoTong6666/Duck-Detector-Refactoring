@@ -23,7 +23,7 @@
 
 namespace duckdetector::memory {
 
-    FdSignals detect_fd_anomalies(const std::vector<MapEntry> &maps);
+FdSignals detect_fd_anomalies(const std::vector<MapEntry>& maps);
 
 }  // namespace duckdetector::memory
 

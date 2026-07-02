@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("ktlint:standard:function-naming")
+
 package com.eltavine.duckdetector.core.ui.components
 
 import androidx.compose.foundation.layout.Arrangement

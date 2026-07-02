@@ -84,16 +84,12 @@ open class SelinuxAuditLogcatReader {
         }
     }
 
-    private fun String?.isPermissionDenied(): Boolean {
-        return this?.contains("Permission denied", ignoreCase = true) == true ||
-                this?.contains("EACCES", ignoreCase = true) == true
-    }
+    private fun String?.isPermissionDenied(): Boolean = this?.contains("Permission denied", ignoreCase = true) == true ||
+        this?.contains("EACCES", ignoreCase = true) == true
 
-    private fun String?.isLogAccessDenied(): Boolean {
-        return isPermissionDenied() ||
-                this?.contains("not allowed to read logs", ignoreCase = true) == true ||
-                this?.contains("READ_LOGS", ignoreCase = true) == true
-    }
+    private fun String?.isLogAccessDenied(): Boolean = isPermissionDenied() ||
+        this?.contains("not allowed to read logs", ignoreCase = true) == true ||
+        this?.contains("READ_LOGS", ignoreCase = true) == true
 
     private companion object {
         private const val PROCESS_TIMEOUT_SECONDS = 5L

@@ -123,8 +123,8 @@ data class NativeRootReport(
     val runtimeFindings: List<NativeRootFinding>
         get() = findings.filter {
             it.group == NativeRootGroup.PATH ||
-                    it.group == NativeRootGroup.PROCESS ||
-                    it.group == NativeRootGroup.PACKAGE
+                it.group == NativeRootGroup.PROCESS ||
+                it.group == NativeRootGroup.PACKAGE
         }
 
     val cgroupFindings: List<NativeRootFinding>
@@ -158,44 +158,40 @@ data class NativeRootReport(
         }
 
     companion object {
-        fun loading(): NativeRootReport {
-            return NativeRootReport(
-                stage = NativeRootStage.LOADING,
-                findings = emptyList(),
-                rootDetected = false,
-                kernelSuDetected = false,
-                aPatchDetected = false,
-                magiskDetected = false,
-                susfsDetected = false,
-                kernelSuVersion = 0L,
-                nativeAvailable = true,
-                prctlProbeHit = false,
-                susfsProbeHit = false,
-                pathHitCount = 0,
-                pathCheckCount = 0,
-                processHitCount = 0,
-                processCheckedCount = 0,
-                processDeniedCount = 0,
-                cgroupAvailable = false,
-                cgroupPathCheckCount = 0,
-                cgroupAccessiblePathCount = 0,
-                cgroupProcessCheckedCount = 0,
-                cgroupProcDeniedCount = 0,
-                cgroupHitCount = 0,
-                kernelHitCount = 0,
-                kernelSourceCount = 0,
-                propertyHitCount = 0,
-                propertyCheckCount = 0,
-                methods = emptyList(),
-            )
-        }
+        fun loading(): NativeRootReport = NativeRootReport(
+            stage = NativeRootStage.LOADING,
+            findings = emptyList(),
+            rootDetected = false,
+            kernelSuDetected = false,
+            aPatchDetected = false,
+            magiskDetected = false,
+            susfsDetected = false,
+            kernelSuVersion = 0L,
+            nativeAvailable = true,
+            prctlProbeHit = false,
+            susfsProbeHit = false,
+            pathHitCount = 0,
+            pathCheckCount = 0,
+            processHitCount = 0,
+            processCheckedCount = 0,
+            processDeniedCount = 0,
+            cgroupAvailable = false,
+            cgroupPathCheckCount = 0,
+            cgroupAccessiblePathCount = 0,
+            cgroupProcessCheckedCount = 0,
+            cgroupProcDeniedCount = 0,
+            cgroupHitCount = 0,
+            kernelHitCount = 0,
+            kernelSourceCount = 0,
+            propertyHitCount = 0,
+            propertyCheckCount = 0,
+            methods = emptyList(),
+        )
 
-        fun failed(message: String): NativeRootReport {
-            return loading().copy(
-                stage = NativeRootStage.FAILED,
-                nativeAvailable = false,
-                errorMessage = message,
-            )
-        }
+        fun failed(message: String): NativeRootReport = loading().copy(
+            stage = NativeRootStage.FAILED,
+            nativeAvailable = false,
+            errorMessage = message,
+        )
     }
 }

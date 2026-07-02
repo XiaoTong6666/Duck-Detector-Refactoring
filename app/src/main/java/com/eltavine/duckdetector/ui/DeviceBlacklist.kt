@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("ktlint:standard:function-naming")
+
 package com.eltavine.duckdetector.ui
 
 import android.app.Activity
@@ -46,12 +48,10 @@ internal data class DeviceBlacklistMatch(
 
 internal object DeviceBlacklist {
 
-    fun matchCurrentDevice(): DeviceBlacklistMatch? {
-        return match(
-            manufacturer = Build.MANUFACTURER,
-            brand = Build.BRAND,
-        )
-    }
+    fun matchCurrentDevice(): DeviceBlacklistMatch? = match(
+        manufacturer = Build.MANUFACTURER,
+        brand = Build.BRAND,
+    )
 
     fun match(
         manufacturer: String?,
@@ -116,10 +116,8 @@ internal fun BlockedDeviceScreen(
     }
 }
 
-private tailrec fun Context.findActivity(): Activity? {
-    return when (this) {
-        is Activity -> this
-        is ContextWrapper -> baseContext.findActivity()
-        else -> null
-    }
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }

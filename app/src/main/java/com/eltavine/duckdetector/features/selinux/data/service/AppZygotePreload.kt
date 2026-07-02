@@ -90,13 +90,11 @@ class AppZygotePreload : ZygotePreload {
         target: String,
         targetClass: String,
         permission: String,
-    ): Boolean? {
-        return runCatching {
-            val selinuxClass = Class.forName("android.os.SELinux")
-            val method = resolveCheckSelinuxAccessMethod(selinuxClass)
-            method.invoke(null, source, target, targetClass, permission) as? Boolean
-        }.getOrNull()
-    }
+    ): Boolean? = runCatching {
+        val selinuxClass = Class.forName("android.os.SELinux")
+        val method = resolveCheckSelinuxAccessMethod(selinuxClass)
+        method.invoke(null, source, target, targetClass, permission) as? Boolean
+    }.getOrNull()
 
     private fun collectJavaCarrierSnapshot(
         currentUid: Int,
@@ -135,67 +133,53 @@ class AppZygotePreload : ZygotePreload {
     private fun invokeSelinuxBoolean(
         selinuxClass: Class<*>,
         methodName: String,
-    ): Boolean? {
-        return runCatching {
-            selinuxClass.getMethod(methodName).invoke(null) as? Boolean
-        }.getOrNull()
-    }
+    ): Boolean? = runCatching {
+        selinuxClass.getMethod(methodName).invoke(null) as? Boolean
+    }.getOrNull()
 
     private fun invokeSelinuxStringNoArgs(
         selinuxClass: Class<*>,
         methodName: String,
-    ): String? {
-        return runCatching {
-            selinuxClass.getMethod(methodName).invoke(null) as? String
-        }.getOrNull()
-    }
+    ): String? = runCatching {
+        selinuxClass.getMethod(methodName).invoke(null) as? String
+    }.getOrNull()
 
     private fun invokeSelinuxStringIntArg(
         selinuxClass: Class<*>,
         methodName: String,
         value: Int,
-    ): String? {
-        return runCatching {
-            selinuxClass.getMethod(methodName, Int::class.javaPrimitiveType).invoke(null, value) as? String
-        }.getOrNull()
-    }
+    ): String? = runCatching {
+        selinuxClass.getMethod(methodName, Int::class.javaPrimitiveType).invoke(null, value) as? String
+    }.getOrNull()
 
     private fun invokeSelinuxStringStringArg(
         selinuxClass: Class<*>,
         methodName: String,
         value: String,
-    ): String? {
-        return runCatching {
-            selinuxClass.getMethod(methodName, String::class.java).invoke(null, value) as? String
-        }.getOrNull()
-    }
+    ): String? = runCatching {
+        selinuxClass.getMethod(methodName, String::class.java).invoke(null, value) as? String
+    }.getOrNull()
 
-    private fun resolveCheckSelinuxAccessMethod(selinuxClass: Class<*>): Method {
-        return selinuxClass.getMethod(
-            "checkSELinuxAccess",
-            String::class.java,
-            String::class.java,
-            String::class.java,
-            String::class.java,
-        )
-    }
+    private fun resolveCheckSelinuxAccessMethod(selinuxClass: Class<*>): Method = selinuxClass.getMethod(
+        "checkSELinuxAccess",
+        String::class.java,
+        String::class.java,
+        String::class.java,
+        String::class.java,
+    )
 
-    private fun fallbackPayload(reason: String): String {
-        return SelinuxContextValidityPayloadCodec.encode(fallbackSnapshot(reason))
-    }
+    private fun fallbackPayload(reason: String): String = SelinuxContextValidityPayloadCodec.encode(fallbackSnapshot(reason))
 
-    private fun fallbackSnapshot(reason: String): SelinuxContextValiditySnapshot {
-        return SelinuxContextValiditySnapshot(
-            dirtyPolicyQueryMethod = DIRTY_POLICY_QUERY_METHOD,
-            dirtyPolicyFailureReason = reason,
-            dirtyPolicyNotes = listOf(FALLBACK_NOTE),
-            policyloadSeqnoState = SelinuxPolicyloadSeqnoState.UNAVAILABLE.name,
-            policyloadSeqnoFailureReason = reason,
-            policyloadSeqnoNotes = listOf(FALLBACK_NOTE),
-            failureReason = reason,
-            notes = listOf(FALLBACK_NOTE),
-        )
-    }
+    private fun fallbackSnapshot(reason: String): SelinuxContextValiditySnapshot = SelinuxContextValiditySnapshot(
+        dirtyPolicyQueryMethod = DIRTY_POLICY_QUERY_METHOD,
+        dirtyPolicyFailureReason = reason,
+        dirtyPolicyNotes = listOf(FALLBACK_NOTE),
+        policyloadSeqnoState = SelinuxPolicyloadSeqnoState.UNAVAILABLE.name,
+        policyloadSeqnoFailureReason = reason,
+        policyloadSeqnoNotes = listOf(FALLBACK_NOTE),
+        failureReason = reason,
+        notes = listOf(FALLBACK_NOTE),
+    )
 
     companion object {
         private const val APP_ZYGOTE_PREFIX = "u:r:app_zygote:s0"
@@ -228,27 +212,25 @@ class AppZygotePreload : ZygotePreload {
         internal fun mergeCarrierSelfCheckSnapshot(
             nativeSnapshot: SelinuxContextValiditySnapshot,
             javaCarrierSnapshot: SelinuxContextValiditySnapshot,
-        ): SelinuxContextValiditySnapshot {
-            return nativeSnapshot.copy(
-                available = nativeSnapshot.available || javaCarrierSnapshot.available,
-                probeAttempted = nativeSnapshot.probeAttempted || javaCarrierSnapshot.available,
-                carrierContext = javaCarrierSnapshot.carrierContext ?: nativeSnapshot.carrierContext,
-                carrierMatchesExpected = if (javaCarrierSnapshot.carrierContext != null) {
-                    javaCarrierSnapshot.carrierMatchesExpected
-                } else {
-                    nativeSnapshot.carrierMatchesExpected
-                },
-                selinuxEnabled = javaCarrierSnapshot.selinuxEnabled ?: nativeSnapshot.selinuxEnabled,
-                selinuxEnforced = javaCarrierSnapshot.selinuxEnforced ?: nativeSnapshot.selinuxEnforced,
-                pidContextMatchesCurrent = javaCarrierSnapshot.pidContextMatchesCurrent
-                    ?: nativeSnapshot.pidContextMatchesCurrent,
-                procSelfContextMatchesCurrent = javaCarrierSnapshot.procSelfContextMatchesCurrent
-                    ?: nativeSnapshot.procSelfContextMatchesCurrent,
-                dyntransitionCheckPassed = javaCarrierSnapshot.dyntransitionCheckPassed
-                    ?: nativeSnapshot.dyntransitionCheckPassed,
-                failureReason = nativeSnapshot.failureReason ?: javaCarrierSnapshot.failureReason,
-            )
-        }
+        ): SelinuxContextValiditySnapshot = nativeSnapshot.copy(
+            available = nativeSnapshot.available || javaCarrierSnapshot.available,
+            probeAttempted = nativeSnapshot.probeAttempted || javaCarrierSnapshot.available,
+            carrierContext = javaCarrierSnapshot.carrierContext ?: nativeSnapshot.carrierContext,
+            carrierMatchesExpected = if (javaCarrierSnapshot.carrierContext != null) {
+                javaCarrierSnapshot.carrierMatchesExpected
+            } else {
+                nativeSnapshot.carrierMatchesExpected
+            },
+            selinuxEnabled = javaCarrierSnapshot.selinuxEnabled ?: nativeSnapshot.selinuxEnabled,
+            selinuxEnforced = javaCarrierSnapshot.selinuxEnforced ?: nativeSnapshot.selinuxEnforced,
+            pidContextMatchesCurrent = javaCarrierSnapshot.pidContextMatchesCurrent
+                ?: nativeSnapshot.pidContextMatchesCurrent,
+            procSelfContextMatchesCurrent = javaCarrierSnapshot.procSelfContextMatchesCurrent
+                ?: nativeSnapshot.procSelfContextMatchesCurrent,
+            dyntransitionCheckPassed = javaCarrierSnapshot.dyntransitionCheckPassed
+                ?: nativeSnapshot.dyntransitionCheckPassed,
+            failureReason = nativeSnapshot.failureReason ?: javaCarrierSnapshot.failureReason,
+        )
 
         internal fun augmentPreloadSnapshot(
             baseSnapshot: SelinuxContextValiditySnapshot,
@@ -356,8 +338,10 @@ class AppZygotePreload : ZygotePreload {
                 "binder",
                 "call",
             )
-            if (accessControl.first == null && accessControl.second == null &&
-                negativeControl.first == null && negativeControl.second == null
+            if (accessControl.first == null &&
+                accessControl.second == null &&
+                negativeControl.first == null &&
+                negativeControl.second == null
             ) {
                 return dirtyPolicyBase.copy(
                     javaDirtyPolicyAvailable = false,
@@ -370,8 +354,10 @@ class AppZygotePreload : ZygotePreload {
             val negativeControlRejected =
                 negativeControl.stable.thenValue(negativeControl.first?.not())
             val controlsPassed =
-                accessControl.stable && accessControl.first == true &&
-                    negativeControl.stable && negativeControl.first == false
+                accessControl.stable &&
+                    accessControl.first == true &&
+                    negativeControl.stable &&
+                    negativeControl.first == false
             var stable = accessControl.stable && negativeControl.stable
 
             val systemServerExecmem = queryAccessPair(
@@ -612,15 +598,11 @@ class AppZygotePreload : ZygotePreload {
             target: String,
             targetClass: String,
             permission: String,
-        ): AccessPair {
-            return AccessPair(
-                first = checkAccess(source, target, targetClass, permission),
-                second = checkAccess(source, target, targetClass, permission),
-            )
-        }
+        ): AccessPair = AccessPair(
+            first = checkAccess(source, target, targetClass, permission),
+            second = checkAccess(source, target, targetClass, permission),
+        )
 
-        private fun <T> Boolean.thenValue(value: T?): T? {
-            return if (this) value else null
-        }
+        private fun <T> Boolean.thenValue(value: T?): T? = if (this) value else null
     }
 }

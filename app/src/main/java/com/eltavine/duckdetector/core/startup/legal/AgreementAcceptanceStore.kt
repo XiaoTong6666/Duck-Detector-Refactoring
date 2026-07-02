@@ -22,10 +22,10 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.preferencesDataStoreFile
-import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import java.io.IOException
 
 data class AgreementAcceptancePrefs(
     val accepted: Boolean,
@@ -64,11 +64,9 @@ class AgreementAcceptanceStore private constructor(
 
         private val KEY_ACCEPTED = booleanPreferencesKey("accepted")
 
-        fun getInstance(context: Context): AgreementAcceptanceStore {
-            return instance ?: synchronized(this) {
-                instance ?: AgreementAcceptanceStore(context.applicationContext).also { created ->
-                    instance = created
-                }
+        fun getInstance(context: Context): AgreementAcceptanceStore = instance ?: synchronized(this) {
+            instance ?: AgreementAcceptanceStore(context.applicationContext).also { created ->
+                instance = created
             }
         }
     }

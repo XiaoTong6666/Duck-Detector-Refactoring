@@ -16,11 +16,11 @@
 
 package com.eltavine.duckdetector.features.tee.data.verification.keystore
 
-import java.security.UnrecoverableKeyException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.security.UnrecoverableKeyException
 
 class GrantDomainFullChainSplitProbeTest {
 
@@ -316,11 +316,9 @@ class GrantDomainFullChainSplitProbeTest {
         assertEquals(GrantDomainAnomalyKind.ISOLATED_GRANT_KEY_NOT_FOUND_AFTER_OWNER_CHAIN, result.anomalyKind)
     }
 
-    private fun chain(vararg labels: String): GrantDomainCertificateChain {
-        return GrantDomainCertificateChain(
-            labels.map { label ->
-                GrantDomainCertificateFingerprint.fromDer(label.toByteArray())
-            },
-        )
-    }
+    private fun chain(vararg labels: String): GrantDomainCertificateChain = GrantDomainCertificateChain(
+        labels.map { label ->
+            GrantDomainCertificateFingerprint.fromDer(label.toByteArray())
+        },
+    )
 }

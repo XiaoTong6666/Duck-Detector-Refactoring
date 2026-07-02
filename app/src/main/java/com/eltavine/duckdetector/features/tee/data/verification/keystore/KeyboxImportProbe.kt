@@ -18,8 +18,8 @@ package com.eltavine.duckdetector.features.tee.data.verification.keystore
 
 import android.content.Context
 import android.os.Build
-import android.security.keystore.KeyProtection
 import android.security.keystore.KeyProperties
+import android.security.keystore.KeyProtection
 import com.eltavine.duckdetector.features.tee.data.keystore.AndroidKeyStoreTools
 import java.security.KeyStore
 import java.security.cert.X509Certificate

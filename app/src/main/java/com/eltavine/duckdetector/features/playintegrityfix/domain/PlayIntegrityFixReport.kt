@@ -116,29 +116,25 @@ data class PlayIntegrityFixReport(
         get() = directPropertyCount > 0 || consistencySignals.isNotEmpty() || nativeSignals.isNotEmpty()
 
     companion object {
-        fun loading(): PlayIntegrityFixReport {
-            return PlayIntegrityFixReport(
-                stage = PlayIntegrityFixStage.LOADING,
-                propertySignals = emptyList(),
-                consistencySignals = emptyList(),
-                nativeSignals = emptyList(),
-                checkedPropertyCount = 0,
-                reflectionHitCount = 0,
-                getpropHitCount = 0,
-                jvmHitCount = 0,
-                nativePropertyHitCount = 0,
-                nativeTraceCount = 0,
-                nativeAvailable = true,
-                methods = emptyList(),
-            )
-        }
+        fun loading(): PlayIntegrityFixReport = PlayIntegrityFixReport(
+            stage = PlayIntegrityFixStage.LOADING,
+            propertySignals = emptyList(),
+            consistencySignals = emptyList(),
+            nativeSignals = emptyList(),
+            checkedPropertyCount = 0,
+            reflectionHitCount = 0,
+            getpropHitCount = 0,
+            jvmHitCount = 0,
+            nativePropertyHitCount = 0,
+            nativeTraceCount = 0,
+            nativeAvailable = true,
+            methods = emptyList(),
+        )
 
-        fun failed(message: String): PlayIntegrityFixReport {
-            return loading().copy(
-                stage = PlayIntegrityFixStage.FAILED,
-                nativeAvailable = false,
-                errorMessage = message,
-            )
-        }
+        fun failed(message: String): PlayIntegrityFixReport = loading().copy(
+            stage = PlayIntegrityFixStage.FAILED,
+            nativeAvailable = false,
+            errorMessage = message,
+        )
     }
 }

@@ -38,11 +38,11 @@ import com.eltavine.duckdetector.features.dangerousapps.domain.DangerousAppsStag
 import com.eltavine.duckdetector.features.dangerousapps.domain.DangerousDetectionMethod
 import com.eltavine.duckdetector.features.dangerousapps.domain.DangerousDetectionMethodKind
 import com.eltavine.duckdetector.features.dangerousapps.domain.DangerousPackageVisibility
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 class DangerousAppsRepository(
     private val context: Context,
@@ -231,7 +231,7 @@ class DangerousAppsRepository(
         val hiddenFromPackageManager = if (packageVisibility == DangerousPackageVisibility.FULL) {
             findings.filter { finding ->
                 finding.target.packageName !in installedPackages &&
-                        finding.methods.any { it.kind != DangerousDetectionMethodKind.PACKAGE_MANAGER && it.hmaEligible }
+                    finding.methods.any { it.kind != DangerousDetectionMethodKind.PACKAGE_MANAGER && it.hmaEligible }
             }
         } else {
             emptyList()
@@ -253,41 +253,38 @@ class DangerousAppsRepository(
 
     private fun buildFindings(
         detectedApps: Map<String, MutableFinding>,
-    ): List<DangerousAppFinding> {
-        return DangerousAppsCatalog.targets.mapNotNull { target ->
-            detectedApps[target.packageName]?.let { finding ->
-                DangerousAppFinding(
-                    target = target,
-                    methods = finding.methods.sortedWith(
-                        compareBy<DangerousDetectionMethod>(
-                            { it.kind.ordinal },
-                            { it.displayText }),
+    ): List<DangerousAppFinding> = DangerousAppsCatalog.targets.mapNotNull { target ->
+        detectedApps[target.packageName]?.let { finding ->
+            DangerousAppFinding(
+                target = target,
+                methods = finding.methods.sortedWith(
+                    compareBy<DangerousDetectionMethod>(
+                        { it.kind.ordinal },
+                        { it.displayText },
                     ),
-                )
-            }
+                ),
+            )
         }
     }
 
     private fun buildProbeList(
         packageVisibility: DangerousPackageVisibility,
-    ): List<DangerousDetectionMethodKind> {
-        return buildList {
-            if (packageVisibility == DangerousPackageVisibility.FULL) {
-                add(DangerousDetectionMethodKind.PACKAGE_MANAGER)
-            }
-            add(DangerousDetectionMethodKind.CREATE_PACKAGE_CONTEXT_ZIP)
-            add(DangerousDetectionMethodKind.OPEN_APK_FD)
-            add(DangerousDetectionMethodKind.DIRECTORY_LISTING)
-            add(DangerousDetectionMethodKind.ZWC_BYPASS)
-            add(DangerousDetectionMethodKind.IGNORABLE_CODEPOINT_BYPASS)
-            add(DangerousDetectionMethodKind.FUSE_STAT)
-            add(DangerousDetectionMethodKind.NATIVE_DATA_STAT)
-            add(DangerousDetectionMethodKind.SPECIAL_PATH)
-            add(DangerousDetectionMethodKind.SCENE_LOOPBACK)
-            add(DangerousDetectionMethodKind.SCENE_BROADCAST)
-            add(DangerousDetectionMethodKind.THANOX_IPC)
-            add(DangerousDetectionMethodKind.ACCESSIBILITY_SERVICE)
+    ): List<DangerousDetectionMethodKind> = buildList {
+        if (packageVisibility == DangerousPackageVisibility.FULL) {
+            add(DangerousDetectionMethodKind.PACKAGE_MANAGER)
         }
+        add(DangerousDetectionMethodKind.CREATE_PACKAGE_CONTEXT_ZIP)
+        add(DangerousDetectionMethodKind.OPEN_APK_FD)
+        add(DangerousDetectionMethodKind.DIRECTORY_LISTING)
+        add(DangerousDetectionMethodKind.ZWC_BYPASS)
+        add(DangerousDetectionMethodKind.IGNORABLE_CODEPOINT_BYPASS)
+        add(DangerousDetectionMethodKind.FUSE_STAT)
+        add(DangerousDetectionMethodKind.NATIVE_DATA_STAT)
+        add(DangerousDetectionMethodKind.SPECIAL_PATH)
+        add(DangerousDetectionMethodKind.SCENE_LOOPBACK)
+        add(DangerousDetectionMethodKind.SCENE_BROADCAST)
+        add(DangerousDetectionMethodKind.THANOX_IPC)
+        add(DangerousDetectionMethodKind.ACCESSIBILITY_SERVICE)
     }
 
     private fun appendMethod(
@@ -423,16 +420,14 @@ class DangerousAppsRepository(
         }
     }
 
-    private fun detectSharedStorageBaselineDenied(): Boolean {
-        return SHARED_STORAGE_BASELINE_PATHS.all { path ->
-            try {
-                Os.stat(path)
-                false
-            } catch (e: ErrnoException) {
-                e.errno == OsConstants.EACCES || e.errno == OsConstants.EPERM
-            } catch (_: Exception) {
-                false
-            }
+    private fun detectSharedStorageBaselineDenied(): Boolean = SHARED_STORAGE_BASELINE_PATHS.all { path ->
+        try {
+            Os.stat(path)
+            false
+        } catch (e: ErrnoException) {
+            e.errno == OsConstants.EACCES || e.errno == OsConstants.EPERM
+        } catch (_: Exception) {
+            false
         }
     }
 
@@ -504,11 +499,15 @@ class DangerousAppsRepository(
                 lines.firstNotNullOfOrNull { line ->
                     val fields = line.split(" ")
                     val fstypeIdx = fields.indexOf("-")
-                    if (fstypeIdx >= 0 && fstypeIdx + 2 < fields.size &&
-                        fields[fstypeIdx + 1] == "debugfs") {
+                    if (fstypeIdx >= 0 &&
+                        fstypeIdx + 2 < fields.size &&
+                        fields[fstypeIdx + 1] == "debugfs"
+                    ) {
                         val match = hashRegex.matchEntire(fields[4].removePrefix("/dev"))
                         match?.groupValues?.getOrNull(1)
-                    } else null
+                    } else {
+                        null
+                    }
                 }
             }
         } catch (_: Exception) {
@@ -524,7 +523,9 @@ class DangerousAppsRepository(
                         val mountPoint = parts[1].removePrefix("/dev")
                         val match = hashRegex.matchEntire(mountPoint)
                         match?.groupValues?.getOrNull(1)
-                    } else null
+                    } else {
+                        null
+                    }
                 }
             }
         } catch (_: Exception) {
@@ -645,60 +646,52 @@ class DangerousAppsRepository(
             listOf(accessOutcome, statOutcome, openOutcome).any { it == PathProbeOutcome.EXISTS }
     }
 
-    private fun probeAccess(path: String): PathProbeOutcome {
-        return try {
-            Os.access(path, OsConstants.F_OK)
-            PathProbeOutcome.EXISTS
-        } catch (e: ErrnoException) {
-            when (e.errno) {
-                OsConstants.ENOENT -> PathProbeOutcome.MISSING
-                OsConstants.EACCES, OsConstants.EPERM -> PathProbeOutcome.UNKNOWN
-                else -> PathProbeOutcome.UNKNOWN
-            }
+    private fun probeAccess(path: String): PathProbeOutcome = try {
+        Os.access(path, OsConstants.F_OK)
+        PathProbeOutcome.EXISTS
+    } catch (e: ErrnoException) {
+        when (e.errno) {
+            OsConstants.ENOENT -> PathProbeOutcome.MISSING
+            OsConstants.EACCES, OsConstants.EPERM -> PathProbeOutcome.UNKNOWN
+            else -> PathProbeOutcome.UNKNOWN
         }
     }
 
-    private fun probeStat(path: String): PathProbeOutcome {
-        return try {
-            Os.stat(path)
-            PathProbeOutcome.EXISTS
-        } catch (e: ErrnoException) {
-            when (e.errno) {
-                OsConstants.ENOENT -> PathProbeOutcome.MISSING
-                OsConstants.EACCES, OsConstants.EPERM -> PathProbeOutcome.UNKNOWN
-                else -> PathProbeOutcome.UNKNOWN
-            }
+    private fun probeStat(path: String): PathProbeOutcome = try {
+        Os.stat(path)
+        PathProbeOutcome.EXISTS
+    } catch (e: ErrnoException) {
+        when (e.errno) {
+            OsConstants.ENOENT -> PathProbeOutcome.MISSING
+            OsConstants.EACCES, OsConstants.EPERM -> PathProbeOutcome.UNKNOWN
+            else -> PathProbeOutcome.UNKNOWN
         }
     }
 
-    private fun probeOpen(path: String): PathProbeOutcome {
-        return try {
-            val fd = Os.open(path, OsConstants.O_RDONLY, 0)
-            Os.close(fd)
-            PathProbeOutcome.EXISTS
-        } catch (e: ErrnoException) {
-            when (e.errno) {
-                OsConstants.ENOENT -> PathProbeOutcome.MISSING
-                OsConstants.EACCES, OsConstants.EPERM -> PathProbeOutcome.UNKNOWN
-                OsConstants.EISDIR -> PathProbeOutcome.EXISTS
-                else -> PathProbeOutcome.UNKNOWN
-            }
+    private fun probeOpen(path: String): PathProbeOutcome = try {
+        val fd = Os.open(path, OsConstants.O_RDONLY, 0)
+        Os.close(fd)
+        PathProbeOutcome.EXISTS
+    } catch (e: ErrnoException) {
+        when (e.errno) {
+            OsConstants.ENOENT -> PathProbeOutcome.MISSING
+            OsConstants.EACCES, OsConstants.EPERM -> PathProbeOutcome.UNKNOWN
+            OsConstants.EISDIR -> PathProbeOutcome.EXISTS
+            else -> PathProbeOutcome.UNKNOWN
         }
     }
 
-    private fun probeCreate(path: String): CreateProbeOutcome {
-        return try {
-            val fd = Os.open(path, OsConstants.O_CREAT or OsConstants.O_EXCL or OsConstants.O_WRONLY, 0)
-            Os.close(fd)
-            runCatching { Os.remove(path) }
-            CreateProbeOutcome.CREATED_BY_US
-        } catch (e: ErrnoException) {
-            when (e.errno) {
-                OsConstants.EEXIST -> CreateProbeOutcome.ALREADY_EXISTS
-                OsConstants.EACCES, OsConstants.EPERM -> CreateProbeOutcome.BLOCKED
-                OsConstants.ENOENT -> CreateProbeOutcome.MISSING
-                else -> CreateProbeOutcome.UNKNOWN
-            }
+    private fun probeCreate(path: String): CreateProbeOutcome = try {
+        val fd = Os.open(path, OsConstants.O_CREAT or OsConstants.O_EXCL or OsConstants.O_WRONLY, 0)
+        Os.close(fd)
+        runCatching { Os.remove(path) }
+        CreateProbeOutcome.CREATED_BY_US
+    } catch (e: ErrnoException) {
+        when (e.errno) {
+            OsConstants.EEXIST -> CreateProbeOutcome.ALREADY_EXISTS
+            OsConstants.EACCES, OsConstants.EPERM -> CreateProbeOutcome.BLOCKED
+            OsConstants.ENOENT -> CreateProbeOutcome.MISSING
+            else -> CreateProbeOutcome.UNKNOWN
         }
     }
 

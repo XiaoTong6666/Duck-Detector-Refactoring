@@ -157,49 +157,43 @@ class DashboardExportFormatter {
         DetectionSeverity.ALL_CLEAR -> "CLEAR"
     }
 
-    private fun headerFactsToPairs(facts: List<*>): List<Pair<String, String>> {
-        return try {
-            @Suppress("UNCHECKED_CAST")
-            facts.map { fact ->
-                val item = requireNotNull(fact)
-                val label = item::class.java.getDeclaredField("label").apply { isAccessible = true }.get(item) as String
-                val value = item::class.java.getDeclaredField("value").apply { isAccessible = true }.get(item) as String
-                label to value
-            }
-        } catch (_: Exception) {
-            emptyList()
+    private fun headerFactsToPairs(facts: List<*>): List<Pair<String, String>> = try {
+        @Suppress("UNCHECKED_CAST")
+        facts.map { fact ->
+            val item = requireNotNull(fact)
+            val label = item::class.java.getDeclaredField("label").apply { isAccessible = true }.get(item) as String
+            val value = item::class.java.getDeclaredField("value").apply { isAccessible = true }.get(item) as String
+            label to value
         }
+    } catch (_: Exception) {
+        emptyList()
     }
 
-    private fun detailRowsToTriples(rows: List<*>): List<Triple<String, String, String?>> {
-        return try {
-            @Suppress("UNCHECKED_CAST")
-            rows.map { row ->
-                val item = requireNotNull(row)
-                val label = item::class.java.getDeclaredField("label").apply { isAccessible = true }.get(item) as String
-                val value = item::class.java.getDeclaredField("value").apply { isAccessible = true }.get(item) as String
-                val detail = try {
-                    item::class.java.getDeclaredField("detail").apply { isAccessible = true }.get(item) as? String
-                } catch (_: Exception) {
-                    null
-                }
-                Triple(label, value, detail)
+    private fun detailRowsToTriples(rows: List<*>): List<Triple<String, String, String?>> = try {
+        @Suppress("UNCHECKED_CAST")
+        rows.map { row ->
+            val item = requireNotNull(row)
+            val label = item::class.java.getDeclaredField("label").apply { isAccessible = true }.get(item) as String
+            val value = item::class.java.getDeclaredField("value").apply { isAccessible = true }.get(item) as String
+            val detail = try {
+                item::class.java.getDeclaredField("detail").apply { isAccessible = true }.get(item) as? String
+            } catch (_: Exception) {
+                null
             }
-        } catch (_: Exception) {
-            emptyList()
+            Triple(label, value, detail)
         }
+    } catch (_: Exception) {
+        emptyList()
     }
 
-    private fun impactItemsToStrings(items: List<*>): List<String> {
-        return try {
-            @Suppress("UNCHECKED_CAST")
-            items.map { item ->
-                val nonNullItem = requireNotNull(item)
-                nonNullItem::class.java.getDeclaredField("text").apply { isAccessible = true }.get(nonNullItem) as String
-            }
-        } catch (_: Exception) {
-            emptyList()
+    private fun impactItemsToStrings(items: List<*>): List<String> = try {
+        @Suppress("UNCHECKED_CAST")
+        items.map { item ->
+            val nonNullItem = requireNotNull(item)
+            nonNullItem::class.java.getDeclaredField("text").apply { isAccessible = true }.get(nonNullItem) as String
         }
+    } catch (_: Exception) {
+        emptyList()
     }
 
     private fun StringBuilder.appendBootloader(model: BootloaderCardModel) {

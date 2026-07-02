@@ -102,8 +102,8 @@ data class LSPosedReport(
     val runtimeSignalCount: Int
         get() = signals.count {
             it.group == LSPosedSignalGroup.RUNTIME ||
-                    it.group == LSPosedSignalGroup.BINDER ||
-                    it.group == LSPosedSignalGroup.NATIVE
+                it.group == LSPosedSignalGroup.BINDER ||
+                it.group == LSPosedSignalGroup.NATIVE
         }
 
     val packageSignalCount: Int
@@ -122,43 +122,39 @@ data class LSPosedReport(
         get() = warningSignalCount > 0
 
     companion object {
-        fun loading(): LSPosedReport {
-            return LSPosedReport(
-                stage = LSPosedStage.LOADING,
-                nativeAvailable = true,
-                nativeHeapAvailable = true,
-                zygotePermissionAvailable = true,
-                runtimeArtifactAvailable = true,
-                logcatAvailable = true,
-                dirtyPolicyAvailable = true,
-                packageVisibility = LSPosedPackageVisibility.UNKNOWN,
-                signals = emptyList(),
-                methods = emptyList(),
-                managerPackageCount = 0,
-                moduleAppCount = 0,
-                classHitCount = 0,
-                classLoaderHitCount = 0,
-                bridgeFieldHitCount = 0,
-                stackHitCount = 0,
-                callbackHitCount = 0,
-                binderHitCount = 0,
-                runtimeArtifactHitCount = 0,
-                logcatHitCount = 0,
-                nativeMapsHitCount = 0,
-                nativeHeapHitCount = 0,
-                nativeHeapScannedRegions = 0,
-            )
-        }
+        fun loading(): LSPosedReport = LSPosedReport(
+            stage = LSPosedStage.LOADING,
+            nativeAvailable = true,
+            nativeHeapAvailable = true,
+            zygotePermissionAvailable = true,
+            runtimeArtifactAvailable = true,
+            logcatAvailable = true,
+            dirtyPolicyAvailable = true,
+            packageVisibility = LSPosedPackageVisibility.UNKNOWN,
+            signals = emptyList(),
+            methods = emptyList(),
+            managerPackageCount = 0,
+            moduleAppCount = 0,
+            classHitCount = 0,
+            classLoaderHitCount = 0,
+            bridgeFieldHitCount = 0,
+            stackHitCount = 0,
+            callbackHitCount = 0,
+            binderHitCount = 0,
+            runtimeArtifactHitCount = 0,
+            logcatHitCount = 0,
+            nativeMapsHitCount = 0,
+            nativeHeapHitCount = 0,
+            nativeHeapScannedRegions = 0,
+        )
 
-        fun failed(message: String): LSPosedReport {
-            return loading().copy(
-                stage = LSPosedStage.FAILED,
-                nativeAvailable = false,
-                nativeHeapAvailable = false,
-                zygotePermissionAvailable = false,
-                dirtyPolicyAvailable = false,
-                errorMessage = message,
-            )
-        }
+        fun failed(message: String): LSPosedReport = loading().copy(
+            stage = LSPosedStage.FAILED,
+            nativeAvailable = false,
+            nativeHeapAvailable = false,
+            zygotePermissionAvailable = false,
+            dirtyPolicyAvailable = false,
+            errorMessage = message,
+        )
     }
 }

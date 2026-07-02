@@ -77,25 +77,25 @@ class CgroupProcessLeakProbeTest {
         assertTrue(
             result.findings.any {
                 it.label == "Cgroup UID mismatch" &&
-                        it.severity == NativeRootFindingSeverity.WARNING
+                    it.severity == NativeRootFindingSeverity.WARNING
             },
         )
         assertTrue(
             result.findings.any {
                 it.label == "LSPosed companion residue" &&
-                        it.severity == NativeRootFindingSeverity.WARNING
+                    it.severity == NativeRootFindingSeverity.WARNING
             },
         )
         assertTrue(
             result.findings.any {
                 it.label == "LSPosed root-context process" &&
-                        it.severity == NativeRootFindingSeverity.WARNING
+                    it.severity == NativeRootFindingSeverity.WARNING
             },
         )
         assertTrue(
             result.findings.any {
                 it.label == "Selective cgroup visibility" &&
-                        it.severity == NativeRootFindingSeverity.DANGER
+                    it.severity == NativeRootFindingSeverity.DANGER
             },
         )
         assertEquals(4, result.hitCount)
@@ -140,13 +140,13 @@ class CgroupProcessLeakProbeTest {
         assertTrue(
             result.findings.any {
                 it.label == "Selective cgroup visibility" &&
-                        it.severity == NativeRootFindingSeverity.WARNING
+                    it.severity == NativeRootFindingSeverity.WARNING
             },
         )
         assertTrue(
             result.findings.none {
                 it.label == "Selective cgroup visibility" &&
-                        it.severity == NativeRootFindingSeverity.DANGER
+                    it.severity == NativeRootFindingSeverity.DANGER
             },
         )
     }

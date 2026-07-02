@@ -86,10 +86,11 @@ class LSPosedLogcatProbe(
 
             when {
                 id == PROCESS_COMMAND_ID -> signals += parseProcessOutput(output.output, emittedIds)
+
                 id.startsWith(TAG_COMMAND_PREFIX) -> signals += parseTagOutput(
                     id,
                     output.output,
-                    emittedIds
+                    emittedIds,
                 )
 
                 else -> signals += parseOverview(output.output, emittedIds)
@@ -122,7 +123,7 @@ class LSPosedLogcatProbe(
             tag?.let { currentTag ->
                 LSPosedProbeSupport.logcatTags.firstOrNull { knownTag ->
                     currentTag.equals(knownTag, ignoreCase = true) ||
-                            currentTag.contains(knownTag, ignoreCase = true)
+                        currentTag.contains(knownTag, ignoreCase = true)
                 }?.let { matchedTag ->
                     val signalId = "logcat_tag_${matchedTag.toSignalIdSegment()}"
                     if (emittedIds.add(signalId)) {
@@ -231,7 +232,7 @@ class LSPosedLogcatProbe(
     ): List<LSPosedSignal> {
         val line = meaningfulLines(output).firstOrNull { entry ->
             entry.contains("org.lsposed.daemon", ignoreCase = true) ||
-                    entry.contains("lsposed daemon", ignoreCase = true)
+                entry.contains("lsposed daemon", ignoreCase = true)
         } ?: return emptyList()
 
         val signalId = "logcat_process_lsposed_daemon"
@@ -251,14 +252,12 @@ class LSPosedLogcatProbe(
 
     private fun meaningfulLines(
         output: String,
-    ): List<String> {
-        return output.lineSequence()
-            .map { it.trim() }
-            .filter { it.isNotBlank() }
-            .filterNot { it.startsWith("---------") }
-            .filterNot(::shouldExcludeLine)
-            .toList()
-    }
+    ): List<String> = output.lineSequence()
+        .map { it.trim() }
+        .filter { it.isNotBlank() }
+        .filterNot { it.startsWith("---------") }
+        .filterNot(::shouldExcludeLine)
+        .toList()
 
     private fun shouldExcludeLine(
         line: String,
@@ -276,19 +275,19 @@ class LSPosedLogcatProbe(
     private fun String.isDirtyPolicyLsposedFileAvc(): Boolean {
         val lower = lowercase()
         return "avc:" in lower &&
-                "denied" in lower &&
-                "scontext=u:r:untrusted_app" in lower &&
-                "tcontext=u:object_r:lsposed_file:s0" in lower &&
-                "tclass=file" in lower &&
-                DIRTY_POLICY_LSPOSED_FILE_READ_REGEX.containsMatchIn(this)
+            "denied" in lower &&
+            "scontext=u:r:untrusted_app" in lower &&
+            "tcontext=u:object_r:lsposed_file:s0" in lower &&
+            "tclass=file" in lower &&
+            DIRTY_POLICY_LSPOSED_FILE_READ_REGEX.containsMatchIn(this)
     }
 
     private fun String.isSelinuxAvcLine(): Boolean {
         val lower = lowercase()
         return "avc:" in lower &&
-                "denied" in lower &&
-                "scontext=" in lower &&
-                "tcontext=" in lower
+            "denied" in lower &&
+            "scontext=" in lower &&
+            "tcontext=" in lower
     }
 
     private fun String.matchesPattern(
@@ -302,16 +301,16 @@ class LSPosedLogcatProbe(
 
         val isControlMessage = pattern.startsWith("!!")
         val isLsposedSpecific = pattern.contains("SystemClassLoader") ||
-                pattern.contains("InMemoryDexClassLoader") ||
-                pattern.contains("ObfuscationManager") ||
-                pattern.contains("startBootstrapHook") ||
-                pattern.contains("LoadedApk#")
+            pattern.contains("InMemoryDexClassLoader") ||
+            pattern.contains("ObfuscationManager") ||
+            pattern.contains("startBootstrapHook") ||
+            pattern.contains("LoadedApk#")
 
         return isControlMessage ||
-                isLsposedSpecific ||
-                lowerLine.contains("xposed") ||
-                lowerLine.contains("lsposed") ||
-                lowerLine.contains("module")
+            isLsposedSpecific ||
+            lowerLine.contains("xposed") ||
+            lowerLine.contains("lsposed") ||
+            lowerLine.contains("module")
     }
 
     private fun dangerSignal(
@@ -319,24 +318,20 @@ class LSPosedLogcatProbe(
         label: String,
         value: String,
         detail: String,
-    ): LSPosedSignal {
-        return LSPosedSignal(
-            id = id,
-            label = label,
-            value = value,
-            group = LSPosedSignalGroup.RUNTIME,
-            severity = LSPosedSignalSeverity.DANGER,
-            detail = detail,
-            detailMonospace = true,
-        )
-    }
+    ): LSPosedSignal = LSPosedSignal(
+        id = id,
+        label = label,
+        value = value,
+        group = LSPosedSignalGroup.RUNTIME,
+        severity = LSPosedSignalSeverity.DANGER,
+        detail = detail,
+        detailMonospace = true,
+    )
 
-    private fun String?.isLogAccessDenied(): Boolean {
-        return this?.contains("Permission denied", ignoreCase = true) == true ||
-                this?.contains("EACCES", ignoreCase = true) == true ||
-                this?.contains("not allowed to read logs", ignoreCase = true) == true ||
-                this?.contains("READ_LOGS", ignoreCase = true) == true
-    }
+    private fun String?.isLogAccessDenied(): Boolean = this?.contains("Permission denied", ignoreCase = true) == true ||
+        this?.contains("EACCES", ignoreCase = true) == true ||
+        this?.contains("not allowed to read logs", ignoreCase = true) == true ||
+        this?.contains("READ_LOGS", ignoreCase = true) == true
 
     private data class LogcatCommandSpec(
         val id: String,
@@ -375,7 +370,7 @@ class LSPosedLogcatProbe(
                                 "-s",
                                 "$tag:*",
                                 "-t",
-                                "50"
+                                "50",
                             ),
                         ),
                     )

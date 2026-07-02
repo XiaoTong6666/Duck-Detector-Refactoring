@@ -75,13 +75,13 @@ class AndroidAttestationCollector(
                 keyStore,
                 "${base}_rsa",
                 challenge,
-                useStrongBox
+                useStrongBox,
             )
             val ec = AndroidKeyStoreTools.generateAttestedEcChain(
                 keyStore,
                 "${base}_ec",
                 challenge,
-                useStrongBox
+                useStrongBox,
             )
             rsa to ec
         }.getOrDefault(emptyList<X509Certificate>() to emptyList()).also {

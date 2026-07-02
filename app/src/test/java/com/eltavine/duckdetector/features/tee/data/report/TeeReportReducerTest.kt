@@ -23,14 +23,13 @@ import com.eltavine.duckdetector.features.tee.data.attestation.AttestedDeviceInf
 import com.eltavine.duckdetector.features.tee.data.attestation.AttestedKeyProperties
 import com.eltavine.duckdetector.features.tee.data.attestation.RootOfTrustSnapshot
 import com.eltavine.duckdetector.features.tee.data.native.NativeTeeSnapshot
-import com.eltavine.duckdetector.features.tee.data.verification.certificate.ChainStructureResult
+import com.eltavine.duckdetector.features.tee.data.verification.boot.BootConsistencyResult
 import com.eltavine.duckdetector.features.tee.data.verification.certificate.CertificateTrustResult
+import com.eltavine.duckdetector.features.tee.data.verification.certificate.ChainStructureResult
 import com.eltavine.duckdetector.features.tee.data.verification.certificate.DualAlgorithmChainResult
 import com.eltavine.duckdetector.features.tee.data.verification.crl.CrlStatusResult
 import com.eltavine.duckdetector.features.tee.data.verification.crl.RevokedCertificate
 import com.eltavine.duckdetector.features.tee.data.verification.crl.RevokedCertificateEvidenceKind
-import com.eltavine.duckdetector.features.tee.data.verification.boot.BootConsistencyResult
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.IdAttestationResult
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.AesGcmRoundTripResult
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.BinderChainConsistencyResult
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.BinderHookBootstrapResult
@@ -40,16 +39,13 @@ import com.eltavine.duckdetector.features.tee.data.verification.keystore.GrantDo
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.GrantDomainFullChainSplitResult
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.GrantSelfDomainAnomalyKind
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.GrantSelfDomainFullChainSplitResult
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.SyntheticGrantGetKeyEntryAccessVectorBlindnessAnomalyKind
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.SyntheticGrantGetKeyEntryAccessVectorBlindnessResult
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.SyntheticGrantGranteeBlindReadbackAnomalyKind
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.SyntheticGrantGranteeBlindReadbackResult
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.IdAttestationResult
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.ImportKeyRetainedAttestationAnomalyKind
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.ImportKeyRetainedAttestationNarrativeResult
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.KeyLifecycleResult
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.KeyMintCapabilityResult
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.KeyMetadataSemanticsResult
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.KeyMetadataShapeResult
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.KeyMintCapabilityResult
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.KeyPairConsistencyResult
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.KeyboxImportProbe
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.KeyboxImportResult
@@ -65,6 +61,10 @@ import com.eltavine.duckdetector.features.tee.data.verification.keystore.PureCer
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.PureCertificateSecurityLevelResult
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.SupplementaryAttestationInfoAnomalyKind
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.SupplementaryAttestationInfoResult
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.SyntheticGrantGetKeyEntryAccessVectorBlindnessAnomalyKind
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.SyntheticGrantGetKeyEntryAccessVectorBlindnessResult
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.SyntheticGrantGranteeBlindReadbackAnomalyKind
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.SyntheticGrantGranteeBlindReadbackResult
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.TimingAnomalyResult
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.TimingSideChannelResult
 import com.eltavine.duckdetector.features.tee.data.verification.keystore.UpdateSubcomponentResult
@@ -83,8 +83,8 @@ import com.eltavine.duckdetector.features.tee.domain.TeeSoterState
 import com.eltavine.duckdetector.features.tee.domain.TeeTier
 import com.eltavine.duckdetector.features.tee.domain.TeeTrustRoot
 import com.eltavine.duckdetector.features.tee.domain.TeeVerdict
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -107,11 +107,14 @@ class TeeReportReducerTest {
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertEquals(1, report.supplementaryIndicatorCount)
         assertTrue(report.summary.contains("Java-hook", ignoreCase = true))
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Keystore2" && it.body.contains(
-                "Java-style"
-            )
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Keystore2" &&
+                    it.body.contains(
+                        "Java-style",
+                    )
+            },
+        )
     }
 
     @Test
@@ -129,9 +132,11 @@ class TeeReportReducerTest {
 
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertTrue(report.summary.contains("KEY_ID", ignoreCase = true))
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Metadata key" && it.body.contains("Descriptor mismatch")
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Metadata key" && it.body.contains("Descriptor mismatch")
+            },
+        )
     }
 
     @Test
@@ -152,14 +157,18 @@ class TeeReportReducerTest {
         assertEquals(1, report.supplementaryIndicatorCount)
         assertTrue(report.summary.contains("TEE Simulator generate-mode fingerprint", ignoreCase = true))
         assertTrue(report.signals.take(4).any { it.label == "Signals" })
-        assertTrue(report.signals.any {
-            it.label == "TEE Simulator generate-mode fingerprint" && it.value == "Matched"
-        })
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "TEE Simulator generate-mode fingerprint" &&
-                it.body.contains("TEE Simulator generate-mode fingerprint", ignoreCase = true) &&
-                it.hiddenCopyText == "reply raw hex dump"
-        })
+        assertTrue(
+            report.signals.any {
+                it.label == "TEE Simulator generate-mode fingerprint" && it.value == "Matched"
+            },
+        )
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "TEE Simulator generate-mode fingerprint" &&
+                    it.body.contains("TEE Simulator generate-mode fingerprint", ignoreCase = true) &&
+                    it.hiddenCopyText == "reply raw hex dump"
+            },
+        )
         assertFalse(report.exportText.contains("reply raw hex dump"))
     }
 
@@ -178,11 +187,13 @@ class TeeReportReducerTest {
         )
 
         assertEquals(0, report.supplementaryIndicatorCount)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "TEE Simulator generate-mode fingerprint" &&
-                it.body.contains("No TEE Simulator generate-mode fingerprint observed.", ignoreCase = true) &&
-                it.hiddenCopyText == "clean diagnostic"
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "TEE Simulator generate-mode fingerprint" &&
+                    it.body.contains("No TEE Simulator generate-mode fingerprint observed.", ignoreCase = true) &&
+                    it.hiddenCopyText == "clean diagnostic"
+            },
+        )
     }
 
     @Test
@@ -199,11 +210,13 @@ class TeeReportReducerTest {
         )
 
         assertEquals(0, report.supplementaryIndicatorCount)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "TEE Simulator generate-mode fingerprint" &&
-                it.body.contains("probe unavailable", ignoreCase = true) &&
-            it.hiddenCopyText == "unavailable diagnostic"
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "TEE Simulator generate-mode fingerprint" &&
+                    it.body.contains("probe unavailable", ignoreCase = true) &&
+                    it.hiddenCopyText == "unavailable diagnostic"
+            },
+        )
     }
 
     @Test
@@ -248,11 +261,13 @@ class TeeReportReducerTest {
 
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertEquals(1, report.supplementaryIndicatorCount)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "KeyMint VINTF" &&
-                it.level == TeeSignalLevel.FAIL &&
-                it.body.contains("did not match", ignoreCase = true)
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "KeyMint VINTF" &&
+                    it.level == TeeSignalLevel.FAIL &&
+                    it.body.contains("did not match", ignoreCase = true)
+            },
+        )
     }
 
     @Test
@@ -279,11 +294,13 @@ class TeeReportReducerTest {
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertEquals(1, report.supplementaryIndicatorCount)
         assertTrue(report.summary.contains("ImportKey retained attestation narrative", ignoreCase = true))
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "ImportKey narrative" &&
-                it.body.contains("Matched", ignoreCase = true) &&
-                it.level == TeeSignalLevel.FAIL
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "ImportKey narrative" &&
+                    it.body.contains("Matched", ignoreCase = true) &&
+                    it.level == TeeSignalLevel.FAIL
+            },
+        )
     }
 
     @Test
@@ -310,12 +327,14 @@ class TeeReportReducerTest {
 
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertEquals(1, report.supplementaryIndicatorCount)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "ImportKey narrative" &&
-                it.body.contains("Matched", ignoreCase = true) &&
-                it.body.contains("STALE_GENERATED_AFTER_IMPORT") &&
-                it.level == TeeSignalLevel.FAIL
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "ImportKey narrative" &&
+                    it.body.contains("Matched", ignoreCase = true) &&
+                    it.body.contains("STALE_GENERATED_AFTER_IMPORT") &&
+                    it.level == TeeSignalLevel.FAIL
+            },
+        )
     }
 
     @Test
@@ -330,11 +349,13 @@ class TeeReportReducerTest {
         )
 
         assertEquals(0, report.supplementaryIndicatorCount)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "ImportKey narrative" &&
-                it.body.contains("Unavailable", ignoreCase = true) &&
-                it.level == TeeSignalLevel.INFO
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "ImportKey narrative" &&
+                    it.body.contains("Unavailable", ignoreCase = true) &&
+                    it.level == TeeSignalLevel.INFO
+            },
+        )
     }
 
     @Test
@@ -351,12 +372,14 @@ class TeeReportReducerTest {
         )
 
         assertEquals(0, report.supplementaryIndicatorCount)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "ImportKey narrative" &&
-                it.body.contains("Unavailable", ignoreCase = true) &&
-                it.body.contains("ImportKey support gate failed") &&
-                it.level == TeeSignalLevel.INFO
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "ImportKey narrative" &&
+                    it.body.contains("Unavailable", ignoreCase = true) &&
+                    it.body.contains("ImportKey support gate failed") &&
+                    it.level == TeeSignalLevel.INFO
+            },
+        )
     }
 
     @Test
@@ -381,15 +404,17 @@ class TeeReportReducerTest {
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertEquals(1, report.supplementaryIndicatorCount)
         assertTrue(report.summary.contains("Grant isolated-domain", ignoreCase = true))
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Grant isolated-domain" &&
-                it.level == TeeSignalLevel.FAIL &&
-                it.body.contains("Matched", ignoreCase = true) &&
-                it.body.contains("kind=ISOLATED_CHAIN_SPLIT") &&
-                it.body.contains("mismatchIndex=2") &&
-                !it.body.contains("at com.example") &&
-                it.hiddenCopyText?.contains("at com.example.Grant.probe") == true
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Grant isolated-domain" &&
+                    it.level == TeeSignalLevel.FAIL &&
+                    it.body.contains("Matched", ignoreCase = true) &&
+                    it.body.contains("kind=ISOLATED_CHAIN_SPLIT") &&
+                    it.body.contains("mismatchIndex=2") &&
+                    !it.body.contains("at com.example") &&
+                    it.hiddenCopyText?.contains("at com.example.Grant.probe") == true
+            },
+        )
     }
 
     @Test
@@ -412,15 +437,17 @@ class TeeReportReducerTest {
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertEquals(1, report.supplementaryIndicatorCount)
         assertTrue(report.summary.contains("Grant isolated-domain key visibility divergence", ignoreCase = true))
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Grant isolated-domain" &&
-                it.level == TeeSignalLevel.FAIL &&
-                it.body.contains("Unavailable", ignoreCase = true) &&
-                it.body.contains("kind=ISOLATED_GRANT_KEY_NOT_FOUND_AFTER_OWNER_CHAIN") &&
-                it.body.contains("No key found by the given alias") &&
-                !it.body.contains("at com.example") &&
-                it.hiddenCopyText?.contains("at com.example.Grant.keyNotFound") == true
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Grant isolated-domain" &&
+                    it.level == TeeSignalLevel.FAIL &&
+                    it.body.contains("Unavailable", ignoreCase = true) &&
+                    it.body.contains("kind=ISOLATED_GRANT_KEY_NOT_FOUND_AFTER_OWNER_CHAIN") &&
+                    it.body.contains("No key found by the given alias") &&
+                    !it.body.contains("at com.example") &&
+                    it.hiddenCopyText?.contains("at com.example.Grant.keyNotFound") == true
+            },
+        )
     }
 
     @Test
@@ -450,12 +477,14 @@ class TeeReportReducerTest {
         assertEquals(1, report.supplementaryIndicatorCount)
         assertEquals(TeeSignalLevel.WARN, report.supplementaryReviewLevel)
         assertTrue(report.summary.contains("Grant isolated-domain", ignoreCase = true))
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Grant isolated-domain" &&
-                it.level == TeeSignalLevel.WARN &&
-                it.body.contains("isolated readback crashed", ignoreCase = true) &&
-                it.hiddenCopyText?.contains("No legacy keys for key descriptor") == true
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Grant isolated-domain" &&
+                    it.level == TeeSignalLevel.WARN &&
+                    it.body.contains("isolated readback crashed", ignoreCase = true) &&
+                    it.hiddenCopyText?.contains("No legacy keys for key descriptor") == true
+            },
+        )
     }
 
     @Test
@@ -470,11 +499,13 @@ class TeeReportReducerTest {
         )
 
         assertEquals(0, report.supplementaryIndicatorCount)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Grant isolated-domain" &&
-                it.level == TeeSignalLevel.INFO &&
-                it.body.contains("Unavailable", ignoreCase = true)
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Grant isolated-domain" &&
+                    it.level == TeeSignalLevel.INFO &&
+                    it.body.contains("Unavailable", ignoreCase = true)
+            },
+        )
     }
 
     @Test
@@ -499,13 +530,15 @@ class TeeReportReducerTest {
         assertEquals(1, report.supplementaryIndicatorCount)
         assertEquals(TeeSignalLevel.FAIL, report.supplementaryReviewLevel)
         assertTrue(report.summary.contains("Grant handle remained readable", ignoreCase = true))
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Grant caller binding" &&
-                it.level == TeeSignalLevel.FAIL &&
-                it.body.contains("NON_GRANTEE_READBACK_ALLOWED") &&
-                it.body.contains("ownerReplay=true") &&
-                it.hiddenCopyText == "grant caller binding diagnostic"
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Grant caller binding" &&
+                    it.level == TeeSignalLevel.FAIL &&
+                    it.body.contains("NON_GRANTEE_READBACK_ALLOWED") &&
+                    it.body.contains("ownerReplay=true") &&
+                    it.hiddenCopyText == "grant caller binding diagnostic"
+            },
+        )
     }
 
     @Test
@@ -525,11 +558,13 @@ class TeeReportReducerTest {
         )
 
         assertEquals(0, report.supplementaryIndicatorCount)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Grant caller binding" &&
-                it.level == TeeSignalLevel.PASS &&
-                it.body.contains("ownerReplay=KEY_NOT_FOUND")
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Grant caller binding" &&
+                    it.level == TeeSignalLevel.PASS &&
+                    it.body.contains("ownerReplay=KEY_NOT_FOUND")
+            },
+        )
     }
 
     @Test
@@ -537,18 +572,18 @@ class TeeReportReducerTest {
         val report = reducer.reduce(
             baseArtifacts(
                 syntheticGrantGetKeyEntryAccessVectorBlindness =
-                    SyntheticGrantGetKeyEntryAccessVectorBlindnessResult(
-                        executed = true,
-                        available = true,
-                        grantCreated = true,
-                        granteeUid = 99001,
-                        accessVector = 0x100,
-                        granteeReadSucceeded = true,
-                        anomalyKind =
-                            SyntheticGrantGetKeyEntryAccessVectorBlindnessAnomalyKind.GET_KEY_ENTRY_WITHOUT_GET_INFO_ALLOWED,
-                        detail = "Private: grantee getKeyEntry(GRANT) succeeded without GET_INFO.",
-                        diagnosticCopyText = "grant access-vector diagnostic",
-                    ),
+                SyntheticGrantGetKeyEntryAccessVectorBlindnessResult(
+                    executed = true,
+                    available = true,
+                    grantCreated = true,
+                    granteeUid = 99001,
+                    accessVector = 0x100,
+                    granteeReadSucceeded = true,
+                    anomalyKind =
+                    SyntheticGrantGetKeyEntryAccessVectorBlindnessAnomalyKind.GET_KEY_ENTRY_WITHOUT_GET_INFO_ALLOWED,
+                    detail = "Private: grantee getKeyEntry(GRANT) succeeded without GET_INFO.",
+                    diagnosticCopyText = "grant access-vector diagnostic",
+                ),
             ),
         )
 
@@ -556,13 +591,15 @@ class TeeReportReducerTest {
         assertEquals(1, report.supplementaryIndicatorCount)
         assertEquals(TeeSignalLevel.FAIL, report.supplementaryReviewLevel)
         assertTrue(report.summary.contains("without GET_INFO", ignoreCase = true))
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Grant access vector" &&
-                it.level == TeeSignalLevel.FAIL &&
-                it.body.contains("GET_KEY_ENTRY_WITHOUT_GET_INFO_ALLOWED") &&
-                it.body.contains("accessVector=256") &&
-                it.hiddenCopyText == "grant access-vector diagnostic"
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Grant access vector" &&
+                    it.level == TeeSignalLevel.FAIL &&
+                    it.body.contains("GET_KEY_ENTRY_WITHOUT_GET_INFO_ALLOWED") &&
+                    it.body.contains("accessVector=256") &&
+                    it.hiddenCopyText == "grant access-vector diagnostic"
+            },
+        )
     }
 
     @Test
@@ -570,24 +607,26 @@ class TeeReportReducerTest {
         val report = reducer.reduce(
             baseArtifacts(
                 syntheticGrantGetKeyEntryAccessVectorBlindness =
-                    SyntheticGrantGetKeyEntryAccessVectorBlindnessResult(
-                        executed = true,
-                        available = true,
-                        grantCreated = true,
-                        granteeUid = 99001,
-                        accessVector = 0x100,
-                        anomalyKind = SyntheticGrantGetKeyEntryAccessVectorBlindnessAnomalyKind.NONE,
-                        detail = "Private: grantee getKeyEntry(GRANT) rejected with PERMISSION_DENIED.",
-                    ),
+                SyntheticGrantGetKeyEntryAccessVectorBlindnessResult(
+                    executed = true,
+                    available = true,
+                    grantCreated = true,
+                    granteeUid = 99001,
+                    accessVector = 0x100,
+                    anomalyKind = SyntheticGrantGetKeyEntryAccessVectorBlindnessAnomalyKind.NONE,
+                    detail = "Private: grantee getKeyEntry(GRANT) rejected with PERMISSION_DENIED.",
+                ),
             ),
         )
 
         assertEquals(0, report.supplementaryIndicatorCount)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Grant access vector" &&
-                it.level == TeeSignalLevel.PASS &&
-                it.body.contains("granteeRead=PERMISSION_DENIED")
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Grant access vector" &&
+                    it.level == TeeSignalLevel.PASS &&
+                    it.body.contains("granteeRead=PERMISSION_DENIED")
+            },
+        )
     }
 
     @Test
@@ -612,15 +651,17 @@ class TeeReportReducerTest {
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertEquals(1, report.supplementaryIndicatorCount)
         assertTrue(report.summary.contains("Grant self-domain certificate-chain split", ignoreCase = true))
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Grant self-domain" &&
-                it.level == TeeSignalLevel.FAIL &&
-                it.body.contains("Matched", ignoreCase = true) &&
-                it.body.contains("kind=SELF_CHAIN_SPLIT") &&
-                it.body.contains("mismatchIndex=2") &&
-                !it.body.contains("at com.example") &&
-                it.hiddenCopyText?.contains("at com.example.Grant.selfSplit") == true
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Grant self-domain" &&
+                    it.level == TeeSignalLevel.FAIL &&
+                    it.body.contains("Matched", ignoreCase = true) &&
+                    it.body.contains("kind=SELF_CHAIN_SPLIT") &&
+                    it.body.contains("mismatchIndex=2") &&
+                    !it.body.contains("at com.example") &&
+                    it.hiddenCopyText?.contains("at com.example.Grant.selfSplit") == true
+            },
+        )
     }
 
     @Test
@@ -639,16 +680,18 @@ class TeeReportReducerTest {
 
         assertEquals(1, report.supplementaryIndicatorCount)
         assertTrue(report.summary.contains("Grant self-domain key visibility divergence", ignoreCase = true))
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Grant self-domain" &&
-                it.level == TeeSignalLevel.FAIL &&
-                it.body.contains("Unavailable", ignoreCase = true) &&
-                it.body.contains("kind=SELF_GRANT_KEY_NOT_FOUND_AFTER_OWNER_CHAIN") &&
-                it.body.contains("owner=4") &&
-                it.body.contains("No key found by the given alias") &&
-                !it.body.contains("at com.example") &&
-                it.hiddenCopyText?.contains("at com.example.Grant.selfKeyNotFound") == true
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Grant self-domain" &&
+                    it.level == TeeSignalLevel.FAIL &&
+                    it.body.contains("Unavailable", ignoreCase = true) &&
+                    it.body.contains("kind=SELF_GRANT_KEY_NOT_FOUND_AFTER_OWNER_CHAIN") &&
+                    it.body.contains("owner=4") &&
+                    it.body.contains("No key found by the given alias") &&
+                    !it.body.contains("at com.example") &&
+                    it.hiddenCopyText?.contains("at com.example.Grant.selfKeyNotFound") == true
+            },
+        )
     }
 
     @Test
@@ -663,12 +706,14 @@ class TeeReportReducerTest {
         )
 
         assertEquals(0, report.supplementaryIndicatorCount)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Grant self-domain" &&
-                it.level == TeeSignalLevel.INFO &&
-                it.body.contains("Unavailable", ignoreCase = true) &&
-                it.body.contains("transient service unavailable")
-            })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Grant self-domain" &&
+                    it.level == TeeSignalLevel.INFO &&
+                    it.body.contains("Unavailable", ignoreCase = true) &&
+                    it.body.contains("transient service unavailable")
+            },
+        )
     }
 
     @Test
@@ -676,21 +721,21 @@ class TeeReportReducerTest {
         val report = reducer.reduce(
             baseArtifacts(
                 updateSubcomponentStaleResponsePersistence =
-                    UpdateSubcomponentStaleResponsePersistenceResult(
-                        executed = true,
-                        available = true,
-                        supportGateClean = true,
-                        updateSucceeded = true,
-                        staleNarrativeDetected = true,
-                        priorChainLength = 3,
-                        postChainLength = 2,
-                        retainedCertificateCount = 1,
-                        postLeafMatchesMarker = false,
-                        anomalyKind =
-                            UpdateSubcomponentStaleResponseAnomalyKind.STALE_TEE_RESPONSE_AFTER_KEY_ID_UPDATE,
-                        retainedFingerprint = "abc123def456",
-                        detail = "kind=STALE_TEE_RESPONSE_AFTER_KEY_ID_UPDATE, retained=1",
-                    ),
+                UpdateSubcomponentStaleResponsePersistenceResult(
+                    executed = true,
+                    available = true,
+                    supportGateClean = true,
+                    updateSucceeded = true,
+                    staleNarrativeDetected = true,
+                    priorChainLength = 3,
+                    postChainLength = 2,
+                    retainedCertificateCount = 1,
+                    postLeafMatchesMarker = false,
+                    anomalyKind =
+                    UpdateSubcomponentStaleResponseAnomalyKind.STALE_TEE_RESPONSE_AFTER_KEY_ID_UPDATE,
+                    retainedFingerprint = "abc123def456",
+                    detail = "kind=STALE_TEE_RESPONSE_AFTER_KEY_ID_UPDATE, retained=1",
+                ),
             ),
         )
 
@@ -698,13 +743,15 @@ class TeeReportReducerTest {
         assertEquals(1, report.supplementaryIndicatorCount)
         assertEquals(TeeSignalLevel.FAIL, report.supplementaryReviewLevel)
         assertTrue(report.summary.contains("UpdateSubcomponent stale TEE response", ignoreCase = true))
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Update persistence" &&
-                it.level == TeeSignalLevel.FAIL &&
-                it.body.contains("Matched", ignoreCase = true) &&
-                it.body.contains("kind=STALE_TEE_RESPONSE_AFTER_KEY_ID_UPDATE") &&
-                it.body.contains("retained=1")
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Update persistence" &&
+                    it.level == TeeSignalLevel.FAIL &&
+                    it.body.contains("Matched", ignoreCase = true) &&
+                    it.body.contains("kind=STALE_TEE_RESPONSE_AFTER_KEY_ID_UPDATE") &&
+                    it.body.contains("retained=1")
+            },
+        )
     }
 
     @Test
@@ -721,38 +768,44 @@ class TeeReportReducerTest {
                     summary = "Abnormal Soter environment: Simplified Chinese locale on a likely Soter-supporting device, but PackageManager could not resolve com.tencent.soter.soterserver.",
                 ),
                 updateSubcomponentStaleResponsePersistence =
-                    UpdateSubcomponentStaleResponsePersistenceResult(
-                        executed = true,
-                        available = true,
-                        supportGateClean = true,
-                        updateSucceeded = true,
-                        staleNarrativeDetected = true,
-                        priorChainLength = 3,
-                        postChainLength = 2,
-                        retainedCertificateCount = 1,
-                        postLeafMatchesMarker = false,
-                        anomalyKind =
-                            UpdateSubcomponentStaleResponseAnomalyKind.STALE_TEE_RESPONSE_AFTER_KEY_ID_UPDATE,
-                        retainedFingerprint = "abc123def456",
-                        detail = "kind=STALE_TEE_RESPONSE_AFTER_KEY_ID_UPDATE, retained=1",
-                    ),
+                UpdateSubcomponentStaleResponsePersistenceResult(
+                    executed = true,
+                    available = true,
+                    supportGateClean = true,
+                    updateSucceeded = true,
+                    staleNarrativeDetected = true,
+                    priorChainLength = 3,
+                    postChainLength = 2,
+                    retainedCertificateCount = 1,
+                    postLeafMatchesMarker = false,
+                    anomalyKind =
+                    UpdateSubcomponentStaleResponseAnomalyKind.STALE_TEE_RESPONSE_AFTER_KEY_ID_UPDATE,
+                    retainedFingerprint = "abc123def456",
+                    detail = "kind=STALE_TEE_RESPONSE_AFTER_KEY_ID_UPDATE, retained=1",
+                ),
             ),
         )
 
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertEquals(2, report.supplementaryIndicatorCount)
         assertEquals(TeeSignalLevel.FAIL, report.supplementaryReviewLevel)
-        assertTrue(report.signals.any {
-            it.label == "Signals" && it.level == TeeSignalLevel.FAIL
-        })
+        assertTrue(
+            report.signals.any {
+                it.label == "Signals" && it.level == TeeSignalLevel.FAIL
+            },
+        )
         assertTrue(report.summary.contains("UpdateSubcomponent stale TEE response", ignoreCase = true))
         assertFalse(report.summary.contains("abnormal soter environment", ignoreCase = true))
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Soter" && it.level == TeeSignalLevel.WARN
-        })
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Update persistence" && it.level == TeeSignalLevel.FAIL
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Soter" && it.level == TeeSignalLevel.WARN
+            },
+        )
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Update persistence" && it.level == TeeSignalLevel.FAIL
+            },
+        )
     }
 
     @Test
@@ -760,28 +813,30 @@ class TeeReportReducerTest {
         val report = reducer.reduce(
             baseArtifacts(
                 updateSubcomponentStaleResponsePersistence =
-                    UpdateSubcomponentStaleResponsePersistenceResult(
-                        executed = true,
-                        available = true,
-                        supportGateClean = true,
-                        updateSucceeded = true,
-                        staleNarrativeDetected = false,
-                        priorChainLength = 3,
-                        postChainLength = 1,
-                        postLeafMatchesMarker = true,
-                        anomalyKind = UpdateSubcomponentStaleResponseAnomalyKind.NONE,
-                        detail = "kind=NONE, marker leaf returned.",
-                    ),
+                UpdateSubcomponentStaleResponsePersistenceResult(
+                    executed = true,
+                    available = true,
+                    supportGateClean = true,
+                    updateSucceeded = true,
+                    staleNarrativeDetected = false,
+                    priorChainLength = 3,
+                    postChainLength = 1,
+                    postLeafMatchesMarker = true,
+                    anomalyKind = UpdateSubcomponentStaleResponseAnomalyKind.NONE,
+                    detail = "kind=NONE, marker leaf returned.",
+                ),
             ),
         )
 
         assertEquals(0, report.supplementaryIndicatorCount)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Update persistence" &&
-                it.level == TeeSignalLevel.PASS &&
-                it.body.contains("Clean", ignoreCase = true) &&
-                it.body.contains("kind=NONE")
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Update persistence" &&
+                    it.level == TeeSignalLevel.PASS &&
+                    it.body.contains("Clean", ignoreCase = true) &&
+                    it.body.contains("kind=NONE")
+            },
+        )
     }
 
     @Test
@@ -789,22 +844,24 @@ class TeeReportReducerTest {
         val report = reducer.reduce(
             baseArtifacts(
                 updateSubcomponentStaleResponsePersistence =
-                    UpdateSubcomponentStaleResponsePersistenceResult(
-                        executed = false,
-                        supportGateClean = false,
-                        anomalyKind = UpdateSubcomponentStaleResponseAnomalyKind.UPDATE_SUBCOMPONENT_UNOBSERVABLE,
-                        detail = "UpdateSubcomponent support gate failed.",
-                    ),
+                UpdateSubcomponentStaleResponsePersistenceResult(
+                    executed = false,
+                    supportGateClean = false,
+                    anomalyKind = UpdateSubcomponentStaleResponseAnomalyKind.UPDATE_SUBCOMPONENT_UNOBSERVABLE,
+                    detail = "UpdateSubcomponent support gate failed.",
+                ),
             ),
         )
 
         assertEquals(0, report.supplementaryIndicatorCount)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Update persistence" &&
-                it.level == TeeSignalLevel.INFO &&
-                it.body.contains("Unavailable", ignoreCase = true) &&
-                it.body.contains("kind=UPDATE_SUBCOMPONENT_UNOBSERVABLE")
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Update persistence" &&
+                    it.level == TeeSignalLevel.INFO &&
+                    it.body.contains("Unavailable", ignoreCase = true) &&
+                    it.body.contains("kind=UPDATE_SUBCOMPONENT_UNOBSERVABLE")
+            },
+        )
     }
 
     @Test
@@ -823,9 +880,11 @@ class TeeReportReducerTest {
 
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertTrue(report.summary.contains("containsAlias()/aliases()", ignoreCase = true))
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "listEntries" && it.body.contains("mismatch", ignoreCase = true)
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "listEntries" && it.body.contains("mismatch", ignoreCase = true)
+            },
+        )
     }
 
     @Test
@@ -848,9 +907,11 @@ class TeeReportReducerTest {
         )
 
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Binder chain" && it.body.contains("diverged", ignoreCase = true)
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Binder chain" && it.body.contains("diverged", ignoreCase = true)
+            },
+        )
     }
 
     @Test
@@ -866,9 +927,11 @@ class TeeReportReducerTest {
         )
 
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Binder hook" && it.body.contains("failed", ignoreCase = true)
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Binder hook" && it.body.contains("failed", ignoreCase = true)
+            },
+        )
     }
 
     @Test
@@ -889,9 +952,11 @@ class TeeReportReducerTest {
         )
 
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Binder chain" && it.body.contains("deleteEntry left alias present", ignoreCase = true)
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Binder chain" && it.body.contains("deleteEntry left alias present", ignoreCase = true)
+            },
+        )
     }
 
     @Test
@@ -911,9 +976,11 @@ class TeeReportReducerTest {
         )
 
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Binder chain" && it.body.contains("Repeated active probe failed", ignoreCase = true)
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Binder chain" && it.body.contains("Repeated active probe failed", ignoreCase = true)
+            },
+        )
     }
 
     @Test
@@ -932,11 +999,13 @@ class TeeReportReducerTest {
             ),
         )
 
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Binder chain" &&
-                it.body.contains("Repeated active probe failed", ignoreCase = true) &&
-                it.body.contains("binder material unavailable", ignoreCase = true)
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Binder chain" &&
+                    it.body.contains("Repeated active probe failed", ignoreCase = true) &&
+                    it.body.contains("binder material unavailable", ignoreCase = true)
+            },
+        )
     }
 
     @Test
@@ -955,9 +1024,11 @@ class TeeReportReducerTest {
         )
 
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Patch mode" && it.body.contains("Leaf differed", ignoreCase = true)
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Patch mode" && it.body.contains("Leaf differed", ignoreCase = true)
+            },
+        )
     }
 
     @Test
@@ -978,9 +1049,11 @@ class TeeReportReducerTest {
         )
 
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Legacy keystore" && it.body.contains("diverged", ignoreCase = true)
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Legacy keystore" && it.body.contains("diverged", ignoreCase = true)
+            },
+        )
     }
 
     @Test
@@ -997,12 +1070,16 @@ class TeeReportReducerTest {
         )
 
         val checks = report.sections.single { it.title == "Checks" }.items
-        assertTrue(checks.any {
-            it.title == "Pure cert level" && it.body == "No security level exposed"
-        })
-        assertTrue(checks.any {
-            it.title == "Pure cert metadata" && it.body == "Metadata security level exposed"
-        })
+        assertTrue(
+            checks.any {
+                it.title == "Pure cert level" && it.body == "No security level exposed"
+            },
+        )
+        assertTrue(
+            checks.any {
+                it.title == "Pure cert metadata" && it.body == "Metadata security level exposed"
+            },
+        )
     }
 
     @Test
@@ -1040,9 +1117,11 @@ class TeeReportReducerTest {
 
         assertEquals(TeeVerdict.TAMPERED, report.verdict)
         assertTrue(report.signals.any { it.label == "Boot" && it.value == "Mismatch" })
-        assertTrue(report.sections.single { it.title == "Attestation" }.items.any {
-            it.title == "Boot consistency" && it.body.contains("Mismatch")
-        })
+        assertTrue(
+            report.sections.single { it.title == "Attestation" }.items.any {
+                it.title == "Boot consistency" && it.body.contains("Mismatch")
+            },
+        )
     }
 
     @Test
@@ -1057,9 +1136,11 @@ class TeeReportReducerTest {
         )
 
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
-        assertTrue(report.sections.single { it.title == "Attestation" }.items.any {
-            it.title == "Boot consistency" && it.body.contains("State only")
-        })
+        assertTrue(
+            report.sections.single { it.title == "Attestation" }.items.any {
+                it.title == "Boot consistency" && it.body.contains("State only")
+            },
+        )
     }
 
     @Test
@@ -1094,9 +1175,11 @@ class TeeReportReducerTest {
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertEquals(2, report.supplementaryIndicatorCount)
         assertTrue(report.summary.contains("GOT", ignoreCase = true))
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Native" && it.body.contains("GOT hook")
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Native" && it.body.contains("GOT hook")
+            },
+        )
     }
 
     @Test
@@ -1121,8 +1204,9 @@ class TeeReportReducerTest {
             ),
         )
 
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Native" &&
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Native" &&
                     it.body.contains("Honeypot") &&
                     it.body.contains("arm64_cntvct") &&
                     it.body.contains("bound_cpu0") &&
@@ -1132,7 +1216,8 @@ class TeeReportReducerTest {
                     it.body.contains("10.0us") &&
                     it.body.contains("1.67x") &&
                     it.body.contains("Keystore-style binder honeypot triggered on 2/3 timing runs.")
-        })
+            },
+        )
     }
 
     @Test
@@ -1155,8 +1240,9 @@ class TeeReportReducerTest {
             ),
         )
 
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Native" &&
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Native" &&
                     it.body.contains("41234ns") &&
                     it.body.contains("25011ns") &&
                     it.body.contains("24890ns") &&
@@ -1167,7 +1253,8 @@ class TeeReportReducerTest {
                     it.body.contains("1.66x") &&
                     it.body.contains("arm64_cntvct") &&
                     it.body.contains("bound_cpu0")
-        })
+            },
+        )
     }
 
     @Test
@@ -1184,16 +1271,20 @@ class TeeReportReducerTest {
 
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertEquals(0, report.supplementaryIndicatorCount)
-        assertTrue(report.signals.any {
-            it.label == "Signals" &&
+        assertTrue(
+            report.signals.any {
+                it.label == "Signals" &&
                     it.value == "0 policy hard • 0 policy review • 0 local" &&
                     it.level == TeeSignalLevel.PASS
-        })
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Timing" &&
+            },
+        )
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Timing" &&
                     it.body == "Fast/steady • 299us" &&
                     it.level == TeeSignalLevel.WARN
-        })
+            },
+        )
         assertEquals("Attestation, trust path, and revocation checks line up.", report.summary)
     }
 
@@ -1211,16 +1302,20 @@ class TeeReportReducerTest {
 
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertEquals(0, report.supplementaryIndicatorCount)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Timing" &&
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Timing" &&
                     it.body == "Median 300us" &&
                     it.level == TeeSignalLevel.INFO
-        })
-        assertTrue(report.signals.any {
-            it.label == "Signals" &&
+            },
+        )
+        assertTrue(
+            report.signals.any {
+                it.label == "Signals" &&
                     it.value == "0 policy hard • 0 policy review • 0 local" &&
                     it.level == TeeSignalLevel.PASS
-        })
+            },
+        )
     }
 
     @Test
@@ -1251,8 +1346,9 @@ class TeeReportReducerTest {
         assertTrue(report.summary.contains("timing side-channel", ignoreCase = true))
         assertTrue(report.summary.contains("supplementary", ignoreCase = true))
         assertTrue(report.summary.contains("ratio 1.53x exceeded 1.1x", ignoreCase = true))
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Timing side-channel" &&
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Timing side-channel" &&
                     it.body.contains("Register timer") &&
                     it.body.contains("attested 0.612ms") &&
                     it.body.contains("non-attested 0.400ms") &&
@@ -1263,7 +1359,8 @@ class TeeReportReducerTest {
                     it.body.contains("ratio 1.530x") &&
                     it.body.contains("threshold > 1.1x") &&
                     it.level == TeeSignalLevel.WARN
-        })
+            },
+        )
     }
 
     @Test
@@ -1292,8 +1389,9 @@ class TeeReportReducerTest {
 
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertEquals(0, report.supplementaryIndicatorCount)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Timing side-channel" &&
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Timing side-channel" &&
                     it.body.contains("ratio skipped") &&
                     it.body.contains("failedPairs=180/500") &&
                     it.body.contains("outlierFiltered=21/320") &&
@@ -1302,7 +1400,8 @@ class TeeReportReducerTest {
                     it.body.contains("Ratio skipped") &&
                     !it.body.contains("Positive") &&
                     it.level == TeeSignalLevel.INFO
-        })
+            },
+        )
     }
 
     @Test
@@ -1325,14 +1424,16 @@ class TeeReportReducerTest {
 
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertEquals(0, report.supplementaryIndicatorCount)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Timing side-channel" &&
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Timing side-channel" &&
                     it.body.contains("Fallback timer") &&
                     it.body.contains("diff 0.200ms") &&
                     it.body.contains("ratio n/a") &&
                     it.body.contains("Not positive") &&
                     it.level == TeeSignalLevel.INFO
-        })
+            },
+        )
     }
 
     @Test
@@ -1357,14 +1458,16 @@ class TeeReportReducerTest {
         assertEquals(1, report.supplementaryIndicatorCount)
         assertTrue(report.summary.contains("Fallback timer timing side-channel stayed supplementary"))
         assertTrue(report.summary.contains("ratio 4.50x exceeded 1.1x"))
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Timing side-channel" &&
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Timing side-channel" &&
                     it.body.contains("Fallback timer") &&
                     it.body.contains("diff -0.350ms") &&
                     it.body.contains("ratio 4.500x") &&
                     it.body.contains("threshold > 1.1x") &&
                     it.level == TeeSignalLevel.WARN
-        })
+            },
+        )
     }
 
     @Test
@@ -1389,18 +1492,22 @@ class TeeReportReducerTest {
 
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertEquals(0, report.supplementaryIndicatorCount)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Timing side-channel" &&
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Timing side-channel" &&
                     it.body.contains("Register timer") &&
                     it.body.contains("bound_cpu0") &&
                     it.body.contains("Measurement unavailable") &&
                     it.body.contains("reason Keystore2 getKeyEntry transact returned false") &&
                     it.level == TeeSignalLevel.INFO
-        })
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Timing side-channel" &&
-                it.hiddenCopyText?.contains("phase=warmup.attested[0]") == true
-        })
+            },
+        )
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Timing side-channel" &&
+                    it.hiddenCopyText?.contains("phase=warmup.attested[0]") == true
+            },
+        )
     }
 
     @Test
@@ -1432,16 +1539,20 @@ class TeeReportReducerTest {
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertEquals(1, report.supplementaryIndicatorCount)
         assertTrue(report.summary.contains("Detected malicious-module fingerprint during timing skip", ignoreCase = true))
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Timing side-channel" &&
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Timing side-channel" &&
                     it.body.contains("Detected malicious-module fingerprint") &&
                     it.body.contains("Register timer") &&
                     it.body.contains("bound_cpu0") &&
                     it.level == TeeSignalLevel.FAIL
-        })
-        assertFalse(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Timing side-channel" && it.body.contains("Measurement unavailable")
-        })
+            },
+        )
+        assertFalse(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Timing side-channel" && it.body.contains("Measurement unavailable")
+            },
+        )
     }
 
     @Test
@@ -1479,16 +1590,20 @@ class TeeReportReducerTest {
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertEquals(1, report.supplementaryIndicatorCount)
         assertTrue(report.summary.contains("Detected malicious-module fingerprint during timing skip", ignoreCase = true))
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Timing side-channel" &&
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Timing side-channel" &&
                     it.body.contains("Detected malicious-module fingerprint") &&
                     it.body.contains("Fallback timer") &&
                     it.body.contains("not_requested") &&
                     it.level == TeeSignalLevel.FAIL
-        })
-        assertFalse(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Timing side-channel" && it.body.contains("Measurement unavailable")
-        })
+            },
+        )
+        assertFalse(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Timing side-channel" && it.body.contains("Measurement unavailable")
+            },
+        )
     }
 
     @Test
@@ -1524,22 +1639,28 @@ class TeeReportReducerTest {
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertEquals(2, report.supplementaryIndicatorCount)
         assertTrue(report.summary.contains("Detected malicious-module fingerprint during timing skip", ignoreCase = true))
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Timing side-channel" &&
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Timing side-channel" &&
                     it.body.contains("Detected malicious-module fingerprint") &&
                     it.body.contains("Fallback timer") &&
                     it.body.contains("not_requested") &&
                     it.level == TeeSignalLevel.FAIL
-        })
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "TEE Simulator generate-mode fingerprint" &&
+            },
+        )
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "TEE Simulator generate-mode fingerprint" &&
                     it.body.contains("Matched TEE Simulator generate-mode fingerprint.") &&
                     it.level == TeeSignalLevel.FAIL &&
                     it.hiddenCopyText == null
-        })
-        assertFalse(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Timing side-channel" && it.body.contains("Measurement unavailable")
-        })
+            },
+        )
+        assertFalse(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Timing side-channel" && it.body.contains("Measurement unavailable")
+            },
+        )
     }
 
     @Test
@@ -1571,16 +1692,20 @@ class TeeReportReducerTest {
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertEquals(1, report.supplementaryIndicatorCount)
         assertTrue(report.summary.contains("private binder exception during timing skip", ignoreCase = true))
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Timing side-channel" &&
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Timing side-channel" &&
                     it.body.contains("Captured private binder exception during timing skip") &&
                     it.body.contains("Fallback timer") &&
                     it.body.contains("not_requested") &&
                     it.level == TeeSignalLevel.WARN
-        })
-        assertFalse(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Timing side-channel" && it.body.contains("Measurement unavailable")
-        })
+            },
+        )
+        assertFalse(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Timing side-channel" && it.body.contains("Measurement unavailable")
+            },
+        )
     }
 
     @Test
@@ -1604,8 +1729,9 @@ class TeeReportReducerTest {
             ),
         )
 
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Timing side-channel" &&
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Timing side-channel" &&
                     it.body.contains("Register timer") &&
                     it.body.contains("bound_cpu0") &&
                     it.body.contains("attested 0.280ms") &&
@@ -1613,7 +1739,8 @@ class TeeReportReducerTest {
                     it.body.contains("diff 0.160ms") &&
                     it.body.contains("Not positive") &&
                     it.level == TeeSignalLevel.INFO
-        })
+            },
+        )
     }
 
     @Test
@@ -1638,8 +1765,9 @@ class TeeReportReducerTest {
             ),
         )
 
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Timing side-channel" &&
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Timing side-channel" &&
                     it.body.contains("Register timer") &&
                     it.body.contains("bound_cpu0") &&
                     it.body.contains("attested 0.310ms") &&
@@ -1648,7 +1776,8 @@ class TeeReportReducerTest {
                     it.body.contains("Not positive") &&
                     it.body.contains("reason non-attested path unavailable") &&
                     it.level == TeeSignalLevel.INFO
-        })
+            },
+        )
     }
 
     @Test
@@ -1664,15 +1793,19 @@ class TeeReportReducerTest {
         )
 
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Indicators" && it.body == "0 policy hard • 0 policy review • 0 local"
-        })
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Native" &&
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Indicators" && it.body == "0 policy hard • 0 policy review • 0 local"
+            },
+        )
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Native" &&
                     it.body.contains("Syscall mismatch") &&
                     it.body.contains("vendor binder/libc", ignoreCase = true) &&
                     it.level == TeeSignalLevel.INFO
-        })
+            },
+        )
     }
 
     @Test
@@ -1687,19 +1820,23 @@ class TeeReportReducerTest {
                         "device",
                         "product",
                         "manufacturer",
-                        "model"
+                        "model",
                     ),
                     detail = "Attestation did not expose any comparable device identifiers.",
                 ),
             ),
         )
 
-        assertTrue(report.sections.single { it.title == "Attestation" }.items.any {
-            it.title == "Device IDs" && it.body == "Not included in attestation"
-        })
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "ID attestation" && it.body == "No comparable IDs exposed"
-        })
+        assertTrue(
+            report.sections.single { it.title == "Attestation" }.items.any {
+                it.title == "Device IDs" && it.body == "Not included in attestation"
+            },
+        )
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "ID attestation" && it.body == "No comparable IDs exposed"
+            },
+        )
     }
 
     @Test
@@ -1717,9 +1854,11 @@ class TeeReportReducerTest {
 
         assertEquals(TeeVerdict.SUSPICIOUS, report.verdict)
         assertTrue(report.summary.contains("256B"))
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Oversized challenge" && it.body.contains("256B") && it.body.contains("4096B")
-        })
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Oversized challenge" && it.body.contains("256B") && it.body.contains("4096B")
+            },
+        )
     }
 
     @Test
@@ -1736,11 +1875,13 @@ class TeeReportReducerTest {
 
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertEquals(0, report.supplementaryIndicatorCount)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Dual algorithm" &&
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Dual algorithm" &&
                     it.body.contains("difference observed") &&
                     it.level == TeeSignalLevel.INFO
-        })
+            },
+        )
     }
 
     @Test
@@ -1759,11 +1900,13 @@ class TeeReportReducerTest {
 
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertEquals(0, report.supplementaryIndicatorCount)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "StrongBox" &&
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "StrongBox" &&
                     it.body.contains("RSA-4096") &&
                     it.level == TeeSignalLevel.INFO
-        })
+            },
+        )
     }
 
     @Test
@@ -1783,11 +1926,13 @@ class TeeReportReducerTest {
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertEquals(1, report.supplementaryIndicatorCount)
         assertTrue(report.summary.contains("software-backed", ignoreCase = true))
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "AES-GCM" &&
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "AES-GCM" &&
                     it.body.contains("software-backed", ignoreCase = true) &&
                     it.level == TeeSignalLevel.WARN
-        })
+            },
+        )
     }
 
     @Test
@@ -1807,11 +1952,13 @@ class TeeReportReducerTest {
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertEquals(1, report.supplementaryIndicatorCount)
         assertTrue(report.summary.contains("AES-GCM", ignoreCase = true))
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "AES-GCM" &&
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "AES-GCM" &&
                     it.body.contains("Round-trip failed") &&
                     it.level == TeeSignalLevel.FAIL
-        })
+            },
+        )
     }
 
     @Test
@@ -1827,11 +1974,13 @@ class TeeReportReducerTest {
 
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertEquals(0, report.supplementaryIndicatorCount)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "AES-GCM" &&
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "AES-GCM" &&
                     it.body == "Skipped" &&
                     it.level == TeeSignalLevel.INFO
-        })
+            },
+        )
     }
 
     @Test
@@ -1857,11 +2006,13 @@ class TeeReportReducerTest {
         assertEquals(TeeTier.STRONGBOX, report.tier)
         assertEquals(0, report.supplementaryIndicatorCount)
         assertEquals("Attestation, trust path, and revocation checks line up.", report.summary)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "StrongBox" &&
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "StrongBox" &&
                     it.body.contains("did not expose a tier") &&
                     it.level == TeeSignalLevel.INFO
-        })
+            },
+        )
     }
 
     @Test
@@ -1881,11 +2032,13 @@ class TeeReportReducerTest {
         )
 
         assertEquals(TeeTier.STRONGBOX, report.tier)
-        assertTrue(report.sections.single { it.title == "Attestation" }.items.any {
-            it.title == "Tier" &&
+        assertTrue(
+            report.sections.single { it.title == "Attestation" }.items.any {
+                it.title == "Tier" &&
                     it.body.contains("StrongBox") &&
                     it.body.contains("attest TEE")
-        })
+            },
+        )
     }
 
     @Test
@@ -1905,11 +2058,13 @@ class TeeReportReducerTest {
         )
 
         assertEquals(TeeTier.SOFTWARE, report.tier)
-        assertTrue(report.sections.single { it.title == "Attestation" }.items.any {
-            it.title == "Tier" &&
+        assertTrue(
+            report.sections.single { it.title == "Attestation" }.items.any {
+                it.title == "Tier" &&
                     it.body.startsWith("Software") &&
                     it.body.contains("sb attest StrongBox")
-        })
+            },
+        )
     }
 
     @Test
@@ -1925,9 +2080,11 @@ class TeeReportReducerTest {
             ),
         )
 
-        assertTrue(report.sections.single { it.title == "Trust" }.items.any {
-            it.title == "CRL" && it.body.contains("Built-in snapshot")
-        })
+        assertTrue(
+            report.sections.single { it.title == "Trust" }.items.any {
+                it.title == "CRL" && it.body.contains("Built-in snapshot")
+            },
+        )
         assertTrue(report.signals.any { it.label == "CRL" && it.value == "Built-in" })
     }
 
@@ -1946,21 +2103,25 @@ class TeeReportReducerTest {
                         serial = "8616ef30679ed43cc2b43e3c97a2319e / 178194732304493...",
                         reason = "MASS_ABUSE",
                         evidenceKind = RevokedCertificateEvidenceKind.LOCAL_MASS_ABUSE,
-                    )
+                    ),
                 ),
             ),
         )
 
         assertEquals(TeeVerdict.SUSPICIOUS, report.verdict)
         assertTrue(report.summary.contains("mass abuse", ignoreCase = true))
-        assertTrue(report.sections.single { it.title == "Trust" }.items.any {
-            it.title == "CRL" &&
+        assertTrue(
+            report.sections.single { it.title == "Trust" }.items.any {
+                it.title == "CRL" &&
                     it.body.contains("mass abuse", ignoreCase = true) &&
                     it.level == TeeSignalLevel.WARN
-        })
-        assertTrue(report.signals.any {
-            it.label == "CRL" && it.value == "Mass abuse" && it.level == TeeSignalLevel.WARN
-        })
+            },
+        )
+        assertTrue(
+            report.signals.any {
+                it.label == "CRL" && it.value == "Mass abuse" && it.level == TeeSignalLevel.WARN
+            },
+        )
     }
 
     @Test
@@ -1975,20 +2136,24 @@ class TeeReportReducerTest {
                     RevokedCertificate(
                         serial = "8616ef30679ed43cc2b43e3c97a2319e / 178194732304493...",
                         reason = "KEY_COMPROMISE",
-                    )
+                    ),
                 ),
             ),
         )
 
         assertEquals(TeeVerdict.TAMPERED, report.verdict)
-        assertTrue(report.sections.single { it.title == "Trust" }.items.any {
-            it.title == "CRL" &&
+        assertTrue(
+            report.sections.single { it.title == "Trust" }.items.any {
+                it.title == "CRL" &&
                     it.body.contains("revoked", ignoreCase = true) &&
                     it.level == TeeSignalLevel.FAIL
-        })
-        assertTrue(report.signals.any {
-            it.label == "CRL" && it.value == "Revoked" && it.level == TeeSignalLevel.FAIL
-        })
+            },
+        )
+        assertTrue(
+            report.signals.any {
+                it.label == "CRL" && it.value == "Revoked" && it.level == TeeSignalLevel.FAIL
+            },
+        )
     }
 
     @Test
@@ -2006,11 +2171,13 @@ class TeeReportReducerTest {
             ),
         )
 
-        assertTrue(report.sections.single { it.title == "Trust" }.items.any {
-            it.title == "CRL" &&
+        assertTrue(
+            report.sections.single { it.title == "Trust" }.items.any {
+                it.title == "CRL" &&
                     it.body.contains("Built-in snapshot") &&
                     it.body.contains("timed out")
-        })
+            },
+        )
         assertTrue(report.signals.any { it.label == "CRL" && it.value == "Built-in" && it.level == TeeSignalLevel.WARN })
     }
 
@@ -2035,7 +2202,7 @@ class TeeReportReducerTest {
         assertEquals(TeeSignalLevel.FAIL, report.localTrustChainLevel)
         assertEquals(
             TeeSignalLevel.FAIL,
-            report.sections.single { it.title == "Trust" }.items.single { it.title == "RKP" }.level
+            report.sections.single { it.title == "Trust" }.items.single { it.title == "RKP" }.level,
         )
         assertTrue(report.trustSummary.contains("invalid local chain"))
     }
@@ -2054,9 +2221,11 @@ class TeeReportReducerTest {
         )
 
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
-        assertTrue(report.sections.none { section ->
-            section.items.any { it.title == "RKP issuance" }
-        })
+        assertTrue(
+            report.sections.none { section ->
+                section.items.any { it.title == "RKP issuance" }
+            },
+        )
     }
 
     @Test
@@ -2077,11 +2246,13 @@ class TeeReportReducerTest {
         assertEquals(TeeVerdict.CONSISTENT, report.verdict)
         assertEquals(0, report.supplementaryIndicatorCount)
         assertEquals("Attestation, trust path, and revocation checks line up.", report.summary)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Soter" &&
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Soter" &&
                     it.body.contains("probe skipped", ignoreCase = true) &&
                     it.level == TeeSignalLevel.WARN
-        })
+            },
+        )
     }
 
     @Test
@@ -2100,15 +2271,19 @@ class TeeReportReducerTest {
         )
 
         assertEquals(TeeVerdict.TAMPERED, report.verdict)
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Soter" &&
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Soter" &&
                     it.body.contains("Soter key preparation failed", ignoreCase = true) &&
                     it.level == TeeSignalLevel.FAIL
-        })
-        assertTrue(report.signals.any {
-            it.label == "Signals" &&
+            },
+        )
+        assertTrue(
+            report.signals.any {
+                it.label == "Signals" &&
                     it.value.contains("1 policy hard")
-        })
+            },
+        )
     }
 
     @Test
@@ -2131,15 +2306,19 @@ class TeeReportReducerTest {
         assertEquals(1, report.supplementaryIndicatorCount)
         assertEquals(TeeSignalLevel.WARN, report.supplementaryReviewLevel)
         assertTrue(report.summary.contains("abnormal soter environment", ignoreCase = true))
-        assertTrue(report.signals.any {
-            it.label == "Signals" &&
+        assertTrue(
+            report.signals.any {
+                it.label == "Signals" &&
                     it.value.contains("1 local")
-        })
-        assertTrue(report.sections.single { it.title == "Checks" }.items.any {
-            it.title == "Soter" &&
+            },
+        )
+        assertTrue(
+            report.sections.single { it.title == "Checks" }.items.any {
+                it.title == "Soter" &&
                     it.body.contains("abnormal soter environment", ignoreCase = true) &&
                     it.level == TeeSignalLevel.WARN
-        })
+            },
+        )
     }
 
     private fun baseArtifacts(
@@ -2304,112 +2483,110 @@ class TeeReportReducerTest {
             UpdateSubcomponentStaleResponsePersistenceResult(
                 detail = "skipped",
             ),
-    ): TeeScanArtifacts {
-        return TeeScanArtifacts(
-            snapshot = AttestationSnapshot(
-                tier = tier,
-                attestationVersion = 4,
-                keymasterVersion = 4,
-                attestationTier = tier,
-                keymasterTier = tier,
-                challengeVerified = true,
-                challengeSummary = "len=32",
-                rootOfTrust = RootOfTrustSnapshot(
-                    verifiedBootKeyHex = "abcd",
-                    deviceLocked = true,
-                    verifiedBootState = "Verified",
-                    verifiedBootHashHex = "12345678",
-                ),
-                osVersion = "14.0.0",
-                osPatchLevel = "2026-03",
-                vendorPatchLevel = "2026-03-05",
-                bootPatchLevel = "2026-03-05",
-                keyProperties = AttestedKeyProperties(
-                    algorithm = "EC",
-                    keySize = 256,
-                    ecCurve = "P-256",
-                    origin = "Generated",
-                    rollbackResistant = true,
-                ),
-                authState = AttestedAuthState(noAuthRequired = true),
-                applicationInfo = AttestedApplicationInfo(packageNames = listOf("com.eltavine.duckdetector")),
-                deviceInfo = deviceInfo,
-                deviceUniqueAttestation = false,
-                trustedAttestationIndex = 1,
-                rawCertificates = emptyList(),
-                displayCertificates = emptyList(),
+    ): TeeScanArtifacts = TeeScanArtifacts(
+        snapshot = AttestationSnapshot(
+            tier = tier,
+            attestationVersion = 4,
+            keymasterVersion = 4,
+            attestationTier = tier,
+            keymasterTier = tier,
+            challengeVerified = true,
+            challengeSummary = "len=32",
+            rootOfTrust = RootOfTrustSnapshot(
+                verifiedBootKeyHex = "abcd",
+                deviceLocked = true,
+                verifiedBootState = "Verified",
+                verifiedBootHashHex = "12345678",
             ),
-            trust = trust,
-            chainStructure = chainStructure,
-            rkp = rkp,
-            crl = CrlStatusResult(
-                networkState = networkState,
-                revokedCertificates = crlRevokedCertificates,
+            osVersion = "14.0.0",
+            osPatchLevel = "2026-03",
+            vendorPatchLevel = "2026-03-05",
+            bootPatchLevel = "2026-03-05",
+            keyProperties = AttestedKeyProperties(
+                algorithm = "EC",
+                keySize = 256,
+                ecCurve = "P-256",
+                origin = "Generated",
+                rollbackResistant = true,
             ),
-            pairConsistency = KeyPairConsistencyResult(
-                keyMatchesCertificate = true,
-                medianSignMicros = 1800,
-                detail = "ok",
-            ),
-            aesGcm = aesGcm,
-            lifecycle = KeyLifecycleResult(
-                created = true,
-                deleteRemovedAlias = true,
-                regeneratedFreshMaterial = true,
-                detail = "ok",
-            ),
-            keyMintCapability = keyMintCapability,
-            timing = timing,
-            timingSideChannel = timingSideChannel,
-            oversizedChallenge = oversizedChallenge,
-            keyboxImport = KeyboxImportResult(
-                executed = false,
-                markerPreserved = true,
-                marker = KeyboxImportProbe.FIXTURE_MARKER,
-                detail = "skipped",
-            ),
-            importKeyRetainedAttestationNarrative = importKeyRetainedAttestationNarrative,
-            supplementaryAttestationInfo = supplementaryAttestationInfo,
-            vintfKeyMintVersion = vintfKeyMintVersion,
-            keystore2Hook = keystore2Hook,
-            generateModeParcelFingerprint = generateModeParcelFingerprint,
-            grantDomainFullChainSplit = grantDomainFullChainSplit,
-            syntheticGrantGranteeBlindReadback = syntheticGrantGranteeBlindReadback,
-            syntheticGrantGetKeyEntryAccessVectorBlindness = syntheticGrantGetKeyEntryAccessVectorBlindness,
-            grantSelfDomainFullChainSplit = grantSelfDomainFullChainSplit,
-            legacyKeystorePath = legacyKeystorePath,
-            listEntriesConsistency = listEntriesConsistency,
-            listEntriesBatched = listEntriesBatched,
-            keyMetadataSemantics = keyMetadataSemantics,
-            keyMetadataShape = keyMetadataShape,
-            pureCertificate = PureCertificateResult(
-                pureCertificateReturnsNullKey = true,
-                detail = "ok",
-            ),
-            pureCertificateSecurityLevel = pureCertificateSecurityLevel,
-            operationErrorPath = operationErrorPath,
-            biometricIntegration = biometricIntegration,
-            binderHookBootstrap = binderHookBootstrap,
-            binderPatchMode = binderPatchMode,
-            binderChainConsistency = binderChainConsistency,
-            updateSubcomponent = UpdateSubcomponentResult(
-                updateSucceeded = true,
-                keyNotFoundStyleFailure = false,
-                detail = "ok",
-            ),
-            updateSubcomponentStaleResponsePersistence = updateSubcomponentStaleResponsePersistence,
-            pruning = OperationPruningResult(
-                suspicious = false,
-                operationsCreated = 18,
-                invalidatedOperations = 2,
-                detail = "ok",
-            ),
-            dualAlgorithm = dualAlgorithm,
-            idAttestation = idAttestation,
-            strongBox = strongBox,
-            native = native,
-            soter = soter,
-            bootConsistency = bootConsistency,
-        )
-    }
+            authState = AttestedAuthState(noAuthRequired = true),
+            applicationInfo = AttestedApplicationInfo(packageNames = listOf("com.eltavine.duckdetector")),
+            deviceInfo = deviceInfo,
+            deviceUniqueAttestation = false,
+            trustedAttestationIndex = 1,
+            rawCertificates = emptyList(),
+            displayCertificates = emptyList(),
+        ),
+        trust = trust,
+        chainStructure = chainStructure,
+        rkp = rkp,
+        crl = CrlStatusResult(
+            networkState = networkState,
+            revokedCertificates = crlRevokedCertificates,
+        ),
+        pairConsistency = KeyPairConsistencyResult(
+            keyMatchesCertificate = true,
+            medianSignMicros = 1800,
+            detail = "ok",
+        ),
+        aesGcm = aesGcm,
+        lifecycle = KeyLifecycleResult(
+            created = true,
+            deleteRemovedAlias = true,
+            regeneratedFreshMaterial = true,
+            detail = "ok",
+        ),
+        keyMintCapability = keyMintCapability,
+        timing = timing,
+        timingSideChannel = timingSideChannel,
+        oversizedChallenge = oversizedChallenge,
+        keyboxImport = KeyboxImportResult(
+            executed = false,
+            markerPreserved = true,
+            marker = KeyboxImportProbe.FIXTURE_MARKER,
+            detail = "skipped",
+        ),
+        importKeyRetainedAttestationNarrative = importKeyRetainedAttestationNarrative,
+        supplementaryAttestationInfo = supplementaryAttestationInfo,
+        vintfKeyMintVersion = vintfKeyMintVersion,
+        keystore2Hook = keystore2Hook,
+        generateModeParcelFingerprint = generateModeParcelFingerprint,
+        grantDomainFullChainSplit = grantDomainFullChainSplit,
+        syntheticGrantGranteeBlindReadback = syntheticGrantGranteeBlindReadback,
+        syntheticGrantGetKeyEntryAccessVectorBlindness = syntheticGrantGetKeyEntryAccessVectorBlindness,
+        grantSelfDomainFullChainSplit = grantSelfDomainFullChainSplit,
+        legacyKeystorePath = legacyKeystorePath,
+        listEntriesConsistency = listEntriesConsistency,
+        listEntriesBatched = listEntriesBatched,
+        keyMetadataSemantics = keyMetadataSemantics,
+        keyMetadataShape = keyMetadataShape,
+        pureCertificate = PureCertificateResult(
+            pureCertificateReturnsNullKey = true,
+            detail = "ok",
+        ),
+        pureCertificateSecurityLevel = pureCertificateSecurityLevel,
+        operationErrorPath = operationErrorPath,
+        biometricIntegration = biometricIntegration,
+        binderHookBootstrap = binderHookBootstrap,
+        binderPatchMode = binderPatchMode,
+        binderChainConsistency = binderChainConsistency,
+        updateSubcomponent = UpdateSubcomponentResult(
+            updateSucceeded = true,
+            keyNotFoundStyleFailure = false,
+            detail = "ok",
+        ),
+        updateSubcomponentStaleResponsePersistence = updateSubcomponentStaleResponsePersistence,
+        pruning = OperationPruningResult(
+            suspicious = false,
+            operationsCreated = 18,
+            invalidatedOperations = 2,
+            detail = "ok",
+        ),
+        dualAlgorithm = dualAlgorithm,
+        idAttestation = idAttestation,
+        strongBox = strongBox,
+        native = native,
+        soter = soter,
+        bootConsistency = bootConsistency,
+    )
 }

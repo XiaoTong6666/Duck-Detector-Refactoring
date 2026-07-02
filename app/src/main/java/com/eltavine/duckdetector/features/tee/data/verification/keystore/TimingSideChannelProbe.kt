@@ -16,9 +16,9 @@
 
 package com.eltavine.duckdetector.features.tee.data.verification.keystore
 
+import android.os.SystemClock
 import com.eltavine.duckdetector.features.tee.data.native.NativeTeeSnapshot
 import com.eltavine.duckdetector.features.tee.data.native.TeeRegisterTimerNativeBridge
-import android.os.SystemClock
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -56,7 +56,7 @@ class TimingSideChannelProbe(
             val session = sessionResult.session
                 ?: throw IllegalStateException(
                     sessionResult.failureReason
-                        ?: "Keystore2 private binder proxy session unavailable."
+                        ?: "Keystore2 private binder proxy session unavailable.",
                 )
             val aliases = binderClient.createTimingAliases()
             val attestedDescriptor = binderClient.createKeyDescriptor(aliases.attestedAlias)
@@ -449,9 +449,7 @@ internal fun isPositiveTimingSideChannelRatio(
     return ratio > TIMING_SIDE_CHANNEL_THRESHOLD_RATIO
 }
 
-internal fun isTimingSideChannelRatioEligible(sampleCount: Int): Boolean {
-    return sampleCount >= MIN_RATIO_SAMPLE_COUNT
-}
+internal fun isTimingSideChannelRatioEligible(sampleCount: Int): Boolean = sampleCount >= MIN_RATIO_SAMPLE_COUNT
 
 internal fun timingSideChannelRatio(
     avgAttestedMillis: Double?,
@@ -487,42 +485,40 @@ internal fun buildTimingSideChannelDetail(
     measurementDetail: String,
     timerFallbackReason: String?,
     partialFailureReason: String?,
-): String {
-    return buildString {
-        val ratio = timingSideChannelRatio(avgAttestedMillis, avgNonAttestedMillis)
-        append("semantics=service.getKeyEntry")
-        append(", source=")
-        append(source)
-        append(", timer=")
-        append(timerSource)
-        append(", affinity=")
-        append(affinity)
-        append(", avgAttested=")
-        append(avgAttestedMillis?.let { String.format(Locale.US, "%.3f", it) } ?: "n/a")
-        append("ms, avgNonAttested=")
-        append(avgNonAttestedMillis?.let { String.format(Locale.US, "%.3f", it) } ?: "n/a")
-        append("ms, diff=")
-        append(diffMillis?.let { String.format(Locale.US, "%.3f", it) } ?: "n/a")
-        append("ms, suspicious=")
-        append(suspicious)
-        append(", ratio=")
-        append(ratio?.let { String.format(Locale.US, "%.3f", it) } ?: "n/a")
-        append(", threshold=ratio > ")
-        append(String.format(Locale.US, "%.1f", TIMING_SIDE_CHANNEL_THRESHOLD_RATIO))
-        append(", warmup=")
-        append(warmupCount)
-        append(", samples=")
-        append(sampleCount)
-        append(". ")
-        append(measurementDetail)
-        timerFallbackReason?.let {
-            append(" timerFallback=")
-            append(it)
-        }
-        partialFailureReason?.let {
-            append(" partialFailure=")
-            append(it)
-        }
+): String = buildString {
+    val ratio = timingSideChannelRatio(avgAttestedMillis, avgNonAttestedMillis)
+    append("semantics=service.getKeyEntry")
+    append(", source=")
+    append(source)
+    append(", timer=")
+    append(timerSource)
+    append(", affinity=")
+    append(affinity)
+    append(", avgAttested=")
+    append(avgAttestedMillis?.let { String.format(Locale.US, "%.3f", it) } ?: "n/a")
+    append("ms, avgNonAttested=")
+    append(avgNonAttestedMillis?.let { String.format(Locale.US, "%.3f", it) } ?: "n/a")
+    append("ms, diff=")
+    append(diffMillis?.let { String.format(Locale.US, "%.3f", it) } ?: "n/a")
+    append("ms, suspicious=")
+    append(suspicious)
+    append(", ratio=")
+    append(ratio?.let { String.format(Locale.US, "%.3f", it) } ?: "n/a")
+    append(", threshold=ratio > ")
+    append(String.format(Locale.US, "%.1f", TIMING_SIDE_CHANNEL_THRESHOLD_RATIO))
+    append(", warmup=")
+    append(warmupCount)
+    append(", samples=")
+    append(sampleCount)
+    append(". ")
+    append(measurementDetail)
+    timerFallbackReason?.let {
+        append(" timerFallback=")
+        append(it)
+    }
+    partialFailureReason?.let {
+        append(" partialFailure=")
+        append(it)
     }
 }
 

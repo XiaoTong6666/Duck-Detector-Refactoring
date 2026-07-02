@@ -17,7 +17,6 @@
 package com.eltavine.duckdetector.features.nativeroot.data.native
 
 import android.os.Build
-import android.util.Log
 
 class NativeRootNativeBridge {
 
@@ -81,108 +80,133 @@ class NativeRootNativeBridge {
     private fun NativeRootNativeSnapshot.applyEntry(
         key: String,
         value: String,
-    ): NativeRootNativeSnapshot {
-        return when (key) {
-            "AVAILABLE" -> copy(available = value.asBool())
-            "ROOT_FOUND" -> copy(rootDetected = value.asBool())
-            "KERNELSU" -> copy(kernelSuDetected = value.asBool())
-            "APATCH" -> copy(aPatchDetected = value.asBool())
-            "MAGISK" -> copy(magiskDetected = value.asBool())
-            "SUSFS" -> copy(susfsDetected = value.asBool())
-            "KSU_VERSION" -> copy(kernelSuVersion = value.toLongOrNull() ?: kernelSuVersion)
-            "PRCTL_HIT" -> copy(prctlProbeHit = value.asBool())
-            "KERNELPATCH_SIDE_CHANNEL_ATTACK" -> copy(kernelPatchSideChannel = value.asBool())
-            "KERNELPATCH_SIDE_CHANNEL_DETAIL" -> copy(kernelPatchSideChannelDetail = value.decodeValue())
-            "DEVPTS_ABNORMAL_PERMISSION_FOUND" -> copy(devptsAbnormalPermission = value.asBool())
-            "DEVPTS_ABNORMAL_PERMISSION_AVAILABLE" -> copy(devptsAbnormalPermissionAvailable = value.asBool())
-            "DEVPTS_ABNORMAL_PERMISSION_CHECKED" -> copy(
-                devptsAbnormalPermissionCheckedCount = value.toIntOrNull()
-                    ?: devptsAbnormalPermissionCheckedCount
-            )
+    ): NativeRootNativeSnapshot = when (key) {
+        "AVAILABLE" -> copy(available = value.asBool())
 
-            "DEVPTS_ABNORMAL_PERMISSION_DENIED" -> copy(
-                devptsAbnormalPermissionDeniedCount = value.toIntOrNull()
-                    ?: devptsAbnormalPermissionDeniedCount
-            )
+        "ROOT_FOUND" -> copy(rootDetected = value.asBool())
 
-            "DEVPTS_ABNORMAL_PERMISSION_DETAIL" -> copy(devptsAbnormalPermissionDetail = value.decodeValue())
-            "KSU_SUPERCALL_ATTEMPTED" -> copy(ksuSupercallAttempted = value.asBool())
-            "KSU_SUPERCALL_HIT" -> copy(ksuSupercallProbeHit = value.asBool())
-            "KSU_SUPERCALL_BLOCKED" -> copy(ksuSupercallBlocked = value.asBool())
-            "KSU_SUPERCALL_SAFE_MODE" -> copy(ksuSupercallSafeMode = value.asBool())
-            "KSU_SUPERCALL_LKM" -> copy(ksuSupercallLkm = value.asBool())
-            "KSU_SUPERCALL_LATE_LOAD" -> copy(ksuSupercallLateLoad = value.asBool())
-            "KSU_SUPERCALL_PR_BUILD" -> copy(ksuSupercallPrBuild = value.asBool())
-            "KSU_SUPERCALL_MANAGER" -> copy(ksuSupercallManager = value.asBool())
-            "SUSFS_HIT" -> copy(susfsProbeHit = value.asBool())
-            "SELF_SU_DOMAIN" -> copy(selfSuDomain = value.asBool())
-            "SELF_CONTEXT" -> copy(selfContext = value.decodeValue())
-            "SELF_KSU_DRIVER_FDS" -> copy(
-                selfKsuDriverFdCount = value.toIntOrNull() ?: selfKsuDriverFdCount
-            )
+        "KERNELSU" -> copy(kernelSuDetected = value.asBool())
 
-            "SELF_KSU_FDWRAPPER_FDS" -> copy(
-                selfKsuFdwrapperFdCount = value.toIntOrNull() ?: selfKsuFdwrapperFdCount
-            )
+        "APATCH" -> copy(aPatchDetected = value.asBool())
 
-            "PATH_HITS" -> copy(pathHitCount = value.toIntOrNull() ?: pathHitCount)
-            "PATH_CHECKS" -> copy(pathCheckCount = value.toIntOrNull() ?: pathCheckCount)
-            "PROCESS_HITS" -> copy(processHitCount = value.toIntOrNull() ?: processHitCount)
-            "PROCESS_CHECKED" -> copy(
-                processCheckedCount = value.toIntOrNull() ?: processCheckedCount
-            )
+        "MAGISK" -> copy(magiskDetected = value.asBool())
 
-            "PROCESS_DENIED" -> copy(processDeniedCount = value.toIntOrNull() ?: processDeniedCount)
-            "KERNEL_HITS" -> copy(kernelHitCount = value.toIntOrNull() ?: kernelHitCount)
-            "KERNEL_SOURCES" -> copy(kernelSourceCount = value.toIntOrNull() ?: kernelSourceCount)
-            "PROPERTY_HITS" -> copy(propertyHitCount = value.toIntOrNull() ?: propertyHitCount)
-            "PROPERTY_CHECKS" -> copy(
-                propertyCheckCount = value.toIntOrNull() ?: propertyCheckCount
-            )
+        "SUSFS" -> copy(susfsDetected = value.asBool())
 
-            else -> this
-        }
+        "KSU_VERSION" -> copy(kernelSuVersion = value.toLongOrNull() ?: kernelSuVersion)
+
+        "PRCTL_HIT" -> copy(prctlProbeHit = value.asBool())
+
+        "KERNELPATCH_SIDE_CHANNEL_ATTACK" -> copy(kernelPatchSideChannel = value.asBool())
+
+        "KERNELPATCH_SIDE_CHANNEL_DETAIL" -> copy(kernelPatchSideChannelDetail = value.decodeValue())
+
+        "DEVPTS_ABNORMAL_PERMISSION_FOUND" -> copy(devptsAbnormalPermission = value.asBool())
+
+        "DEVPTS_ABNORMAL_PERMISSION_AVAILABLE" -> copy(devptsAbnormalPermissionAvailable = value.asBool())
+
+        "DEVPTS_ABNORMAL_PERMISSION_CHECKED" -> copy(
+            devptsAbnormalPermissionCheckedCount = value.toIntOrNull()
+                ?: devptsAbnormalPermissionCheckedCount,
+        )
+
+        "DEVPTS_ABNORMAL_PERMISSION_DENIED" -> copy(
+            devptsAbnormalPermissionDeniedCount = value.toIntOrNull()
+                ?: devptsAbnormalPermissionDeniedCount,
+        )
+
+        "DEVPTS_ABNORMAL_PERMISSION_DETAIL" -> copy(devptsAbnormalPermissionDetail = value.decodeValue())
+
+        "KSU_SUPERCALL_ATTEMPTED" -> copy(ksuSupercallAttempted = value.asBool())
+
+        "KSU_SUPERCALL_HIT" -> copy(ksuSupercallProbeHit = value.asBool())
+
+        "KSU_SUPERCALL_BLOCKED" -> copy(ksuSupercallBlocked = value.asBool())
+
+        "KSU_SUPERCALL_SAFE_MODE" -> copy(ksuSupercallSafeMode = value.asBool())
+
+        "KSU_SUPERCALL_LKM" -> copy(ksuSupercallLkm = value.asBool())
+
+        "KSU_SUPERCALL_LATE_LOAD" -> copy(ksuSupercallLateLoad = value.asBool())
+
+        "KSU_SUPERCALL_PR_BUILD" -> copy(ksuSupercallPrBuild = value.asBool())
+
+        "KSU_SUPERCALL_MANAGER" -> copy(ksuSupercallManager = value.asBool())
+
+        "SUSFS_HIT" -> copy(susfsProbeHit = value.asBool())
+
+        "SELF_SU_DOMAIN" -> copy(selfSuDomain = value.asBool())
+
+        "SELF_CONTEXT" -> copy(selfContext = value.decodeValue())
+
+        "SELF_KSU_DRIVER_FDS" -> copy(
+            selfKsuDriverFdCount = value.toIntOrNull() ?: selfKsuDriverFdCount,
+        )
+
+        "SELF_KSU_FDWRAPPER_FDS" -> copy(
+            selfKsuFdwrapperFdCount = value.toIntOrNull() ?: selfKsuFdwrapperFdCount,
+        )
+
+        "PATH_HITS" -> copy(pathHitCount = value.toIntOrNull() ?: pathHitCount)
+
+        "PATH_CHECKS" -> copy(pathCheckCount = value.toIntOrNull() ?: pathCheckCount)
+
+        "PROCESS_HITS" -> copy(processHitCount = value.toIntOrNull() ?: processHitCount)
+
+        "PROCESS_CHECKED" -> copy(
+            processCheckedCount = value.toIntOrNull() ?: processCheckedCount,
+        )
+
+        "PROCESS_DENIED" -> copy(processDeniedCount = value.toIntOrNull() ?: processDeniedCount)
+
+        "KERNEL_HITS" -> copy(kernelHitCount = value.toIntOrNull() ?: kernelHitCount)
+
+        "KERNEL_SOURCES" -> copy(kernelSourceCount = value.toIntOrNull() ?: kernelSourceCount)
+
+        "PROPERTY_HITS" -> copy(propertyHitCount = value.toIntOrNull() ?: propertyHitCount)
+
+        "PROPERTY_CHECKS" -> copy(
+            propertyCheckCount = value.toIntOrNull() ?: propertyCheckCount,
+        )
+
+        else -> this
     }
 
-    private fun String.asBool(): Boolean {
-        return this == "1" || equals("true", ignoreCase = true)
-    }
+    private fun String.asBool(): Boolean = this == "1" || equals("true", ignoreCase = true)
 
-    private fun String.decodeValue(): String {
-        return buildString(length) {
-            var index = 0
-            while (index < this@decodeValue.length) {
-                val current = this@decodeValue[index]
-                if (current == '\\' && index + 1 < this@decodeValue.length) {
-                    when (this@decodeValue[index + 1]) {
-                        'n' -> {
-                            append('\n')
-                            index += 2
-                            continue
-                        }
+    private fun String.decodeValue(): String = buildString(length) {
+        var index = 0
+        while (index < this@decodeValue.length) {
+            val current = this@decodeValue[index]
+            if (current == '\\' && index + 1 < this@decodeValue.length) {
+                when (this@decodeValue[index + 1]) {
+                    'n' -> {
+                        append('\n')
+                        index += 2
+                        continue
+                    }
 
-                        'r' -> {
-                            append('\r')
-                            index += 2
-                            continue
-                        }
+                    'r' -> {
+                        append('\r')
+                        index += 2
+                        continue
+                    }
 
-                        't' -> {
-                            append('\t')
-                            index += 2
-                            continue
-                        }
+                    't' -> {
+                        append('\t')
+                        index += 2
+                        continue
+                    }
 
-                        '\\' -> {
-                            append('\\')
-                            index += 2
-                            continue
-                        }
+                    '\\' -> {
+                        append('\\')
+                        index += 2
+                        continue
                     }
                 }
-                append(current)
-                index += 1
             }
+            append(current)
+            index += 1
         }
     }
 

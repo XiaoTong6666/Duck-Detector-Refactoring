@@ -21,7 +21,7 @@
 
 namespace duckdetector::nativeroot {
 
-    ProbeResult run_devpts_permission_check();
+ProbeResult run_devpts_permission_check();
 
 }  // namespace duckdetector::nativeroot
 

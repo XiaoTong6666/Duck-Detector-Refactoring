@@ -21,9 +21,7 @@
 
 namespace customrom {
 
-    std::vector<std::string> find_loaded_symbol_paths(
-            const char *library_name,
-            const char *symbol_name
-    );
+std::vector<std::string> find_loaded_symbol_paths(const char* library_name,
+                                                  const char* symbol_name);
 
 }  // namespace customrom

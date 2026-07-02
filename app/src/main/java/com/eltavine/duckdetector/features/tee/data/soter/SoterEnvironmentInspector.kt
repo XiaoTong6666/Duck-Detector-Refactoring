@@ -51,18 +51,16 @@ internal class AndroidSoterEnvironmentInspector(
     }
 
     @Suppress("DEPRECATION")
-    private fun isPackageVisible(packageName: String): Boolean {
-        return runCatching {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                appContext.packageManager.getPackageInfo(
-                    packageName,
-                    PackageManager.PackageInfoFlags.of(0),
-                )
-            } else {
-                appContext.packageManager.getPackageInfo(packageName, 0)
-            }
-        }.isSuccess
-    }
+    private fun isPackageVisible(packageName: String): Boolean = runCatching {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            appContext.packageManager.getPackageInfo(
+                packageName,
+                PackageManager.PackageInfoFlags.of(0),
+            )
+        } else {
+            appContext.packageManager.getPackageInfo(packageName, 0)
+        }
+    }.isSuccess
 
     private fun isSimplifiedChinese(locale: Locale): Boolean {
         if (!locale.language.equals("zh", ignoreCase = true)) {

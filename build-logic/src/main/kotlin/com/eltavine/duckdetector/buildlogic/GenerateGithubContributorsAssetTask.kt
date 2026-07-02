@@ -77,7 +77,7 @@ abstract class GenerateGithubContributorsAssetTask : DefaultTask() {
             .onFailure { failure ->
                 logger.warn(
                     "GitHub contributors sync failed; falling back to local asset: " +
-                        (failure.message ?: failure.javaClass.simpleName)
+                        (failure.message ?: failure.javaClass.simpleName),
                 )
             }
             .getOrThrowUnlessRecoverable()
@@ -109,7 +109,7 @@ abstract class GenerateGithubContributorsAssetTask : DefaultTask() {
                     .put("avatarAssetPath", contributor.avatarUrl?.let { assetPath })
                     .put("contributions", contributor.contributions)
                     .put("summaryKey", metadata?.summaryKey)
-                    .put("contributionKeys", JSONArray(metadata?.contributionKeys ?: emptyList<String>()))
+                    .put("contributionKeys", JSONArray(metadata?.contributionKeys ?: emptyList<String>())),
             )
         }
 
@@ -129,7 +129,7 @@ abstract class GenerateGithubContributorsAssetTask : DefaultTask() {
             val contributors = result.getOrNull()
             if (contributors != null) {
                 logger.lifecycle(
-                    "Fetched GitHub contributors from ${endpointUrl.get()} on attempt $attempt/$attempts."
+                    "Fetched GitHub contributors from ${endpointUrl.get()} on attempt $attempt/$attempts.",
                 )
                 return contributors
             }
@@ -137,7 +137,7 @@ abstract class GenerateGithubContributorsAssetTask : DefaultTask() {
             lastFailure = result.exceptionOrNull()
             logger.warn(
                 "GitHub contributors fetch attempt $attempt/$attempts failed: " +
-                    "${lastFailure?.message ?: lastFailure?.javaClass?.simpleName.orEmpty()}"
+                    "${lastFailure?.message ?: lastFailure?.javaClass?.simpleName.orEmpty()}",
             )
             if (attempt < attempts) {
                 Thread.sleep((300L * attempt).coerceAtMost(1_500L))
@@ -184,36 +184,32 @@ abstract class GenerateGithubContributorsAssetTask : DefaultTask() {
                         avatarUrl = avatarUrl,
                         contributions = contributions,
                         codeVolume = codeVolume,
-                    )
+                    ),
                 )
             }
         }.sortedWith(
             compareByDescending<GitHubContributor> { it.contributions }
                 .thenByDescending { it.codeVolume }
-                .thenBy { it.login.lowercase() }
+                .thenBy { it.login.lowercase() },
         )
     }
 
-    private fun fetchText(url: String): String {
-        return fetchConnection(url) { connection, statusCode ->
-            val body = readBody(connection, statusCode)
-            if (statusCode !in 200..299) {
-                throw IOException("HTTP $statusCode ${connection.responseMessage.orEmpty()}".trim())
-            }
-            body
+    private fun fetchText(url: String): String = fetchConnection(url) { connection, statusCode ->
+        val body = readBody(connection, statusCode)
+        if (statusCode !in 200..299) {
+            throw IOException("HTTP $statusCode ${connection.responseMessage.orEmpty()}".trim())
         }
+        body
     }
 
-    private fun fetchBytes(url: String): ByteArray {
-        return fetchConnection(url) { connection, statusCode ->
-            if (statusCode !in 200..299) {
-                val body = readBody(connection, statusCode)
-                throw IOException(
-                    "HTTP $statusCode ${connection.responseMessage.orEmpty()} ${body.take(120)}".trim()
-                )
-            }
-            connection.inputStream.use { stream -> stream.readBytes() }
+    private fun fetchBytes(url: String): ByteArray = fetchConnection(url) { connection, statusCode ->
+        if (statusCode !in 200..299) {
+            val body = readBody(connection, statusCode)
+            throw IOException(
+                "HTTP $statusCode ${connection.responseMessage.orEmpty()} ${body.take(120)}".trim(),
+            )
         }
+        connection.inputStream.use { stream -> stream.readBytes() }
     }
 
     private fun <T> fetchConnection(url: String, block: (HttpURLConnection, Int) -> T): T {
@@ -226,7 +222,7 @@ abstract class GenerateGithubContributorsAssetTask : DefaultTask() {
             if (url.lowercase(Locale.ROOT).contains("/graphs/contributors-data")) {
                 connection.setRequestProperty(
                     "User-Agent",
-                    "Mozilla/5.0 (X11; Linux x86_64; rv:154.0) Gecko/20100101 Firefox/154.0"
+                    "Mozilla/5.0 (X11; Linux x86_64; rv:154.0) Gecko/20100101 Firefox/154.0",
                 )
                 connection.setRequestProperty("Accept", "application/json")
             } else {
@@ -243,24 +239,20 @@ abstract class GenerateGithubContributorsAssetTask : DefaultTask() {
         }
     }
 
-    private fun readBody(connection: HttpURLConnection, statusCode: Int): String {
-        return (if (statusCode in 200..299) connection.inputStream else connection.errorStream)
-            ?.bufferedReader(Charsets.UTF_8)
-            ?.use { reader -> reader.readText() }
-            .orEmpty()
-    }
+    private fun readBody(connection: HttpURLConnection, statusCode: Int): String = (if (statusCode in 200..299) connection.inputStream else connection.errorStream)
+        ?.bufferedReader(Charsets.UTF_8)
+        ?.use { reader -> reader.readText() }
+        .orEmpty()
 
-    private fun sanitizeAssetFileName(login: String): String {
-        return buildString(login.length) {
-            login.forEach { character ->
-                append(
-                    when {
-                        character.isLetterOrDigit() -> character.lowercaseChar()
-                        character == '-' || character == '_' -> character
-                        else -> '_'
-                    }
-                )
-            }
+    private fun sanitizeAssetFileName(login: String): String = buildString(login.length) {
+        login.forEach { character ->
+            append(
+                when {
+                    character.isLetterOrDigit() -> character.lowercaseChar()
+                    character == '-' || character == '_' -> character
+                    else -> '_'
+                },
+            )
         }
     }
 
@@ -286,7 +278,7 @@ abstract class GenerateGithubContributorsAssetTask : DefaultTask() {
                     ContributorMetadata(
                         summaryKey = item.optString("summaryKey").trim().ifBlank { null },
                         contributionKeys = item.optJSONArray("contributionKeys").toStringList(),
-                    )
+                    ),
                 )
             }
         }

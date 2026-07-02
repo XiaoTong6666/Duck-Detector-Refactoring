@@ -78,9 +78,7 @@ class LSPosedViewModel(
             val appContext = context.applicationContext
             return object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return LSPosedViewModel(LSPosedRepository(appContext)) as T
-                }
+                override fun <T : ViewModel> create(modelClass: Class<T>): T = LSPosedViewModel(LSPosedRepository(appContext)) as T
             }
         }
     }

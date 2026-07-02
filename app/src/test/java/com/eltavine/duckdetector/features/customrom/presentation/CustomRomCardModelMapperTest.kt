@@ -17,9 +17,9 @@
 package com.eltavine.duckdetector.features.customrom.presentation
 
 import com.eltavine.duckdetector.features.customrom.domain.CustomRomFinding
-import com.eltavine.duckdetector.features.customrom.domain.CustomRomModificationFinding
 import com.eltavine.duckdetector.features.customrom.domain.CustomRomMethodOutcome
 import com.eltavine.duckdetector.features.customrom.domain.CustomRomMethodResult
+import com.eltavine.duckdetector.features.customrom.domain.CustomRomModificationFinding
 import com.eltavine.duckdetector.features.customrom.domain.CustomRomPackageVisibility
 import com.eltavine.duckdetector.features.customrom.domain.CustomRomReport
 import com.eltavine.duckdetector.features.customrom.domain.CustomRomStage
@@ -170,94 +170,92 @@ class CustomRomCardModelMapperTest {
         propertyAreaItemAnomalyCount: Int = 2,
         modificationFindings: List<CustomRomModificationFinding> = emptyList(),
         symbolFindings: List<CustomRomFinding> = emptyList(),
-    ): CustomRomReport {
-        return CustomRomReport(
-            stage = CustomRomStage.READY,
-            packageVisibility = CustomRomPackageVisibility.FULL,
-            detectedRoms = emptyList(),
-            propertyFindings = emptyList(),
-            buildFindings = emptyList(),
-            modificationFindings = modificationFindings,
-            packageFindings = emptyList(),
-            serviceFindings = emptyList(),
-            reflectionFindings = emptyList(),
-            platformFileFindings = emptyList(),
-            resourceInjectionFindings = emptyList(),
-            recoveryScripts = emptyList(),
-            policyFindings = emptyList(),
-            overlayFindings = emptyList(),
-            symbolFindings = symbolFindings,
-            nativeAvailable = nativeAvailable,
-            propertyAreaAvailable = propertyAreaAvailable,
-            symbolScanAvailable = symbolScanAvailable,
-            checkedPropertyCount = 10,
-            checkedBuildFieldCount = 3,
-            checkedModificationPropertyCount = 18,
-            checkedPackageCount = 0,
-            checkedServiceCount = 0,
-            listedServiceCount = 0,
-            methods = listOf(
-                CustomRomMethodResult("propertyScan", "Clean", CustomRomMethodOutcome.CLEAN),
-                CustomRomMethodResult("buildFieldScan", "Clean", CustomRomMethodOutcome.CLEAN),
-                CustomRomMethodResult("modificationScan", "Clean", CustomRomMethodOutcome.CLEAN),
-                CustomRomMethodResult("packageScan", "Clean", CustomRomMethodOutcome.CLEAN),
-                CustomRomMethodResult("serviceScan", "Clean", CustomRomMethodOutcome.CLEAN),
-                CustomRomMethodResult("reflectionScan", "Clean", CustomRomMethodOutcome.CLEAN),
-                if (nativeAvailable) {
-                    CustomRomMethodResult("mapsInjection", "Clean", CustomRomMethodOutcome.CLEAN)
-                } else {
-                    CustomRomMethodResult(
-                        "mapsInjection",
-                        "Unavailable",
-                        CustomRomMethodOutcome.SUPPORT,
-                    )
-                },
-                if (nativeAvailable) {
-                    CustomRomMethodResult("nativeFiles", "Clean", CustomRomMethodOutcome.CLEAN)
-                } else {
-                    CustomRomMethodResult(
-                        "nativeFiles",
-                        "Unavailable",
-                        CustomRomMethodOutcome.SUPPORT,
-                    )
-                },
-                if (nativeAvailable) {
-                    CustomRomMethodResult("nativePolicy", "Clean", CustomRomMethodOutcome.CLEAN)
-                } else {
-                    CustomRomMethodResult(
-                        "nativePolicy",
-                        "Unavailable",
-                        CustomRomMethodOutcome.SUPPORT,
-                    )
-                },
-                if (!nativeAvailable) {
-                    CustomRomMethodResult(
-                        "nativeSymbols",
-                        "Unavailable",
-                        CustomRomMethodOutcome.SUPPORT,
-                    )
-                } else if (symbolScanAvailable) {
-                    CustomRomMethodResult("nativeSymbols", "Clean", CustomRomMethodOutcome.CLEAN)
-                } else {
-                    CustomRomMethodResult(
-                        "nativeSymbols",
-                        "Unsupported",
-                        CustomRomMethodOutcome.SUPPORT,
-                    )
-                },
-                if (nativeAvailable) {
-                    CustomRomMethodResult("nativeLibrary", "Loaded", CustomRomMethodOutcome.CLEAN)
-                } else {
-                    CustomRomMethodResult(
-                        "nativeLibrary",
-                        "Unavailable",
-                        CustomRomMethodOutcome.SUPPORT,
-                    )
-                },
-            ),
-            propertyAreaContextCount = propertyAreaContextCount,
-            propertyAreaAnomalyCount = propertyAreaAnomalyCount,
-            propertyAreaItemAnomalyCount = propertyAreaItemAnomalyCount,
-        )
-    }
+    ): CustomRomReport = CustomRomReport(
+        stage = CustomRomStage.READY,
+        packageVisibility = CustomRomPackageVisibility.FULL,
+        detectedRoms = emptyList(),
+        propertyFindings = emptyList(),
+        buildFindings = emptyList(),
+        modificationFindings = modificationFindings,
+        packageFindings = emptyList(),
+        serviceFindings = emptyList(),
+        reflectionFindings = emptyList(),
+        platformFileFindings = emptyList(),
+        resourceInjectionFindings = emptyList(),
+        recoveryScripts = emptyList(),
+        policyFindings = emptyList(),
+        overlayFindings = emptyList(),
+        symbolFindings = symbolFindings,
+        nativeAvailable = nativeAvailable,
+        propertyAreaAvailable = propertyAreaAvailable,
+        symbolScanAvailable = symbolScanAvailable,
+        checkedPropertyCount = 10,
+        checkedBuildFieldCount = 3,
+        checkedModificationPropertyCount = 18,
+        checkedPackageCount = 0,
+        checkedServiceCount = 0,
+        listedServiceCount = 0,
+        methods = listOf(
+            CustomRomMethodResult("propertyScan", "Clean", CustomRomMethodOutcome.CLEAN),
+            CustomRomMethodResult("buildFieldScan", "Clean", CustomRomMethodOutcome.CLEAN),
+            CustomRomMethodResult("modificationScan", "Clean", CustomRomMethodOutcome.CLEAN),
+            CustomRomMethodResult("packageScan", "Clean", CustomRomMethodOutcome.CLEAN),
+            CustomRomMethodResult("serviceScan", "Clean", CustomRomMethodOutcome.CLEAN),
+            CustomRomMethodResult("reflectionScan", "Clean", CustomRomMethodOutcome.CLEAN),
+            if (nativeAvailable) {
+                CustomRomMethodResult("mapsInjection", "Clean", CustomRomMethodOutcome.CLEAN)
+            } else {
+                CustomRomMethodResult(
+                    "mapsInjection",
+                    "Unavailable",
+                    CustomRomMethodOutcome.SUPPORT,
+                )
+            },
+            if (nativeAvailable) {
+                CustomRomMethodResult("nativeFiles", "Clean", CustomRomMethodOutcome.CLEAN)
+            } else {
+                CustomRomMethodResult(
+                    "nativeFiles",
+                    "Unavailable",
+                    CustomRomMethodOutcome.SUPPORT,
+                )
+            },
+            if (nativeAvailable) {
+                CustomRomMethodResult("nativePolicy", "Clean", CustomRomMethodOutcome.CLEAN)
+            } else {
+                CustomRomMethodResult(
+                    "nativePolicy",
+                    "Unavailable",
+                    CustomRomMethodOutcome.SUPPORT,
+                )
+            },
+            if (!nativeAvailable) {
+                CustomRomMethodResult(
+                    "nativeSymbols",
+                    "Unavailable",
+                    CustomRomMethodOutcome.SUPPORT,
+                )
+            } else if (symbolScanAvailable) {
+                CustomRomMethodResult("nativeSymbols", "Clean", CustomRomMethodOutcome.CLEAN)
+            } else {
+                CustomRomMethodResult(
+                    "nativeSymbols",
+                    "Unsupported",
+                    CustomRomMethodOutcome.SUPPORT,
+                )
+            },
+            if (nativeAvailable) {
+                CustomRomMethodResult("nativeLibrary", "Loaded", CustomRomMethodOutcome.CLEAN)
+            } else {
+                CustomRomMethodResult(
+                    "nativeLibrary",
+                    "Unavailable",
+                    CustomRomMethodOutcome.SUPPORT,
+                )
+            },
+        ),
+        propertyAreaContextCount = propertyAreaContextCount,
+        propertyAreaAnomalyCount = propertyAreaAnomalyCount,
+        propertyAreaItemAnomalyCount = propertyAreaItemAnomalyCount,
+    )
 }

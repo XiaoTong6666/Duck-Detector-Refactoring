@@ -38,7 +38,7 @@ class UidIdentityProbeTest {
         assertTrue(
             result.signals.any {
                 it.label == "Host package shares UID" &&
-                        it.severity == VirtualizationSignalSeverity.DANGER
+                    it.severity == VirtualizationSignalSeverity.DANGER
             },
         )
         assertTrue(result.hostPackageHit)
@@ -58,7 +58,7 @@ class UidIdentityProbeTest {
         assertTrue(
             result.signals.any {
                 it.label == "Current package missing from UID" &&
-                        it.severity == VirtualizationSignalSeverity.DANGER
+                    it.severity == VirtualizationSignalSeverity.DANGER
             },
         )
     }
@@ -77,7 +77,7 @@ class UidIdentityProbeTest {
         assertTrue(
             result.signals.any {
                 it.label == "UID name unavailable" &&
-                        it.severity == VirtualizationSignalSeverity.WARNING
+                    it.severity == VirtualizationSignalSeverity.WARNING
             },
         )
     }

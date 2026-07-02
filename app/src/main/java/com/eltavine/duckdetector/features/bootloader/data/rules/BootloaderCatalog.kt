@@ -52,91 +52,91 @@ object BootloaderCatalog {
         BootloaderPropertySpec(
             FLASH_LOCKED,
             "Bootloader lock status",
-            SystemPropertyCategory.VERIFIED_BOOT
+            SystemPropertyCategory.VERIFIED_BOOT,
         ),
         BootloaderPropertySpec(
             VERIFIED_BOOT_STATE,
             "Verified Boot state",
-            SystemPropertyCategory.VERIFIED_BOOT
+            SystemPropertyCategory.VERIFIED_BOOT,
         ),
         BootloaderPropertySpec(
             SECURE_BOOT,
             "Secure boot flag",
-            SystemPropertyCategory.VERIFIED_BOOT
+            SystemPropertyCategory.VERIFIED_BOOT,
         ),
         BootloaderPropertySpec(
             DEBUGGABLE,
             "Debuggable build flag",
-            SystemPropertyCategory.SECURITY_CORE
+            SystemPropertyCategory.SECURITY_CORE,
         ),
         BootloaderPropertySpec(SECURE, "Secure build flag", SystemPropertyCategory.SECURITY_CORE),
         BootloaderPropertySpec(
             WARRANTY_BIT,
             "Samsung warranty e-fuse",
-            SystemPropertyCategory.VERIFIED_BOOT
+            SystemPropertyCategory.VERIFIED_BOOT,
         ),
         BootloaderPropertySpec(
             WARRANTY_BIT_ALT,
             "Samsung warranty e-fuse (alt)",
-            SystemPropertyCategory.VERIFIED_BOOT
+            SystemPropertyCategory.VERIFIED_BOOT,
         ),
         BootloaderPropertySpec(
             KNOX_STATE,
             "Samsung Knox state",
-            SystemPropertyCategory.VERIFIED_BOOT
+            SystemPropertyCategory.VERIFIED_BOOT,
         ),
         BootloaderPropertySpec(
             OEM_UNLOCK_SUPPORTED,
             "OEM unlock support",
-            SystemPropertyCategory.VERIFIED_BOOT
+            SystemPropertyCategory.VERIFIED_BOOT,
         ),
         BootloaderPropertySpec(
             VBMETA_DEVICE_STATE,
             "VBMeta device state",
-            SystemPropertyCategory.VERIFIED_BOOT
+            SystemPropertyCategory.VERIFIED_BOOT,
         ),
         BootloaderPropertySpec(VERITYMODE, "dm-verity mode", SystemPropertyCategory.VERIFIED_BOOT),
         BootloaderPropertySpec(
             VBMETA_HASH_ALG,
             "VBMeta hash algorithm",
-            SystemPropertyCategory.VERIFIED_BOOT
+            SystemPropertyCategory.VERIFIED_BOOT,
         ),
         BootloaderPropertySpec(VBMETA_SIZE, "VBMeta size", SystemPropertyCategory.VERIFIED_BOOT),
         BootloaderPropertySpec(
             VBMETA_DIGEST,
             "VBMeta digest",
-            SystemPropertyCategory.VERIFIED_BOOT
+            SystemPropertyCategory.VERIFIED_BOOT,
         ),
         BootloaderPropertySpec(AVB_VERSION, "AVB version", SystemPropertyCategory.VERIFIED_BOOT),
         BootloaderPropertySpec(
             VBMETA_INVALIDATE,
             "VBMeta invalidate-on-error",
-            SystemPropertyCategory.VERIFIED_BOOT
+            SystemPropertyCategory.VERIFIED_BOOT,
         ),
         BootloaderPropertySpec(
             PARTITION_SYSTEM_VERIFIED,
             "System partition dm-verity",
-            SystemPropertyCategory.PARTITION_VERITY
+            SystemPropertyCategory.PARTITION_VERITY,
         ),
         BootloaderPropertySpec(
             PARTITION_VENDOR_VERIFIED,
             "Vendor partition dm-verity",
-            SystemPropertyCategory.PARTITION_VERITY
+            SystemPropertyCategory.PARTITION_VERITY,
         ),
         BootloaderPropertySpec(
             PARTITION_PRODUCT_VERIFIED,
             "Product partition dm-verity",
-            SystemPropertyCategory.PARTITION_VERITY
+            SystemPropertyCategory.PARTITION_VERITY,
         ),
         BootloaderPropertySpec(
             PARTITION_SYSTEM_EXT_VERIFIED,
             "System_ext partition dm-verity",
-            SystemPropertyCategory.PARTITION_VERITY
+            SystemPropertyCategory.PARTITION_VERITY,
         ),
         BootloaderPropertySpec(
             PARTITION_ODM_VERIFIED,
             "ODM partition dm-verity",
-            SystemPropertyCategory.PARTITION_VERITY
+            SystemPropertyCategory.PARTITION_VERITY,
         ),
     )
 }

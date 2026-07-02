@@ -20,11 +20,9 @@ class PlayIntegrityFixNativeBridge {
 
     fun collectSnapshot(
         propertyNames: Collection<String>,
-    ): PlayIntegrityFixNativeSnapshot {
-        return runCatching {
-            parse(nativeCollectSnapshot(propertyNames.distinct().sorted().toTypedArray()))
-        }.getOrDefault(PlayIntegrityFixNativeSnapshot())
-    }
+    ): PlayIntegrityFixNativeSnapshot = runCatching {
+        parse(nativeCollectSnapshot(propertyNames.distinct().sorted().toTypedArray()))
+    }.getOrDefault(PlayIntegrityFixNativeSnapshot())
 
     internal fun parse(raw: String): PlayIntegrityFixNativeSnapshot {
         if (raw.isBlank()) {
@@ -42,8 +40,10 @@ class PlayIntegrityFixNativeBridge {
                 val key = line.substringBefore('=')
                 val value = line.substringAfter('=')
                 when (key) {
-                    "AVAILABLE" -> available =
-                        value == "1" || value.equals("true", ignoreCase = true)
+                    "AVAILABLE" ->
+                        available =
+                            value == "1" ||
+                            value.equals("true", ignoreCase = true)
 
                     "PROP" -> {
                         val parts = value.split('|', limit = 2)
@@ -72,41 +72,39 @@ class PlayIntegrityFixNativeBridge {
         )
     }
 
-    private fun String.decodeValue(): String {
-        return buildString(length) {
-            var index = 0
-            while (index < this@decodeValue.length) {
-                val current = this@decodeValue[index]
-                if (current == '\\' && index + 1 < this@decodeValue.length) {
-                    when (this@decodeValue[index + 1]) {
-                        'n' -> {
-                            append('\n')
-                            index += 2
-                            continue
-                        }
+    private fun String.decodeValue(): String = buildString(length) {
+        var index = 0
+        while (index < this@decodeValue.length) {
+            val current = this@decodeValue[index]
+            if (current == '\\' && index + 1 < this@decodeValue.length) {
+                when (this@decodeValue[index + 1]) {
+                    'n' -> {
+                        append('\n')
+                        index += 2
+                        continue
+                    }
 
-                        'r' -> {
-                            append('\r')
-                            index += 2
-                            continue
-                        }
+                    'r' -> {
+                        append('\r')
+                        index += 2
+                        continue
+                    }
 
-                        't' -> {
-                            append('\t')
-                            index += 2
-                            continue
-                        }
+                    't' -> {
+                        append('\t')
+                        index += 2
+                        continue
+                    }
 
-                        '\\' -> {
-                            append('\\')
-                            index += 2
-                            continue
-                        }
+                    '\\' -> {
+                        append('\\')
+                        index += 2
+                        continue
                     }
                 }
-                append(current)
-                index += 1
             }
+            append(current)
+            index += 1
         }
     }
 

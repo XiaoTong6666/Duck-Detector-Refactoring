@@ -70,13 +70,9 @@ class SelinuxViewModel(
     }
 
     companion object {
-        fun factory(context: Context): ViewModelProvider.Factory {
-            return object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return SelinuxViewModel(SelinuxRepository(context.applicationContext)) as T
-                }
-            }
+        fun factory(context: Context): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T = SelinuxViewModel(SelinuxRepository(context.applicationContext)) as T
         }
     }
 }

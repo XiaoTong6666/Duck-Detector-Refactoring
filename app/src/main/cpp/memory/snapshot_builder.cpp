@@ -26,23 +26,23 @@
 
 namespace duckdetector::memory {
 
-    Snapshot collect_snapshot() {
-        Snapshot snapshot;
-        const auto maps = read_self_maps();
-        if (maps.empty()) {
-            snapshot.available = false;
-            return snapshot;
-        }
-
-        snapshot.available = true;
-        const auto smaps = read_self_smaps();
-        snapshot.hooks = detect_function_hooks(maps);
-        snapshot.maps = detect_maps_anomalies(maps, smaps);
-        snapshot.fd = detect_fd_anomalies(maps);
-        snapshot.signal = detect_signal_anomalies(maps);
-        snapshot.vdso = detect_vdso_anomalies(maps);
-        snapshot.linker = detect_linker_anomalies(maps);
+Snapshot collect_snapshot() {
+    Snapshot snapshot;
+    const auto maps = read_self_maps();
+    if (maps.empty()) {
+        snapshot.available = false;
         return snapshot;
     }
+
+    snapshot.available = true;
+    const auto smaps = read_self_smaps();
+    snapshot.hooks = detect_function_hooks(maps);
+    snapshot.maps = detect_maps_anomalies(maps, smaps);
+    snapshot.fd = detect_fd_anomalies(maps);
+    snapshot.signal = detect_signal_anomalies(maps);
+    snapshot.vdso = detect_vdso_anomalies(maps);
+    snapshot.linker = detect_linker_anomalies(maps);
+    return snapshot;
+}
 
 }  // namespace duckdetector::memory

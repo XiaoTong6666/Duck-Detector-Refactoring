@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+@file:Suppress("ktlint:standard:function-naming")
+
 package com.eltavine.duckdetector.features.settings.ui.components
 
 import android.content.ClipData
-import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -46,8 +47,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.eltavine.duckdetector.R
-import com.eltavine.duckdetector.core.ui.openExternalUri
 import com.eltavine.duckdetector.core.ui.components.WrapSafeText
+import com.eltavine.duckdetector.core.ui.openExternalUri
 import com.eltavine.duckdetector.core.ui.presentation.formatBuildTimeUtc
 import com.eltavine.duckdetector.ui.theme.ShapeTokens
 
@@ -196,13 +197,11 @@ private fun buildClipboardText(
     clipboardVersionLine: String,
     clipboardBuildTimeLine: String,
     clipboardBuildHashLine: String,
-): String {
-    return listOf(
-        clipboardVersionLine,
-        clipboardBuildTimeLine,
-        clipboardBuildHashLine,
-    ).joinToString(separator = "\n")
-}
+): String = listOf(
+    clipboardVersionLine,
+    clipboardBuildTimeLine,
+    clipboardBuildHashLine,
+).joinToString(separator = "\n")
 
 @Composable
 private fun AboutInfoRow(

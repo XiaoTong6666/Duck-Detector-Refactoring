@@ -32,12 +32,10 @@ class OpenApkFdPackageProbe(
 
     fun run(
         targetPackages: Set<String>,
-    ): OpenApkFdPackageProbeResult {
-        return evaluate(
-            fdTargets = readFdTargets(procFdPath),
-            targetPackages = targetPackages,
-        )
-    }
+    ): OpenApkFdPackageProbeResult = evaluate(
+        fdTargets = readFdTargets(procFdPath),
+        targetPackages = targetPackages,
+    )
 
     internal fun evaluate(
         fdTargets: List<String>?,
@@ -101,8 +99,8 @@ class OpenApkFdPackageProbe(
     ): Boolean {
         val lowerParent = parentDirectory.lowercase()
         return lowerParent == packageLower ||
-                lowerParent.startsWith("$packageLower-") ||
-                lowerParent.startsWith("$packageLower==")
+            lowerParent.startsWith("$packageLower-") ||
+            lowerParent.startsWith("$packageLower==")
     }
 
     private fun String.parentDirectoryName(): String? {

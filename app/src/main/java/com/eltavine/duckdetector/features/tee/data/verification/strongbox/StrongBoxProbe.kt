@@ -261,22 +261,18 @@ class StrongBoxBehaviorProbeSuite(
         val keyGenerationMillis: Int? = null,
     )
 
-    private fun expectedConcurrentSigningHandleLimit(): Int {
-        return expectedConcurrentSigningHandleLimit(
-            brand = Build.BRAND,
-            manufacturer = Build.MANUFACTURER,
-            model = Build.MODEL,
-        )
-    }
+    private fun expectedConcurrentSigningHandleLimit(): Int = expectedConcurrentSigningHandleLimit(
+        brand = Build.BRAND,
+        manufacturer = Build.MANUFACTURER,
+        model = Build.MODEL,
+    )
 }
 
 internal fun expectedConcurrentSigningHandleLimit(
     brand: String,
     manufacturer: String,
     model: String,
-): Int {
-    return if (isPixelDeviceProfile(brand, manufacturer, model)) 128 else 16
-}
+): Int = if (isPixelDeviceProfile(brand, manufacturer, model)) 128 else 16
 
 internal fun isPixelDeviceProfile(
     brand: String,
@@ -292,22 +288,20 @@ internal fun isPixelDeviceProfile(
 internal fun assessStrongBoxAttestation(
     available: Boolean,
     attestationTier: TeeTier,
-): StrongBoxAttestationAssessment {
-    return when {
-        available && attestationTier == TeeTier.UNKNOWN -> StrongBoxAttestationAssessment(
-            warning = "StrongBox key generation succeeded, but dedicated attestation did not expose a tier.",
-        )
+): StrongBoxAttestationAssessment = when {
+    available && attestationTier == TeeTier.UNKNOWN -> StrongBoxAttestationAssessment(
+        warning = "StrongBox key generation succeeded, but dedicated attestation did not expose a tier.",
+    )
 
-        available && attestationTier != TeeTier.STRONGBOX -> StrongBoxAttestationAssessment(
-            hardFailure = "StrongBox key generation succeeded, but attestation tier came back as $attestationTier.",
-        )
+    available && attestationTier != TeeTier.STRONGBOX -> StrongBoxAttestationAssessment(
+        hardFailure = "StrongBox key generation succeeded, but attestation tier came back as $attestationTier.",
+    )
 
-        !available && attestationTier == TeeTier.STRONGBOX -> StrongBoxAttestationAssessment(
-            hardFailure = "Attestation claimed StrongBox, but local KeyInfo could not confirm a StrongBox key.",
-        )
+    !available && attestationTier == TeeTier.STRONGBOX -> StrongBoxAttestationAssessment(
+        hardFailure = "Attestation claimed StrongBox, but local KeyInfo could not confirm a StrongBox key.",
+    )
 
-        else -> StrongBoxAttestationAssessment()
-    }
+    else -> StrongBoxAttestationAssessment()
 }
 
 internal data class StrongBoxAttestationAssessment(

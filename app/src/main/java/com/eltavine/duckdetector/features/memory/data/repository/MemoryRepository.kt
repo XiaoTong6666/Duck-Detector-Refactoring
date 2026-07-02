@@ -92,118 +92,110 @@ class MemoryRepository(
         )
     }
 
-    internal fun buildMethods(snapshot: MemoryNativeSnapshot): List<MemoryMethodResult> {
-        return listOf(
-            MemoryMethodResult(
-                label = "GOT/PLT resolution",
-                summary = when {
-                    snapshot.gotPltHook -> "Mismatch"
-                    else -> "Clean"
-                },
-                outcome = when {
-                    snapshot.gotPltHook -> MemoryMethodOutcome.DETECTED
-                    else -> MemoryMethodOutcome.CLEAN
-                },
-                detail = "Checks whether critical libc and linker symbols still resolve into their expected native modules.",
-            ),
-            MemoryMethodResult(
-                label = "Entry prologue",
-                summary = when {
-                    snapshot.inlineHook || snapshot.prologueModified -> "Hook-like"
-                    snapshot.trampoline -> "Jump entry"
-                    else -> "Clean"
-                },
-                outcome = when {
-                    snapshot.inlineHook || snapshot.prologueModified -> MemoryMethodOutcome.DETECTED
-                    snapshot.trampoline -> MemoryMethodOutcome.REVIEW
-                    else -> MemoryMethodOutcome.CLEAN
-                },
-                detail = "Looks for branch-heavy entry bytes and trampoline-style handoff patterns at sensitive function starts.",
-            ),
-            MemoryMethodResult(
-                label = "maps + smaps",
-                summary = when {
-                    snapshot.writableExec || snapshot.anonymousExec || snapshot.sharedDirtyExec -> "Anomaly"
-                    snapshot.swappedExec -> "Review"
-                    else -> "Clean"
-                },
-                outcome = when {
-                    snapshot.writableExec || snapshot.anonymousExec || snapshot.sharedDirtyExec -> MemoryMethodOutcome.DETECTED
-                    snapshot.swappedExec -> MemoryMethodOutcome.REVIEW
-                    else -> MemoryMethodOutcome.CLEAN
-                },
-                detail = "Scans non-ART executable mappings for writable code, unexpected swapped pages, and shared-dirty system code.",
-            ),
-            MemoryMethodResult(
-                label = "FD-backed code",
-                summary = when {
-                    snapshot.deletedSo || snapshot.suspiciousMemfd -> "Suspicious"
-                    snapshot.execAshmem || snapshot.devZeroExec -> "Review"
-                    else -> "Clean"
-                },
-                outcome = when {
-                    snapshot.deletedSo || snapshot.suspiciousMemfd -> MemoryMethodOutcome.DETECTED
-                    snapshot.execAshmem || snapshot.devZeroExec -> MemoryMethodOutcome.REVIEW
-                    else -> MemoryMethodOutcome.CLEAN
-                },
-                detail = "Cross-checks executable mappings and live file descriptors for deleted libraries, memfd loaders, ashmem, and /dev/zero execution.",
-            ),
-            MemoryMethodResult(
-                label = "Signal handlers",
-                summary = when {
-                    snapshot.fridaSignal || snapshot.anonymousSignal -> "Suspicious"
-                    snapshot.signalHandler -> "Review"
-                    else -> "Clean"
-                },
-                outcome = when {
-                    snapshot.fridaSignal || snapshot.anonymousSignal -> MemoryMethodOutcome.DETECTED
-                    snapshot.signalHandler -> MemoryMethodOutcome.REVIEW
-                    else -> MemoryMethodOutcome.CLEAN
-                },
-                detail = "Enumerates SIGTRAP/SIGBUS/SIGSEGV/SIGILL handlers and checks whether they point into anonymous or loader-suspicious memory.",
-            ),
-            MemoryMethodResult(
-                label = "Loader visibility",
-                summary = when {
-                    snapshot.hiddenModule || snapshot.deletedLibrary -> "Mismatch"
-                    snapshot.mapsOnlyModule || snapshot.vdsoRemapped || snapshot.vdsoUnusualBase -> "Review"
-                    else -> "Clean"
-                },
-                outcome = when {
-                    snapshot.hiddenModule || snapshot.deletedLibrary -> MemoryMethodOutcome.DETECTED
-                    snapshot.mapsOnlyModule || snapshot.vdsoRemapped || snapshot.vdsoUnusualBase -> MemoryMethodOutcome.REVIEW
-                    else -> MemoryMethodOutcome.CLEAN
-                },
-                detail = "Compares /proc/self/maps against dl_iterate_phdr and sanity-checks the current process [vdso] view.",
-            ),
-        )
+    internal fun buildMethods(snapshot: MemoryNativeSnapshot): List<MemoryMethodResult> = listOf(
+        MemoryMethodResult(
+            label = "GOT/PLT resolution",
+            summary = when {
+                snapshot.gotPltHook -> "Mismatch"
+                else -> "Clean"
+            },
+            outcome = when {
+                snapshot.gotPltHook -> MemoryMethodOutcome.DETECTED
+                else -> MemoryMethodOutcome.CLEAN
+            },
+            detail = "Checks whether critical libc and linker symbols still resolve into their expected native modules.",
+        ),
+        MemoryMethodResult(
+            label = "Entry prologue",
+            summary = when {
+                snapshot.inlineHook || snapshot.prologueModified -> "Hook-like"
+                snapshot.trampoline -> "Jump entry"
+                else -> "Clean"
+            },
+            outcome = when {
+                snapshot.inlineHook || snapshot.prologueModified -> MemoryMethodOutcome.DETECTED
+                snapshot.trampoline -> MemoryMethodOutcome.REVIEW
+                else -> MemoryMethodOutcome.CLEAN
+            },
+            detail = "Looks for branch-heavy entry bytes and trampoline-style handoff patterns at sensitive function starts.",
+        ),
+        MemoryMethodResult(
+            label = "maps + smaps",
+            summary = when {
+                snapshot.writableExec || snapshot.anonymousExec || snapshot.sharedDirtyExec -> "Anomaly"
+                snapshot.swappedExec -> "Review"
+                else -> "Clean"
+            },
+            outcome = when {
+                snapshot.writableExec || snapshot.anonymousExec || snapshot.sharedDirtyExec -> MemoryMethodOutcome.DETECTED
+                snapshot.swappedExec -> MemoryMethodOutcome.REVIEW
+                else -> MemoryMethodOutcome.CLEAN
+            },
+            detail = "Scans non-ART executable mappings for writable code, unexpected swapped pages, and shared-dirty system code.",
+        ),
+        MemoryMethodResult(
+            label = "FD-backed code",
+            summary = when {
+                snapshot.deletedSo || snapshot.suspiciousMemfd -> "Suspicious"
+                snapshot.execAshmem || snapshot.devZeroExec -> "Review"
+                else -> "Clean"
+            },
+            outcome = when {
+                snapshot.deletedSo || snapshot.suspiciousMemfd -> MemoryMethodOutcome.DETECTED
+                snapshot.execAshmem || snapshot.devZeroExec -> MemoryMethodOutcome.REVIEW
+                else -> MemoryMethodOutcome.CLEAN
+            },
+            detail = "Cross-checks executable mappings and live file descriptors for deleted libraries, memfd loaders, ashmem, and /dev/zero execution.",
+        ),
+        MemoryMethodResult(
+            label = "Signal handlers",
+            summary = when {
+                snapshot.fridaSignal || snapshot.anonymousSignal -> "Suspicious"
+                snapshot.signalHandler -> "Review"
+                else -> "Clean"
+            },
+            outcome = when {
+                snapshot.fridaSignal || snapshot.anonymousSignal -> MemoryMethodOutcome.DETECTED
+                snapshot.signalHandler -> MemoryMethodOutcome.REVIEW
+                else -> MemoryMethodOutcome.CLEAN
+            },
+            detail = "Enumerates SIGTRAP/SIGBUS/SIGSEGV/SIGILL handlers and checks whether they point into anonymous or loader-suspicious memory.",
+        ),
+        MemoryMethodResult(
+            label = "Loader visibility",
+            summary = when {
+                snapshot.hiddenModule || snapshot.deletedLibrary -> "Mismatch"
+                snapshot.mapsOnlyModule || snapshot.vdsoRemapped || snapshot.vdsoUnusualBase -> "Review"
+                else -> "Clean"
+            },
+            outcome = when {
+                snapshot.hiddenModule || snapshot.deletedLibrary -> MemoryMethodOutcome.DETECTED
+                snapshot.mapsOnlyModule || snapshot.vdsoRemapped || snapshot.vdsoUnusualBase -> MemoryMethodOutcome.REVIEW
+                else -> MemoryMethodOutcome.CLEAN
+            },
+            detail = "Compares /proc/self/maps against dl_iterate_phdr and sanity-checks the current process [vdso] view.",
+        ),
+    )
+
+    private fun String.toSection(): MemoryFindingSection = when (uppercase()) {
+        "HOOK" -> MemoryFindingSection.HOOK
+        "MAPS" -> MemoryFindingSection.MAPS
+        "FD" -> MemoryFindingSection.FD
+        "SIGNAL" -> MemoryFindingSection.SIGNAL
+        "VDSO" -> MemoryFindingSection.VDSO
+        "LINKER" -> MemoryFindingSection.LINKER
+        else -> MemoryFindingSection.MAPS
     }
 
-    private fun String.toSection(): MemoryFindingSection {
-        return when (uppercase()) {
-            "HOOK" -> MemoryFindingSection.HOOK
-            "MAPS" -> MemoryFindingSection.MAPS
-            "FD" -> MemoryFindingSection.FD
-            "SIGNAL" -> MemoryFindingSection.SIGNAL
-            "VDSO" -> MemoryFindingSection.VDSO
-            "LINKER" -> MemoryFindingSection.LINKER
-            else -> MemoryFindingSection.MAPS
-        }
+    private fun String.toSeverity(): MemoryFindingSeverity = when (uppercase()) {
+        "CRITICAL" -> MemoryFindingSeverity.CRITICAL
+        "HIGH" -> MemoryFindingSeverity.HIGH
+        "MEDIUM" -> MemoryFindingSeverity.MEDIUM
+        else -> MemoryFindingSeverity.LOW
     }
 
-    private fun String.toSeverity(): MemoryFindingSeverity {
-        return when (uppercase()) {
-            "CRITICAL" -> MemoryFindingSeverity.CRITICAL
-            "HIGH" -> MemoryFindingSeverity.HIGH
-            "MEDIUM" -> MemoryFindingSeverity.MEDIUM
-            else -> MemoryFindingSeverity.LOW
-        }
-    }
-
-    private fun String.prettyLabel(): String {
-        return lowercase().split('_').joinToString(" ") { token ->
-            token.replaceFirstChar { it.uppercase() }
-        }
+    private fun String.prettyLabel(): String = lowercase().split('_').joinToString(" ") { token ->
+        token.replaceFirstChar { it.uppercase() }
     }
 
     internal fun sanitizeSnapshot(snapshot: MemoryNativeSnapshot): MemoryNativeSnapshot {
@@ -214,7 +206,7 @@ class MemoryRepository(
         val filteredFindings = snapshot.findings.filterNot(::isBenignArtCodeCacheSwapFinding)
         val hasSwappedExecFinding = filteredFindings.any { finding ->
             finding.section.equals("MAPS", ignoreCase = true) &&
-                    finding.label == SWAPPED_EXEC_LABEL
+                finding.label == SWAPPED_EXEC_LABEL
         }
         return snapshot.copy(
             swappedExec = hasSwappedExecFinding,
@@ -225,7 +217,7 @@ class MemoryRepository(
     internal fun isBenignArtCodeCacheSwapFinding(finding: MemoryNativeFinding): Boolean {
         if (!finding.section.equals(
                 "MAPS",
-                ignoreCase = true
+                ignoreCase = true,
             ) || finding.label != SWAPPED_EXEC_LABEL
         ) {
             return false
@@ -234,33 +226,27 @@ class MemoryRepository(
         return BENIGN_ART_CODE_CACHE_MARKERS.any(loweredDetail::contains)
     }
 
-    private fun String.shouldUseMonospace(): Boolean {
-        return contains("0x") ||
-                contains("/data/") ||
-                contains("/proc/") ||
-                contains(".so") ||
-                contains("[vdso]") ||
-                contains("memfd:")
+    private fun String.shouldUseMonospace(): Boolean = contains("0x") ||
+        contains("/data/") ||
+        contains("/proc/") ||
+        contains(".so") ||
+        contains("[vdso]") ||
+        contains("memfd:")
+
+    private fun severityPriority(severity: MemoryFindingSeverity): Int = when (severity) {
+        MemoryFindingSeverity.CRITICAL -> 0
+        MemoryFindingSeverity.HIGH -> 1
+        MemoryFindingSeverity.MEDIUM -> 2
+        MemoryFindingSeverity.LOW -> 3
     }
 
-    private fun severityPriority(severity: MemoryFindingSeverity): Int {
-        return when (severity) {
-            MemoryFindingSeverity.CRITICAL -> 0
-            MemoryFindingSeverity.HIGH -> 1
-            MemoryFindingSeverity.MEDIUM -> 2
-            MemoryFindingSeverity.LOW -> 3
-        }
-    }
-
-    private fun sectionPriority(section: MemoryFindingSection): Int {
-        return when (section) {
-            MemoryFindingSection.HOOK -> 0
-            MemoryFindingSection.MAPS -> 1
-            MemoryFindingSection.FD -> 2
-            MemoryFindingSection.SIGNAL -> 3
-            MemoryFindingSection.VDSO -> 4
-            MemoryFindingSection.LINKER -> 5
-        }
+    private fun sectionPriority(section: MemoryFindingSection): Int = when (section) {
+        MemoryFindingSection.HOOK -> 0
+        MemoryFindingSection.MAPS -> 1
+        MemoryFindingSection.FD -> 2
+        MemoryFindingSection.SIGNAL -> 3
+        MemoryFindingSection.VDSO -> 4
+        MemoryFindingSection.LINKER -> 5
     }
 
     private companion object {

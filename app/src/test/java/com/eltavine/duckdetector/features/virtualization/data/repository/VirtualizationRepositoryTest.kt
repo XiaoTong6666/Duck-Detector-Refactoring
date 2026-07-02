@@ -65,7 +65,7 @@ class VirtualizationRepositoryTest {
                     "prop",
                     "ro.kernel.qemu",
                     VirtualizationSignalGroup.ENVIRONMENT,
-                    VirtualizationSignalSeverity.DANGER
+                    VirtualizationSignalSeverity.DANGER,
                 ),
             ),
             nativeSnapshot = VirtualizationNativeSnapshot(
@@ -76,7 +76,7 @@ class VirtualizationRepositoryTest {
                         "DANGER",
                         "Emulator device node",
                         "/dev/qemu_pipe",
-                        "/dev/qemu_pipe"
+                        "/dev/qemu_pipe",
                     ),
                 ),
             ),
@@ -95,7 +95,7 @@ class VirtualizationRepositoryTest {
                     "bridge",
                     "ro.dalvik.vm.native.bridge",
                     VirtualizationSignalGroup.TRANSLATION,
-                    VirtualizationSignalSeverity.WARNING
+                    VirtualizationSignalSeverity.WARNING,
                 ),
             ),
         ).scanInternal()
@@ -141,7 +141,7 @@ class VirtualizationRepositoryTest {
                     "cap",
                     "Hypervisor capability",
                     VirtualizationSignalGroup.ENVIRONMENT,
-                    VirtualizationSignalSeverity.INFO
+                    VirtualizationSignalSeverity.INFO,
                 ),
             ),
         ).scanInternal()
@@ -177,7 +177,7 @@ class VirtualizationRepositoryTest {
                         "DANGER",
                         "Emulator device node",
                         "/dev/qemu_pipe",
-                        "/dev/qemu_pipe"
+                        "/dev/qemu_pipe",
                     ),
                 ),
             ),
@@ -201,30 +201,29 @@ class VirtualizationRepositoryTest {
     }
 
     @Test
-    fun `graphics only artifact difference does not trigger cross process artifact drift`() =
-        runBlocking {
-            val report = repository(
-                nativeSnapshot = VirtualizationNativeSnapshot(
-                    available = true,
-                    findings = listOf(
-                        VirtualizationNativeFinding(
-                            "RUNTIME",
-                            "WARNING",
-                            "Graphics renderer",
-                            "gfxstream",
-                            "Google\ngfxstream\nOpenGL ES 3.2",
-                        ),
+    fun `graphics only artifact difference does not trigger cross process artifact drift`() = runBlocking {
+        val report = repository(
+            nativeSnapshot = VirtualizationNativeSnapshot(
+                available = true,
+                findings = listOf(
+                    VirtualizationNativeFinding(
+                        "RUNTIME",
+                        "WARNING",
+                        "Graphics renderer",
+                        "gfxstream",
+                        "Google\ngfxstream\nOpenGL ES 3.2",
                     ),
                 ),
-                remoteSnapshot = VirtualizationRemoteSnapshot(
-                    available = true,
-                    profile = VirtualizationRemoteProfile.REGULAR,
-                    findings = emptyList(),
-                ),
-            ).scanInternal()
+            ),
+            remoteSnapshot = VirtualizationRemoteSnapshot(
+                available = true,
+                profile = VirtualizationRemoteProfile.REGULAR,
+                findings = emptyList(),
+            ),
+        ).scanInternal()
 
-            assertTrue(report.consistencyRows.none { it.label == "Cross-process artifact drift" })
-        }
+        assertTrue(report.consistencyRows.none { it.label == "Cross-process artifact drift" })
+    }
 
     @Test
     fun `host classpath residue maps to danger`() = runBlocking {
@@ -298,7 +297,7 @@ class VirtualizationRepositoryTest {
         assertTrue(
             report.consistencyRows.any {
                 it.label == "Isolated process stayed clean" &&
-                        it.severity == VirtualizationSignalSeverity.DANGER
+                    it.severity == VirtualizationSignalSeverity.DANGER
             },
         )
     }
@@ -323,7 +322,7 @@ class VirtualizationRepositoryTest {
         assertTrue(
             report.consistencyRows.any {
                 it.label == "Cross-process mount anchor drift" &&
-                        it.severity == VirtualizationSignalSeverity.DANGER
+                    it.severity == VirtualizationSignalSeverity.DANGER
             },
         )
     }
@@ -369,7 +368,7 @@ class VirtualizationRepositoryTest {
         assertTrue(
             report.consistencyRows.any {
                 it.label == "Cross-process namespace drift" &&
-                        it.severity == VirtualizationSignalSeverity.WARNING
+                    it.severity == VirtualizationSignalSeverity.WARNING
             },
         )
     }
@@ -422,7 +421,7 @@ class VirtualizationRepositoryTest {
         buildSignals: List<VirtualizationSignal> = emptyList(),
         serviceResult: VirtualizationServiceProbeResult = VirtualizationServiceProbeResult(
             0,
-            emptyList()
+            emptyList(),
         ),
         dexPathResult: DexPathProbeResult = DexPathProbeResult(),
         uidIdentityResult: UidIdentityProbeResult = UidIdentityProbeResult(),
@@ -438,67 +437,62 @@ class VirtualizationRepositoryTest {
         ),
         processInfo: VirtualizationProcessInfo = VirtualizationProcessInfo(),
         syscallPackResult: SacrificialSyscallPackResult = SacrificialSyscallPackResult(),
-    ): VirtualizationRepository {
-        return VirtualizationRepository(
-            propertyProbe = object : VirtualizationPropertyProbe() {
-                override fun probe(): List<VirtualizationSignal> = propertySignals
-            },
-            buildProbe = object : VirtualizationBuildProbe() {
-                override fun probe(): List<VirtualizationSignal> = buildSignals
-            },
-            serviceProbe = object : VirtualizationServiceProbe() {
-                override fun probe(): VirtualizationServiceProbeResult = serviceResult
-            },
-            dexPathProbe = object : DexPathProbe() {
-                override fun probe(): DexPathProbeResult = dexPathResult
-            },
-            uidIdentityProbe = object : UidIdentityProbe() {
-                override fun probe(): UidIdentityProbeResult = uidIdentityResult
-            },
-            nativeBridge = object : VirtualizationNativeBridge() {
-                override fun collectSnapshot(): VirtualizationNativeSnapshot = nativeSnapshot
-            },
-            hostAppProbe = object : VirtualizationHostAppProbe() {
-                override fun probe(): VirtualizationHostAppProbeResult = hostAppResult
-            },
-            probeManager = object : VirtualizationProbeManager() {
-                override suspend fun collect(): VirtualizationRemoteSnapshot = remoteSnapshot
-                override suspend fun runSacrificialSyscallPack(): SacrificialSyscallPackResult =
-                    syscallPackResult
-            },
-            isolatedProbeManager = object : VirtualizationIsolatedProbeManager() {
-                override suspend fun collect(): VirtualizationRemoteSnapshot = isolatedSnapshot
-            },
-            nativeTimingTrapProbe = object : NativeTimingTrapProbe() {
-                override fun probe(): VirtualizationTrapResult = VirtualizationTrapResult()
-            },
-            nativeSyscallParityTrapProbe = object : NativeSyscallParityTrapProbe() {
-                override fun probe(): VirtualizationTrapResult = VirtualizationTrapResult()
-            },
-            asmCounterTrapProbe = object : AsmCounterTrapProbe() {
-                override fun probe(): VirtualizationTrapResult = VirtualizationTrapResult()
-            },
-            asmRawSyscallTrapProbe = object : AsmRawSyscallTrapProbe() {
-                override fun probe(): VirtualizationTrapResult = VirtualizationTrapResult()
-            },
-            preloadResultProvider = { preloadResult },
-            processInfoProvider = { processInfo },
-        )
-    }
+    ): VirtualizationRepository = VirtualizationRepository(
+        propertyProbe = object : VirtualizationPropertyProbe() {
+            override fun probe(): List<VirtualizationSignal> = propertySignals
+        },
+        buildProbe = object : VirtualizationBuildProbe() {
+            override fun probe(): List<VirtualizationSignal> = buildSignals
+        },
+        serviceProbe = object : VirtualizationServiceProbe() {
+            override fun probe(): VirtualizationServiceProbeResult = serviceResult
+        },
+        dexPathProbe = object : DexPathProbe() {
+            override fun probe(): DexPathProbeResult = dexPathResult
+        },
+        uidIdentityProbe = object : UidIdentityProbe() {
+            override fun probe(): UidIdentityProbeResult = uidIdentityResult
+        },
+        nativeBridge = object : VirtualizationNativeBridge() {
+            override fun collectSnapshot(): VirtualizationNativeSnapshot = nativeSnapshot
+        },
+        hostAppProbe = object : VirtualizationHostAppProbe() {
+            override fun probe(): VirtualizationHostAppProbeResult = hostAppResult
+        },
+        probeManager = object : VirtualizationProbeManager() {
+            override suspend fun collect(): VirtualizationRemoteSnapshot = remoteSnapshot
+            override suspend fun runSacrificialSyscallPack(): SacrificialSyscallPackResult = syscallPackResult
+        },
+        isolatedProbeManager = object : VirtualizationIsolatedProbeManager() {
+            override suspend fun collect(): VirtualizationRemoteSnapshot = isolatedSnapshot
+        },
+        nativeTimingTrapProbe = object : NativeTimingTrapProbe() {
+            override fun probe(): VirtualizationTrapResult = VirtualizationTrapResult()
+        },
+        nativeSyscallParityTrapProbe = object : NativeSyscallParityTrapProbe() {
+            override fun probe(): VirtualizationTrapResult = VirtualizationTrapResult()
+        },
+        asmCounterTrapProbe = object : AsmCounterTrapProbe() {
+            override fun probe(): VirtualizationTrapResult = VirtualizationTrapResult()
+        },
+        asmRawSyscallTrapProbe = object : AsmRawSyscallTrapProbe() {
+            override fun probe(): VirtualizationTrapResult = VirtualizationTrapResult()
+        },
+        preloadResultProvider = { preloadResult },
+        processInfoProvider = { processInfo },
+    )
 
     private fun signal(
         id: String,
         label: String,
         group: VirtualizationSignalGroup,
         severity: VirtualizationSignalSeverity,
-    ): VirtualizationSignal {
-        return VirtualizationSignal(
-            id = id,
-            label = label,
-            value = label,
-            group = group,
-            severity = severity,
-            detail = label,
-        )
-    }
+    ): VirtualizationSignal = VirtualizationSignal(
+        id = id,
+        label = label,
+        value = label,
+        group = group,
+        severity = severity,
+        detail = label,
+    )
 }

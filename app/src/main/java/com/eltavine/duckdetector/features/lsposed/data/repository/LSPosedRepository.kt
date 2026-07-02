@@ -23,9 +23,9 @@ import com.eltavine.duckdetector.features.lsposed.data.native.LSPosedNativeTrace
 import com.eltavine.duckdetector.features.lsposed.data.probes.LSPosedBinderProbe
 import com.eltavine.duckdetector.features.lsposed.data.probes.LSPosedBridgeFieldProbe
 import com.eltavine.duckdetector.features.lsposed.data.probes.LSPosedBridgeFieldProbeResult
-import com.eltavine.duckdetector.features.lsposed.data.probes.LSPosedClassProbe
 import com.eltavine.duckdetector.features.lsposed.data.probes.LSPosedClassLoaderProbe
 import com.eltavine.duckdetector.features.lsposed.data.probes.LSPosedClassLoaderProbeResult
+import com.eltavine.duckdetector.features.lsposed.data.probes.LSPosedClassProbe
 import com.eltavine.duckdetector.features.lsposed.data.probes.LSPosedDirtyPolicyProbe
 import com.eltavine.duckdetector.features.lsposed.data.probes.LSPosedDirtyPolicyProbeResult
 import com.eltavine.duckdetector.features.lsposed.data.probes.LSPosedHookCallbackProbe
@@ -38,7 +38,6 @@ import com.eltavine.duckdetector.features.lsposed.data.probes.LSPosedRuntimeArti
 import com.eltavine.duckdetector.features.lsposed.data.probes.LSPosedStackProbe
 import com.eltavine.duckdetector.features.lsposed.data.probes.LSPosedZygotePermissionProbe
 import com.eltavine.duckdetector.features.lsposed.data.probes.LSPosedZygotePermissionProbeResult
-import com.eltavine.duckdetector.features.selinux.data.service.SelinuxContextValidityCarrierManager
 import com.eltavine.duckdetector.features.lsposed.domain.LSPosedMethodOutcome
 import com.eltavine.duckdetector.features.lsposed.domain.LSPosedMethodResult
 import com.eltavine.duckdetector.features.lsposed.domain.LSPosedPackageVisibility
@@ -47,6 +46,7 @@ import com.eltavine.duckdetector.features.lsposed.domain.LSPosedSignal
 import com.eltavine.duckdetector.features.lsposed.domain.LSPosedSignalGroup
 import com.eltavine.duckdetector.features.lsposed.domain.LSPosedSignalSeverity
 import com.eltavine.duckdetector.features.lsposed.domain.LSPosedStage
+import com.eltavine.duckdetector.features.selinux.data.service.SelinuxContextValidityCarrierManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -170,11 +170,11 @@ class LSPosedRepository(
         signals: List<LSPosedSignal>,
     ): List<LSPosedMethodResult> {
         val signalSummaryReducedCoverage = !nativeSnapshot.available ||
-                !nativeSnapshot.heapAvailable ||
-                !zygotePermissionResult.available ||
-                !runtimeArtifactResult.available ||
-                !logcatResult.available ||
-                packageVisibility != LSPosedPackageVisibility.FULL
+            !nativeSnapshot.heapAvailable ||
+            !zygotePermissionResult.available ||
+            !runtimeArtifactResult.available ||
+            !logcatResult.available ||
+            packageVisibility != LSPosedPackageVisibility.FULL
         return listOf(
             LSPosedMethodResult(
                 label = "Class load",
@@ -355,55 +355,49 @@ class LSPosedRepository(
 
     private fun runtimeProbeSummary(
         result: Any,
-    ): String {
-        return when (result) {
-            is LSPosedRuntimeArtifactProbeResult -> when {
-                !result.available -> "Unavailable"
-                result.signals.isEmpty() -> "Clean"
-                else -> probeSummary(result.signals)
-            }
-
-            is LSPosedLogcatProbeResult -> when {
-                !result.available -> "Unavailable"
-                result.signals.isEmpty() -> "Clean"
-                else -> probeSummary(result.signals)
-            }
-
-            else -> "Unavailable"
+    ): String = when (result) {
+        is LSPosedRuntimeArtifactProbeResult -> when {
+            !result.available -> "Unavailable"
+            result.signals.isEmpty() -> "Clean"
+            else -> probeSummary(result.signals)
         }
+
+        is LSPosedLogcatProbeResult -> when {
+            !result.available -> "Unavailable"
+            result.signals.isEmpty() -> "Clean"
+            else -> probeSummary(result.signals)
+        }
+
+        else -> "Unavailable"
     }
 
     private fun probeOutcome(
         signals: List<LSPosedSignal>,
         available: Boolean,
-    ): LSPosedMethodOutcome {
-        return when {
-            !available -> LSPosedMethodOutcome.SUPPORT
-            signals.any { it.severity == LSPosedSignalSeverity.DANGER } -> LSPosedMethodOutcome.DETECTED
-            signals.any { it.severity == LSPosedSignalSeverity.WARNING } -> LSPosedMethodOutcome.WARNING
-            else -> LSPosedMethodOutcome.CLEAN
-        }
+    ): LSPosedMethodOutcome = when {
+        !available -> LSPosedMethodOutcome.SUPPORT
+        signals.any { it.severity == LSPosedSignalSeverity.DANGER } -> LSPosedMethodOutcome.DETECTED
+        signals.any { it.severity == LSPosedSignalSeverity.WARNING } -> LSPosedMethodOutcome.WARNING
+        else -> LSPosedMethodOutcome.CLEAN
     }
 
     private fun nativeSignal(
         index: Int,
         trace: LSPosedNativeTrace,
-    ): LSPosedSignal {
-        return LSPosedSignal(
-            id = "native_${trace.group.lowercase()}_$index",
-            label = trace.label,
-            value = if (trace.group == "HEAP") "Residual" else "Mapped",
-            group = LSPosedSignalGroup.NATIVE,
-            severity = when (trace.severity) {
-                "DANGER" -> LSPosedSignalSeverity.DANGER
-                else -> LSPosedSignalSeverity.WARNING
-            },
-            detail = buildString {
-                append(trace.group)
-                appendLine()
-                append(trace.detail)
-            },
-            detailMonospace = true,
-        )
-    }
+    ): LSPosedSignal = LSPosedSignal(
+        id = "native_${trace.group.lowercase()}_$index",
+        label = trace.label,
+        value = if (trace.group == "HEAP") "Residual" else "Mapped",
+        group = LSPosedSignalGroup.NATIVE,
+        severity = when (trace.severity) {
+            "DANGER" -> LSPosedSignalSeverity.DANGER
+            else -> LSPosedSignalSeverity.WARNING
+        },
+        detail = buildString {
+            append(trace.group)
+            appendLine()
+            append(trace.detail)
+        },
+        detailMonospace = true,
+    )
 }

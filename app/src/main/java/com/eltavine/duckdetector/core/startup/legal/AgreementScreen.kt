@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("ktlint:standard:function-naming")
+
 package com.eltavine.duckdetector.core.startup.legal
 
 import androidx.compose.animation.AnimatedVisibility
@@ -359,9 +361,13 @@ fun AgreementScreen(
                                         if (
                                             input.length <= 6 &&
                                             input.all {
-                                                it.isDigit() || (it == '-' && input.indexOf(
-                                                    '-'
-                                                ) == 0)
+                                                it.isDigit() ||
+                                                    (
+                                                        it == '-' &&
+                                                            input.indexOf(
+                                                                '-',
+                                                            ) == 0
+                                                        )
                                             }
                                         ) {
                                             userAnswer = input
@@ -762,27 +768,25 @@ private data class AgreementSectionColors(
 )
 
 @Composable
-private fun AgreementSectionTone.colors(): AgreementSectionColors {
-    return when (this) {
-        AgreementSectionTone.Standard -> AgreementSectionColors(
-            container = MaterialTheme.colorScheme.surfaceContainerLow,
-            iconContainer = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-            iconTint = MaterialTheme.colorScheme.primary,
-            title = MaterialTheme.colorScheme.onSurface,
-        )
+private fun AgreementSectionTone.colors(): AgreementSectionColors = when (this) {
+    AgreementSectionTone.Standard -> AgreementSectionColors(
+        container = MaterialTheme.colorScheme.surfaceContainerLow,
+        iconContainer = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+        iconTint = MaterialTheme.colorScheme.primary,
+        title = MaterialTheme.colorScheme.onSurface,
+    )
 
-        AgreementSectionTone.Warning -> AgreementSectionColors(
-            container = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.42f),
-            iconContainer = MaterialTheme.colorScheme.errorContainer,
-            iconTint = MaterialTheme.colorScheme.error,
-            title = MaterialTheme.colorScheme.error,
-        )
+    AgreementSectionTone.Warning -> AgreementSectionColors(
+        container = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.42f),
+        iconContainer = MaterialTheme.colorScheme.errorContainer,
+        iconTint = MaterialTheme.colorScheme.error,
+        title = MaterialTheme.colorScheme.error,
+    )
 
-        AgreementSectionTone.Notice -> AgreementSectionColors(
-            container = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.28f),
-            iconContainer = MaterialTheme.colorScheme.secondaryContainer,
-            iconTint = MaterialTheme.colorScheme.primary,
-            title = MaterialTheme.colorScheme.onSurface,
-        )
-    }
+    AgreementSectionTone.Notice -> AgreementSectionColors(
+        container = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.28f),
+        iconContainer = MaterialTheme.colorScheme.secondaryContainer,
+        iconTint = MaterialTheme.colorScheme.primary,
+        title = MaterialTheme.colorScheme.onSurface,
+    )
 }

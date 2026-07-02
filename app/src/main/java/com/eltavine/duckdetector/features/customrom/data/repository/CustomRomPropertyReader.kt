@@ -32,13 +32,11 @@ internal class DefaultCustomRomPropertyReader : CustomRomPropertyReader {
     }
 
     @Suppress("PrivateApi")
-    private fun readViaReflection(name: String): String? {
-        return runCatching {
-            val clazz = Class.forName("android.os.SystemProperties")
-            val method = clazz.getMethod("get", String::class.java)
-            (method.invoke(null, name) as? String)?.trim()
-        }.getOrNull()
-    }
+    private fun readViaReflection(name: String): String? = runCatching {
+        val clazz = Class.forName("android.os.SystemProperties")
+        val method = clazz.getMethod("get", String::class.java)
+        (method.invoke(null, name) as? String)?.trim()
+    }.getOrNull()
 
     private fun readViaGetprop(name: String): String? {
         var process: Process? = null

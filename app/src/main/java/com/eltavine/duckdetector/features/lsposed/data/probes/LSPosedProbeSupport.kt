@@ -83,12 +83,10 @@ internal fun containsFrameworkToken(text: String): Boolean {
     return LSPosedProbeSupport.frameworkTokens.any { token -> lower.contains(token) }
 }
 
-internal fun String.toSignalIdSegment(): String {
-    return lowercase()
-        .replace(Regex("[^a-z0-9]+"), "_")
-        .trim('_')
-        .ifBlank { "entry" }
-}
+internal fun String.toSignalIdSegment(): String = lowercase()
+    .replace(Regex("[^a-z0-9]+"), "_")
+    .trim('_')
+    .ifBlank { "entry" }
 
 internal fun String.trimToPreview(
     maxLength: Int = 180,

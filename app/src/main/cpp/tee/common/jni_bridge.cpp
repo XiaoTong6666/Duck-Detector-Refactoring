@@ -28,16 +28,15 @@
 
 namespace {
 
-    jstring to_jstring(JNIEnv *env, const std::string &value) {
-        return env->NewStringUTF(value.c_str());
-    }
+jstring to_jstring(JNIEnv* env, const std::string& value) {
+    return env->NewStringUTF(value.c_str());
+}
 
 }  // namespace
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_eltavine_duckdetector_features_tee_data_native_TeeNativeBridge_nativeCollectEnvironment(
-        JNIEnv *env,
-        jobject) {
+    JNIEnv* env, jobject) {
     const auto snapshot = ducktee::keystore::collect_environment();
     ducktee::common::ResultCodec codec;
     codec.put_bool("TRACING", snapshot.tracing_detected);
@@ -49,8 +48,7 @@ Java_com_eltavine_duckdetector_features_tee_data_native_TeeNativeBridge_nativeCo
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_eltavine_duckdetector_features_tee_data_native_TeeNativeBridge_nativeInspectTrickyStore(
-        JNIEnv *env,
-        jobject) {
+    JNIEnv* env, jobject) {
     const auto snapshot = ducktee::trickystore::inspect_process();
     ducktee::common::ResultCodec codec;
     codec.put_bool("DETECTED", snapshot.detected);
@@ -74,20 +72,14 @@ Java_com_eltavine_duckdetector_features_tee_data_native_TeeNativeBridge_nativeIn
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_eltavine_duckdetector_features_tee_data_native_TeeNativeBridge_nativeInspectLeafDer(
-        JNIEnv *env,
-        jobject,
-        jbyteArray leaf_der) {
+    JNIEnv* env, jobject, jbyteArray leaf_der) {
     if (leaf_der == nullptr) {
         return to_jstring(env, "PRIMARY=0\nSECONDARY=0\nDETAILS=leaf der missing\n");
     }
 
     const jsize size = env->GetArrayLength(leaf_der);
     std::vector<std::uint8_t> bytes(static_cast<std::size_t>(size));
-    env->GetByteArrayRegion(
-            leaf_der,
-            0,
-            size,
-            reinterpret_cast<jbyte *>(bytes.data()));
+    env->GetByteArrayRegion(leaf_der, 0, size, reinterpret_cast<jbyte*>(bytes.data()));
 
     const auto snapshot = ducktee::der::scan_leaf_der(bytes);
     ducktee::common::ResultCodec codec;
@@ -99,16 +91,14 @@ Java_com_eltavine_duckdetector_features_tee_data_native_TeeNativeBridge_nativeIn
 
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_eltavine_duckdetector_features_tee_data_native_TeeRegisterTimerNativeBridge_nativeIsRegisterTimerAvailable(
-        JNIEnv *,
-        jobject) {
+    JNIEnv*, jobject) {
     std::uint64_t value_ns = 0;
     return ducktee::common::register_timer_time_ns(&value_ns) ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_eltavine_duckdetector_features_tee_data_native_TeeRegisterTimerNativeBridge_nativeReadRegisterTimerNs(
-        JNIEnv *,
-        jobject) {
+    JNIEnv*, jobject) {
     std::uint64_t value_ns = 0;
     if (!ducktee::common::register_timer_time_ns(&value_ns)) {
         return -1;
@@ -118,24 +108,19 @@ Java_com_eltavine_duckdetector_features_tee_data_native_TeeRegisterTimerNativeBr
 
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_eltavine_duckdetector_features_tee_data_native_TeeRegisterTimerNativeBridge_nativeBindCurrentThreadToCpu0(
-        JNIEnv *,
-        jobject) {
+    JNIEnv*, jobject) {
     return ducktee::common::bind_current_thread_to_cpu0() ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_eltavine_duckdetector_features_tee_data_native_TeeRegisterTimerNativeBridge_nativeSelectPreferredTimer(
-        JNIEnv *env,
-        jobject,
-        jboolean request_cpu0_affinity) {
+    JNIEnv* env, jobject, jboolean request_cpu0_affinity) {
     ducktee::common::LocalTimerSelection selection;
     ducktee::common::select_preferred_local_timer(request_cpu0_affinity == JNI_TRUE, &selection);
 
     ducktee::common::ResultCodec codec;
-    codec.put_bool(
-            "REGISTER_TIMER_AVAILABLE",
-            selection.kind == ducktee::common::LocalTimerKind::Arm64Cntvct
-    );
+    codec.put_bool("REGISTER_TIMER_AVAILABLE",
+                   selection.kind == ducktee::common::LocalTimerKind::Arm64Cntvct);
     codec.put("TIMER_SOURCE", selection.source_label);
     codec.put("FALLBACK_REASON", selection.fallback_reason);
     codec.put("AFFINITY", selection.affinity_status);

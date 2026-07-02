@@ -104,11 +104,9 @@ class LSPosedPackageProbe {
     private fun appLabel(
         packageManager: PackageManager,
         appInfo: ApplicationInfo,
-    ): String {
-        return runCatching {
-            packageManager.getApplicationLabel(appInfo).toString()
-        }.getOrDefault(appInfo.packageName)
-    }
+    ): String = runCatching {
+        packageManager.getApplicationLabel(appInfo).toString()
+    }.getOrDefault(appInfo.packageName)
 
     private companion object {
         private val KNOWN_PACKAGES = linkedMapOf(

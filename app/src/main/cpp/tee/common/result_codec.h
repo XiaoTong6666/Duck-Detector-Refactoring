@@ -23,21 +23,21 @@
 
 namespace ducktee::common {
 
-    class ResultCodec {
-    public:
-        void put(std::string_view key, std::string_view value);
+class ResultCodec {
+   public:
+    void put(std::string_view key, std::string_view value);
 
-        void put_bool(std::string_view key, bool value);
+    void put_bool(std::string_view key, bool value);
 
-        void put_int(std::string_view key, long value);
+    void put_int(std::string_view key, long value);
 
-        void put_many(std::string_view key, const std::vector<std::string> &values);
+    void put_many(std::string_view key, const std::vector<std::string>& values);
 
-        [[nodiscard]] std::string str() const;
+    [[nodiscard]] std::string str() const;
 
-    private:
-        std::string buffer_;
-    };
+   private:
+    std::string buffer_;
+};
 
 }  // namespace ducktee::common
 

@@ -62,7 +62,7 @@ open class VirtualizationPropertyProbe {
             "ro.board.platform" to readProperty("ro.board.platform"),
         ).filter { (_, value) ->
             value.contains("goldfish", ignoreCase = true) ||
-                    value.contains("ranchu", ignoreCase = true)
+                value.contains("ranchu", ignoreCase = true)
         }
         if (hardwareHits.isNotEmpty()) {
             signals += VirtualizationSignal(
@@ -120,11 +120,9 @@ open class VirtualizationPropertyProbe {
         return signals.distinctBy { it.id }
     }
 
-    protected open fun readProperty(name: String): String {
-        return runCatching {
-            val clazz = Class.forName("android.os.SystemProperties")
-            val method = clazz.getMethod("get", String::class.java)
-            (method.invoke(null, name) as? String).orEmpty().trim()
-        }.getOrDefault("")
-    }
+    protected open fun readProperty(name: String): String = runCatching {
+        val clazz = Class.forName("android.os.SystemProperties")
+        val method = clazz.getMethod("get", String::class.java)
+        (method.invoke(null, name) as? String).orEmpty().trim()
+    }.getOrDefault("")
 }

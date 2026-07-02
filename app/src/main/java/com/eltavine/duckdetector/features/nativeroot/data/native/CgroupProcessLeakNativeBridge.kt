@@ -54,11 +54,9 @@ data class CgroupProcessLeakNativeSnapshot(
 
 class CgroupProcessLeakNativeBridge {
 
-    fun collectSnapshot(): CgroupProcessLeakNativeSnapshot {
-        return runCatching {
-            parse(nativeCollectSnapshot())
-        }.getOrDefault(CgroupProcessLeakNativeSnapshot())
-    }
+    fun collectSnapshot(): CgroupProcessLeakNativeSnapshot = runCatching {
+        parse(nativeCollectSnapshot())
+    }.getOrDefault(CgroupProcessLeakNativeSnapshot())
 
     internal fun parse(raw: String): CgroupProcessLeakNativeSnapshot {
         if (raw.isBlank()) {
@@ -164,13 +162,18 @@ class CgroupProcessLeakNativeBridge {
                         val value = line.substringAfter('=')
                         when (key) {
                             "AVAILABLE" -> available = value == "1"
+
                             "PATH_CHECKS" -> pathCheckCount = value.toIntOrNull() ?: pathCheckCount
-                            "PATH_ACCESSIBLE" -> accessiblePathCount =
-                                value.toIntOrNull() ?: accessiblePathCount
+
+                            "PATH_ACCESSIBLE" ->
+                                accessiblePathCount =
+                                    value.toIntOrNull() ?: accessiblePathCount
 
                             "PROCESS_COUNT" -> processCount = value.toIntOrNull() ?: processCount
-                            "PROC_DENIED" -> procDeniedCount =
-                                value.toIntOrNull() ?: procDeniedCount
+
+                            "PROC_DENIED" ->
+                                procDeniedCount =
+                                    value.toIntOrNull() ?: procDeniedCount
                         }
                     }
                 }
@@ -187,47 +190,45 @@ class CgroupProcessLeakNativeBridge {
         )
     }
 
-    private fun String.decodeValue(): String {
-        return buildString(length) {
-            var index = 0
-            while (index < this@decodeValue.length) {
-                val current = this@decodeValue[index]
-                if (current == '\\' && index + 1 < this@decodeValue.length) {
-                    when (this@decodeValue[index + 1]) {
-                        'n' -> {
-                            append('\n')
-                            index += 2
-                            continue
-                        }
+    private fun String.decodeValue(): String = buildString(length) {
+        var index = 0
+        while (index < this@decodeValue.length) {
+            val current = this@decodeValue[index]
+            if (current == '\\' && index + 1 < this@decodeValue.length) {
+                when (this@decodeValue[index + 1]) {
+                    'n' -> {
+                        append('\n')
+                        index += 2
+                        continue
+                    }
 
-                        'r' -> {
-                            append('\r')
-                            index += 2
-                            continue
-                        }
+                    'r' -> {
+                        append('\r')
+                        index += 2
+                        continue
+                    }
 
-                        't' -> {
-                            append('\t')
-                            index += 2
-                            continue
-                        }
+                    't' -> {
+                        append('\t')
+                        index += 2
+                        continue
+                    }
 
-                        '0' -> {
-                            append('\u0000')
-                            index += 2
-                            continue
-                        }
+                    '0' -> {
+                        append('\u0000')
+                        index += 2
+                        continue
+                    }
 
-                        '\\' -> {
-                            append('\\')
-                            index += 2
-                            continue
-                        }
+                    '\\' -> {
+                        append('\\')
+                        index += 2
+                        continue
                     }
                 }
-                append(current)
-                index += 1
             }
+            append(current)
+            index += 1
         }
     }
 

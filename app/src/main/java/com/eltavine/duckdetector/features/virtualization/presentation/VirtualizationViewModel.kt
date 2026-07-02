@@ -78,11 +78,9 @@ class VirtualizationViewModel(
             val appContext = context.applicationContext
             return object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return VirtualizationViewModel(
-                        VirtualizationRepository(appContext),
-                    ) as T
-                }
+                override fun <T : ViewModel> create(modelClass: Class<T>): T = VirtualizationViewModel(
+                    VirtualizationRepository(appContext),
+                ) as T
             }
         }
     }

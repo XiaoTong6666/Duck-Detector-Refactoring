@@ -112,43 +112,39 @@ data class MemoryReport(
         get() = findings.count { it.section == MemoryFindingSection.SIGNAL || it.section == MemoryFindingSection.VDSO || it.section == MemoryFindingSection.LINKER }
 
     companion object {
-        fun loading(): MemoryReport {
-            return MemoryReport(
-                stage = MemoryStage.LOADING,
-                nativeAvailable = true,
-                findings = emptyList(),
-                methods = emptyList(),
-                modifiedFunctionCount = 0,
-                gotPltHook = false,
-                inlineHook = false,
-                prologueModified = false,
-                trampoline = false,
-                suspiciousJump = false,
-                writableExec = false,
-                anonymousExec = false,
-                swappedExec = false,
-                sharedDirtyExec = false,
-                deletedSo = false,
-                suspiciousMemfd = false,
-                execAshmem = false,
-                devZeroExec = false,
-                signalHandler = false,
-                fridaSignal = false,
-                anonymousSignal = false,
-                vdsoRemapped = false,
-                vdsoUnusualBase = false,
-                deletedLibrary = false,
-                hiddenModule = false,
-                mapsOnlyModule = false,
-            )
-        }
+        fun loading(): MemoryReport = MemoryReport(
+            stage = MemoryStage.LOADING,
+            nativeAvailable = true,
+            findings = emptyList(),
+            methods = emptyList(),
+            modifiedFunctionCount = 0,
+            gotPltHook = false,
+            inlineHook = false,
+            prologueModified = false,
+            trampoline = false,
+            suspiciousJump = false,
+            writableExec = false,
+            anonymousExec = false,
+            swappedExec = false,
+            sharedDirtyExec = false,
+            deletedSo = false,
+            suspiciousMemfd = false,
+            execAshmem = false,
+            devZeroExec = false,
+            signalHandler = false,
+            fridaSignal = false,
+            anonymousSignal = false,
+            vdsoRemapped = false,
+            vdsoUnusualBase = false,
+            deletedLibrary = false,
+            hiddenModule = false,
+            mapsOnlyModule = false,
+        )
 
-        fun failed(message: String): MemoryReport {
-            return loading().copy(
-                stage = MemoryStage.FAILED,
-                nativeAvailable = false,
-                errorMessage = message,
-            )
-        }
+        fun failed(message: String): MemoryReport = loading().copy(
+            stage = MemoryStage.FAILED,
+            nativeAvailable = false,
+            errorMessage = message,
+        )
     }
 }

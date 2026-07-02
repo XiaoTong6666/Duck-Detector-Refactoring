@@ -73,13 +73,9 @@ class MemoryViewModel(
     }
 
     companion object {
-        fun factory(): ViewModelProvider.Factory {
-            return object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return MemoryViewModel(MemoryRepository()) as T
-                }
-            }
+        fun factory(): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T = MemoryViewModel(MemoryRepository()) as T
         }
     }
 }

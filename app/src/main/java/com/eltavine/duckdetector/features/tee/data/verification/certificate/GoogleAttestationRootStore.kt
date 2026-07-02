@@ -20,10 +20,10 @@ import android.content.Context
 import com.eltavine.duckdetector.R
 import org.json.JSONArray
 import java.io.ByteArrayInputStream
+import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
-import java.nio.charset.StandardCharsets
 
 class GoogleAttestationRootStore(
     context: Context,
@@ -61,15 +61,11 @@ class GoogleAttestationRootStore(
         }
     }
 
-    private fun parseCertificate(pem: String): X509Certificate {
-        return ByteArrayInputStream(pem.toByteArray(StandardCharsets.UTF_8)).use { stream ->
-            certificateFactory.generateCertificate(stream) as X509Certificate
-        }
+    private fun parseCertificate(pem: String): X509Certificate = ByteArrayInputStream(pem.toByteArray(StandardCharsets.UTF_8)).use { stream ->
+        certificateFactory.generateCertificate(stream) as X509Certificate
     }
 
-    private fun ByteArray.sha256(): String {
-        return MessageDigest.getInstance("SHA-256")
-            .digest(this)
-            .joinToString(separator = "") { byte -> "%02x".format(byte) }
-    }
+    private fun ByteArray.sha256(): String = MessageDigest.getInstance("SHA-256")
+        .digest(this)
+        .joinToString(separator = "") { byte -> "%02x".format(byte) }
 }

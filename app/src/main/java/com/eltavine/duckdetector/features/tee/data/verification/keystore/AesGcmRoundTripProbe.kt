@@ -227,17 +227,15 @@ internal fun keyInfoSecurityLevelLabel(
     sdkInt: Int,
     securityLevel: Int?,
     insideSecureHardware: Boolean,
-): String {
-    return if (sdkInt >= Build.VERSION_CODES.S && securityLevel != null) {
-        when (securityLevel) {
-            KeyProperties.SECURITY_LEVEL_STRONGBOX -> "StrongBox"
-            KeyProperties.SECURITY_LEVEL_TRUSTED_ENVIRONMENT -> "TEE"
-            KeyProperties.SECURITY_LEVEL_SOFTWARE -> "Software"
-            else -> if (insideSecureHardware) "SecureHardware" else "Software"
-        }
-    } else if (insideSecureHardware) {
-        "SecureHardware"
-    } else {
-        "Software"
+): String = if (sdkInt >= Build.VERSION_CODES.S && securityLevel != null) {
+    when (securityLevel) {
+        KeyProperties.SECURITY_LEVEL_STRONGBOX -> "StrongBox"
+        KeyProperties.SECURITY_LEVEL_TRUSTED_ENVIRONMENT -> "TEE"
+        KeyProperties.SECURITY_LEVEL_SOFTWARE -> "Software"
+        else -> if (insideSecureHardware) "SecureHardware" else "Software"
     }
+} else if (insideSecureHardware) {
+    "SecureHardware"
+} else {
+    "Software"
 }

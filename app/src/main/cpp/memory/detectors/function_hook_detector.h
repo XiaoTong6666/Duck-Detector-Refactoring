@@ -23,7 +23,7 @@
 
 namespace duckdetector::memory {
 
-    HookSignals detect_function_hooks(const std::vector<MapEntry> &maps);
+HookSignals detect_function_hooks(const std::vector<MapEntry>& maps);
 
 }  // namespace duckdetector::memory
 

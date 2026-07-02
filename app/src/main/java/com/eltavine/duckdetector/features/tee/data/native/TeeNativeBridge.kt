@@ -18,15 +18,13 @@ package com.eltavine.duckdetector.features.tee.data.native
 
 class TeeNativeBridge {
 
-    fun collectSnapshot(leafDer: ByteArray?): NativeTeeSnapshot {
-        return runCatching {
-            decodeSnapshot(
-                environmentRaw = nativeCollectEnvironment(),
-                trickyRaw = nativeInspectTrickyStore(),
-                derRaw = leafDer?.let(::nativeInspectLeafDer).orEmpty(),
-            )
-        }.getOrDefault(NativeTeeSnapshot())
-    }
+    fun collectSnapshot(leafDer: ByteArray?): NativeTeeSnapshot = runCatching {
+        decodeSnapshot(
+            environmentRaw = nativeCollectEnvironment(),
+            trickyRaw = nativeInspectTrickyStore(),
+            derRaw = leafDer?.let(::nativeInspectLeafDer).orEmpty(),
+        )
+    }.getOrDefault(NativeTeeSnapshot())
 
     internal fun decodeSnapshot(
         environmentRaw: String,

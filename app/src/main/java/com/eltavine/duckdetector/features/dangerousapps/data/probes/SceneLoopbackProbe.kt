@@ -47,8 +47,13 @@ class SceneLoopbackProbe(
                 } else {
                     ProbeExchange.unavailable()
                 }
-            val result = evaluate(httpGet, invalidPayload, sideChannel,
-                httpPort = httpPort, sidecarPort = sidecarPort)
+            val result = evaluate(
+                httpGet,
+                invalidPayload,
+                sideChannel,
+                httpPort = httpPort,
+                sidecarPort = sidecarPort,
+            )
             if (result.detected) return result
             lastResult = result
         }
@@ -149,12 +154,10 @@ class SceneLoopbackProbe(
             }
         }
 
-        private fun readFirstLine(socket: Socket): String? {
-            return BufferedReader(
-                InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8),
-            ).use { reader ->
-                reader.readLine()
-            }
+        private fun readFirstLine(socket: Socket): String? = BufferedReader(
+            InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8),
+        ).use { reader ->
+            reader.readLine()
         }
     }
 
@@ -178,6 +181,7 @@ class SceneLoopbackProbe(
 
     private companion object {
         private const val LOOPBACK_HOST = "127.0.0.1"
+
         // Scene 8.x:           HTTP_PORT=8765,  SIDECAR_PORT=8788
         // Scene 9.3.0 Alpha13: HTTP_PORT=14731, SIDECAR_PORT=14754
         // Probe both port pairs for backward compatibility.
@@ -190,10 +194,10 @@ class SceneLoopbackProbe(
         private const val HTTP_STATUS_PATTERN = "^HTTP/\\d(?:\\.\\d)?\\s+%d(?:\\s+.*)?$"
 
         private val HTTP_GET_PAYLOAD = (
-                "GET / HTTP/1.1\r\n" +
-                        "Host: 127.0.0.1\r\n" +
-                        "Connection: close\r\n\r\n"
-                ).toByteArray(StandardCharsets.US_ASCII)
+            "GET / HTTP/1.1\r\n" +
+                "Host: 127.0.0.1\r\n" +
+                "Connection: close\r\n\r\n"
+            ).toByteArray(StandardCharsets.US_ASCII)
 
         private val JSON_PING_PAYLOAD =
             "{\"action\":\"ping\"}\n".toByteArray(StandardCharsets.US_ASCII)

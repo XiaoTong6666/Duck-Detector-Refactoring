@@ -18,8 +18,8 @@ package com.eltavine.duckdetector.features.tee.data.verification.keystore
 
 import android.content.Context
 import android.os.Build
-import android.security.keystore.KeyProtection
 import android.security.keystore.KeyProperties
+import android.security.keystore.KeyProtection
 import com.eltavine.duckdetector.features.tee.data.keystore.AndroidKeyStoreTools
 import java.io.ByteArrayInputStream
 import java.security.MessageDigest
@@ -112,9 +112,7 @@ class ImportKeyRetainedAttestationNarrativeProbe internal constructor(
             else -> value.toString()
         }
 
-        fun describeThrowable(throwable: Throwable): String {
-            return throwable.message ?: "ImportKey retained narrative probe failed."
-        }
+        fun describeThrowable(throwable: Throwable): String = throwable.message ?: "ImportKey retained narrative probe failed."
     }
 
     internal data class PostImportMetadata(
@@ -198,12 +196,10 @@ class ImportKeyRetainedAttestationNarrativeProbe internal constructor(
             )
         }
 
-        override fun readPostImportMetadataSnapshots(alias: String): List<PostImportMetadata> {
-            return listOfNotNull(
-                readPostImportMetadata(alias),
-                readPostImportMetadata(alias),
-            )
-        }
+        override fun readPostImportMetadataSnapshots(alias: String): List<PostImportMetadata> = listOfNotNull(
+            readPostImportMetadata(alias),
+            readPostImportMetadata(alias),
+        )
 
         private fun readPostImportMetadata(alias: String): PostImportMetadata? {
             val service = binderClient.getKeystoreService() ?: return null
@@ -234,25 +230,19 @@ class ImportKeyRetainedAttestationNarrativeProbe internal constructor(
             AndroidKeyStoreTools.safeDelete(keyStore, alias)
         }
 
-        override fun originLabel(value: Int?): String {
-            return when (value) {
-                null -> "unknown"
-                binderClient.getKeyOriginValue("GENERATED") -> "GENERATED"
-                binderClient.getKeyOriginValue("DERIVED") -> "DERIVED"
-                binderClient.getKeyOriginValue("IMPORTED") -> "IMPORTED"
-                binderClient.getKeyOriginValue("UNKNOWN") -> "UNKNOWN"
-                binderClient.getKeyOriginValue("SECURELY_IMPORTED") -> "SECURELY_IMPORTED"
-                else -> value.toString()
-            }
+        override fun originLabel(value: Int?): String = when (value) {
+            null -> "unknown"
+            binderClient.getKeyOriginValue("GENERATED") -> "GENERATED"
+            binderClient.getKeyOriginValue("DERIVED") -> "DERIVED"
+            binderClient.getKeyOriginValue("IMPORTED") -> "IMPORTED"
+            binderClient.getKeyOriginValue("UNKNOWN") -> "UNKNOWN"
+            binderClient.getKeyOriginValue("SECURELY_IMPORTED") -> "SECURELY_IMPORTED"
+            else -> value.toString()
         }
 
-        override fun describeThrowable(throwable: Throwable): String {
-            return binderClient.describeThrowable(throwable)
-        }
+        override fun describeThrowable(throwable: Throwable): String = binderClient.describeThrowable(throwable)
 
-        private fun buildFullChain(leafBlob: ByteArray?, chainBlob: ByteArray?): List<ByteArray> {
-            return listOfNotNull(leafBlob?.takeIf { it.isNotEmpty() }) + parseCertificates(chainBlob)
-        }
+        private fun buildFullChain(leafBlob: ByteArray?, chainBlob: ByteArray?): List<ByteArray> = listOfNotNull(leafBlob?.takeIf { it.isNotEmpty() }) + parseCertificates(chainBlob)
 
         private fun parseCertificates(blob: ByteArray?): List<ByteArray> {
             if (blob == null || blob.isEmpty()) {
@@ -379,23 +369,21 @@ class ImportKeyRetainedAttestationNarrativeProbe internal constructor(
             originLabel: String,
             postImportLeafMatchesMarker: Boolean,
             detailPrefix: String,
-        ): ImportKeyRetainedAttestationNarrativeResult {
-            return ImportKeyRetainedAttestationNarrativeResult(
-                executed = true,
-                importSupported = true,
-                markerImportBaselineClean = true,
-                originImported = anomalyKind == ImportKeyRetainedAttestationAnomalyKind.IMPORTED_RETAINED_PRIOR_CHAIN,
-                postImportLeafMatchesMarker = postImportLeafMatchesMarker,
-                retainedNarrativeDetected = true,
-                priorChainLength = priorFingerprints.size,
-                postImportChainLength = postImportFingerprints.size,
-                retainedCertificateCount = retained.size,
-                originLabel = originLabel,
-                anomalyKind = anomalyKind,
-                retainedFingerprint = retained.first().shortSha256,
-                detail = "$detailPrefix, origin=$originLabel, retained=${retained.size}, priorChain=${priorFingerprints.size}, postImportChain=${postImportFingerprints.size}, leafMatchesMarker=$postImportLeafMatchesMarker, firstRetained=${retained.first().shortSha256}.",
-            )
-        }
+        ): ImportKeyRetainedAttestationNarrativeResult = ImportKeyRetainedAttestationNarrativeResult(
+            executed = true,
+            importSupported = true,
+            markerImportBaselineClean = true,
+            originImported = anomalyKind == ImportKeyRetainedAttestationAnomalyKind.IMPORTED_RETAINED_PRIOR_CHAIN,
+            postImportLeafMatchesMarker = postImportLeafMatchesMarker,
+            retainedNarrativeDetected = true,
+            priorChainLength = priorFingerprints.size,
+            postImportChainLength = postImportFingerprints.size,
+            retainedCertificateCount = retained.size,
+            originLabel = originLabel,
+            anomalyKind = anomalyKind,
+            retainedFingerprint = retained.first().shortSha256,
+            detail = "$detailPrefix, origin=$originLabel, retained=${retained.size}, priorChain=${priorFingerprints.size}, postImportChain=${postImportFingerprints.size}, leafMatchesMarker=$postImportLeafMatchesMarker, firstRetained=${retained.first().shortSha256}.",
+        )
 
         private fun unavailable(
             detail: String,
@@ -406,33 +394,29 @@ class ImportKeyRetainedAttestationNarrativeProbe internal constructor(
             priorChainLength: Int = 0,
             postImportChainLength: Int = 0,
             originLabel: String = "unknown",
-        ): ImportKeyRetainedAttestationNarrativeResult {
-            return ImportKeyRetainedAttestationNarrativeResult(
-                executed = false,
-                importSupported = importSupported,
-                markerImportBaselineClean = markerImportBaselineClean,
-                originImported = false,
-                postImportLeafMatchesMarker = postImportLeafMatchesMarker,
-                retainedNarrativeDetected = false,
-                priorChainLength = priorChainLength,
-                postImportChainLength = postImportChainLength,
-                retainedCertificateCount = 0,
-                originLabel = originLabel,
-                anomalyKind = anomalyKind,
-                detail = detail,
-            )
-        }
+        ): ImportKeyRetainedAttestationNarrativeResult = ImportKeyRetainedAttestationNarrativeResult(
+            executed = false,
+            importSupported = importSupported,
+            markerImportBaselineClean = markerImportBaselineClean,
+            originImported = false,
+            postImportLeafMatchesMarker = postImportLeafMatchesMarker,
+            retainedNarrativeDetected = false,
+            priorChainLength = priorChainLength,
+            postImportChainLength = postImportChainLength,
+            retainedCertificateCount = 0,
+            originLabel = originLabel,
+            anomalyKind = anomalyKind,
+            detail = detail,
+        )
 
-        private fun fingerprintChain(chain: List<ByteArray>): List<CertificateFingerprint> {
-            return chain.mapIndexed { index, der ->
-                val sha256 = der.sha256Hex()
-                CertificateFingerprint(
-                    index = index,
-                    derLength = der.size,
-                    sha256 = sha256,
-                    shortSha256 = sha256.take(12),
-                )
-            }
+        private fun fingerprintChain(chain: List<ByteArray>): List<CertificateFingerprint> = chain.mapIndexed { index, der ->
+            val sha256 = der.sha256Hex()
+            CertificateFingerprint(
+                index = index,
+                derLength = der.size,
+                sha256 = sha256,
+                shortSha256 = sha256.take(12),
+            )
         }
 
         private fun ByteArray.sha256Hex(): String {
@@ -448,6 +432,7 @@ enum class ImportKeyRetainedAttestationAnomalyKind {
     NONE,
     IMPORT_UNSUPPORTED,
     IMPORTED_RETAINED_PRIOR_CHAIN,
+
     // Import support was proven separately; GENERATED plus prior-chain overlap means a stale attestation narrative was replayed after overwrite.
     // 已经单独证明 import 支持；GENERATED 且与旧链重叠表示覆盖后仍回放了陈旧认证叙事。
     STALE_GENERATED_AFTER_IMPORT,

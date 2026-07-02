@@ -30,97 +30,97 @@ object PlayIntegrityFixCatalog {
         PlayIntegrityFixPropertyRule(
             "persist.sys.spoof.gms",
             "GMS spoof",
-            PlayIntegrityFixPropertyCategory.CONTROL
+            PlayIntegrityFixPropertyCategory.CONTROL,
         ),
         PlayIntegrityFixPropertyRule(
             "persist.sys.pihooks.disable.gms",
             "GMS hook toggle",
-            PlayIntegrityFixPropertyCategory.CONTROL
+            PlayIntegrityFixPropertyCategory.CONTROL,
         ),
         PlayIntegrityFixPropertyRule(
             "persist.sys.pihooks_ID",
             "Hook profile ID",
-            PlayIntegrityFixPropertyCategory.CONTROL
+            PlayIntegrityFixPropertyCategory.CONTROL,
         ),
         PlayIntegrityFixPropertyRule(
             "persist.sys.pihooks_DEVICE_INIT",
             "Device init hook",
-            PlayIntegrityFixPropertyCategory.CONTROL
+            PlayIntegrityFixPropertyCategory.CONTROL,
         ),
         PlayIntegrityFixPropertyRule(
             "persist.sys.pixelprops.pi",
             "Play Integrity pixel props",
-            PlayIntegrityFixPropertyCategory.PIXEL
+            PlayIntegrityFixPropertyCategory.PIXEL,
         ),
         PlayIntegrityFixPropertyRule(
             "persist.sys.pixelprops.gms",
             "GMS pixel props",
-            PlayIntegrityFixPropertyCategory.PIXEL
+            PlayIntegrityFixPropertyCategory.PIXEL,
         ),
         PlayIntegrityFixPropertyRule(
             "persist.sys.pixelprops.gapps",
             "GApps pixel props",
-            PlayIntegrityFixPropertyCategory.PIXEL
+            PlayIntegrityFixPropertyCategory.PIXEL,
         ),
         PlayIntegrityFixPropertyRule(
             "persist.sys.pixelprops.google",
             "Google pixel props",
-            PlayIntegrityFixPropertyCategory.PIXEL
+            PlayIntegrityFixPropertyCategory.PIXEL,
         ),
         PlayIntegrityFixPropertyRule(
             "persist.sys.pihooks_BRAND",
             "Spoofed brand",
-            PlayIntegrityFixPropertyCategory.DEVICE
+            PlayIntegrityFixPropertyCategory.DEVICE,
         ),
         PlayIntegrityFixPropertyRule(
             "persist.sys.pihooks_MODEL",
             "Spoofed model",
-            PlayIntegrityFixPropertyCategory.DEVICE
+            PlayIntegrityFixPropertyCategory.DEVICE,
         ),
         PlayIntegrityFixPropertyRule(
             "persist.sys.pihooks_DEVICE",
             "Spoofed device",
-            PlayIntegrityFixPropertyCategory.DEVICE
+            PlayIntegrityFixPropertyCategory.DEVICE,
         ),
         PlayIntegrityFixPropertyRule(
             "persist.sys.pihooks_PRODUCT",
             "Spoofed product",
-            PlayIntegrityFixPropertyCategory.DEVICE
+            PlayIntegrityFixPropertyCategory.DEVICE,
         ),
         PlayIntegrityFixPropertyRule(
             "persist.sys.pihooks_MANUFACTURE",
             "Spoofed manufacture",
-            PlayIntegrityFixPropertyCategory.DEVICE
+            PlayIntegrityFixPropertyCategory.DEVICE,
         ),
         PlayIntegrityFixPropertyRule(
             "persist.sys.pihooks_MANUFACTURER",
             "Spoofed manufacturer",
-            PlayIntegrityFixPropertyCategory.DEVICE
+            PlayIntegrityFixPropertyCategory.DEVICE,
         ),
         PlayIntegrityFixPropertyRule(
             "persist.sys.pihooks_RELEASE",
             "Spoofed Android release",
-            PlayIntegrityFixPropertyCategory.SECURITY
+            PlayIntegrityFixPropertyCategory.SECURITY,
         ),
         PlayIntegrityFixPropertyRule(
             "persist.sys.pihooks_SDK_INT",
             "Spoofed SDK level",
-            PlayIntegrityFixPropertyCategory.SECURITY
+            PlayIntegrityFixPropertyCategory.SECURITY,
         ),
         PlayIntegrityFixPropertyRule(
             "persist.sys.pihooks_FINGERPRINT",
             "Spoofed fingerprint",
-            PlayIntegrityFixPropertyCategory.SECURITY
+            PlayIntegrityFixPropertyCategory.SECURITY,
         ),
         PlayIntegrityFixPropertyRule(
             "persist.sys.pihooks_SECURITY_PA",
             "Spoofed security patch",
-            PlayIntegrityFixPropertyCategory.SECURITY
+            PlayIntegrityFixPropertyCategory.SECURITY,
         ),
         PlayIntegrityFixPropertyRule(
             "persist.sys.pihooks_SECURITY_PATCH",
             "Spoofed security patch",
-            PlayIntegrityFixPropertyCategory.SECURITY
+            PlayIntegrityFixPropertyCategory.SECURITY,
         ),
     )
 }

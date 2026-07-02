@@ -321,20 +321,18 @@ class SelinuxCardModelMapperContextValidityTest {
         )
     }
 
-    private fun baseReport(vararg methods: SelinuxCheckResult): SelinuxReport {
-        return SelinuxReport(
-            stage = SelinuxStage.READY,
-            mode = SelinuxMode.ENFORCING,
-            resolvedStatusLabel = "Enforcing",
-            filesystemMounted = true,
-            paradoxDetected = false,
-            methods = methods.toList(),
-            processContext = "u:r:untrusted_app:s0:c1,c2",
-            contextType = "untrusted_app",
-            policyAnalysis = null,
-            auditIntegrity = null,
-            androidVersion = "16",
-            apiLevel = 36,
-        )
-    }
+    private fun baseReport(vararg methods: SelinuxCheckResult): SelinuxReport = SelinuxReport(
+        stage = SelinuxStage.READY,
+        mode = SelinuxMode.ENFORCING,
+        resolvedStatusLabel = "Enforcing",
+        filesystemMounted = true,
+        paradoxDetected = false,
+        methods = methods.toList(),
+        processContext = "u:r:untrusted_app:s0:c1,c2",
+        contextType = "untrusted_app",
+        policyAnalysis = null,
+        auditIntegrity = null,
+        androidVersion = "16",
+        apiLevel = 36,
+    )
 }

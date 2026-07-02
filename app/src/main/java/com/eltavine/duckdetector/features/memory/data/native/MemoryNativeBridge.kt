@@ -18,11 +18,9 @@ package com.eltavine.duckdetector.features.memory.data.native
 
 class MemoryNativeBridge {
 
-    fun collectSnapshot(): MemoryNativeSnapshot {
-        return runCatching {
-            parse(nativeCollectSnapshot())
-        }.getOrDefault(MemoryNativeSnapshot())
-    }
+    fun collectSnapshot(): MemoryNativeSnapshot = runCatching {
+        parse(nativeCollectSnapshot())
+    }.getOrDefault(MemoryNativeSnapshot())
 
     internal fun parse(raw: String): MemoryNativeSnapshot {
         if (raw.isBlank()) {
@@ -62,81 +60,101 @@ class MemoryNativeBridge {
     private fun MemoryNativeSnapshot.applyEntry(
         key: String,
         value: String,
-    ): MemoryNativeSnapshot {
-        return when (key) {
-            "AVAILABLE" -> copy(available = value.asBool())
-            "GOT_PLT_HOOK" -> copy(gotPltHook = value.asBool())
-            "INLINE_HOOK" -> copy(inlineHook = value.asBool())
-            "PROLOGUE_MODIFIED" -> copy(prologueModified = value.asBool())
-            "TRAMPOLINE" -> copy(trampoline = value.asBool())
-            "SUSPICIOUS_JUMP" -> copy(suspiciousJump = value.asBool())
-            "MODIFIED_FUNCTION_COUNT" -> copy(
-                modifiedFunctionCount = value.toIntOrNull() ?: modifiedFunctionCount
-            )
+    ): MemoryNativeSnapshot = when (key) {
+        "AVAILABLE" -> copy(available = value.asBool())
 
-            "WRITABLE_EXEC" -> copy(writableExec = value.asBool())
-            "ANONYMOUS_EXEC" -> copy(anonymousExec = value.asBool())
-            "SWAPPED_EXEC" -> copy(swappedExec = value.asBool())
-            "SHARED_DIRTY_EXEC" -> copy(sharedDirtyExec = value.asBool())
-            "DELETED_SO" -> copy(deletedSo = value.asBool())
-            "SUSPICIOUS_MEMFD" -> copy(suspiciousMemfd = value.asBool())
-            "EXEC_ASHMEM" -> copy(execAshmem = value.asBool())
-            "DEV_ZERO_EXEC" -> copy(devZeroExec = value.asBool())
-            "SIGNAL_HANDLER" -> copy(signalHandler = value.asBool())
-            "FRIDA_SIGNAL" -> copy(fridaSignal = value.asBool())
-            "ANONYMOUS_SIGNAL" -> copy(anonymousSignal = value.asBool())
-            "VDSO_REMAPPED" -> copy(vdsoRemapped = value.asBool())
-            "VDSO_UNUSUAL_BASE" -> copy(vdsoUnusualBase = value.asBool())
-            "DELETED_LIBRARY" -> copy(deletedLibrary = value.asBool())
-            "HIDDEN_MODULE" -> copy(hiddenModule = value.asBool())
-            "MAPS_ONLY_MODULE" -> copy(mapsOnlyModule = value.asBool())
-            "CRITICAL_COUNT" -> copy(criticalCount = value.toIntOrNull() ?: criticalCount)
-            "HIGH_COUNT" -> copy(highCount = value.toIntOrNull() ?: highCount)
-            "MEDIUM_COUNT" -> copy(mediumCount = value.toIntOrNull() ?: mediumCount)
-            "LOW_COUNT" -> copy(lowCount = value.toIntOrNull() ?: lowCount)
-            else -> this
-        }
+        "GOT_PLT_HOOK" -> copy(gotPltHook = value.asBool())
+
+        "INLINE_HOOK" -> copy(inlineHook = value.asBool())
+
+        "PROLOGUE_MODIFIED" -> copy(prologueModified = value.asBool())
+
+        "TRAMPOLINE" -> copy(trampoline = value.asBool())
+
+        "SUSPICIOUS_JUMP" -> copy(suspiciousJump = value.asBool())
+
+        "MODIFIED_FUNCTION_COUNT" -> copy(
+            modifiedFunctionCount = value.toIntOrNull() ?: modifiedFunctionCount,
+        )
+
+        "WRITABLE_EXEC" -> copy(writableExec = value.asBool())
+
+        "ANONYMOUS_EXEC" -> copy(anonymousExec = value.asBool())
+
+        "SWAPPED_EXEC" -> copy(swappedExec = value.asBool())
+
+        "SHARED_DIRTY_EXEC" -> copy(sharedDirtyExec = value.asBool())
+
+        "DELETED_SO" -> copy(deletedSo = value.asBool())
+
+        "SUSPICIOUS_MEMFD" -> copy(suspiciousMemfd = value.asBool())
+
+        "EXEC_ASHMEM" -> copy(execAshmem = value.asBool())
+
+        "DEV_ZERO_EXEC" -> copy(devZeroExec = value.asBool())
+
+        "SIGNAL_HANDLER" -> copy(signalHandler = value.asBool())
+
+        "FRIDA_SIGNAL" -> copy(fridaSignal = value.asBool())
+
+        "ANONYMOUS_SIGNAL" -> copy(anonymousSignal = value.asBool())
+
+        "VDSO_REMAPPED" -> copy(vdsoRemapped = value.asBool())
+
+        "VDSO_UNUSUAL_BASE" -> copy(vdsoUnusualBase = value.asBool())
+
+        "DELETED_LIBRARY" -> copy(deletedLibrary = value.asBool())
+
+        "HIDDEN_MODULE" -> copy(hiddenModule = value.asBool())
+
+        "MAPS_ONLY_MODULE" -> copy(mapsOnlyModule = value.asBool())
+
+        "CRITICAL_COUNT" -> copy(criticalCount = value.toIntOrNull() ?: criticalCount)
+
+        "HIGH_COUNT" -> copy(highCount = value.toIntOrNull() ?: highCount)
+
+        "MEDIUM_COUNT" -> copy(mediumCount = value.toIntOrNull() ?: mediumCount)
+
+        "LOW_COUNT" -> copy(lowCount = value.toIntOrNull() ?: lowCount)
+
+        else -> this
     }
 
-    private fun String.asBool(): Boolean {
-        return this == "1" || equals("true", ignoreCase = true)
-    }
+    private fun String.asBool(): Boolean = this == "1" || equals("true", ignoreCase = true)
 
-    private fun String.decodeValue(): String {
-        return buildString(length) {
-            var index = 0
-            while (index < this@decodeValue.length) {
-                val current = this@decodeValue[index]
-                if (current == '\\' && index + 1 < this@decodeValue.length) {
-                    when (this@decodeValue[index + 1]) {
-                        'n' -> {
-                            append('\n')
-                            index += 2
-                            continue
-                        }
+    private fun String.decodeValue(): String = buildString(length) {
+        var index = 0
+        while (index < this@decodeValue.length) {
+            val current = this@decodeValue[index]
+            if (current == '\\' && index + 1 < this@decodeValue.length) {
+                when (this@decodeValue[index + 1]) {
+                    'n' -> {
+                        append('\n')
+                        index += 2
+                        continue
+                    }
 
-                        'r' -> {
-                            append('\r')
-                            index += 2
-                            continue
-                        }
+                    'r' -> {
+                        append('\r')
+                        index += 2
+                        continue
+                    }
 
-                        't' -> {
-                            append('\t')
-                            index += 2
-                            continue
-                        }
+                    't' -> {
+                        append('\t')
+                        index += 2
+                        continue
+                    }
 
-                        '\\' -> {
-                            append('\\')
-                            index += 2
-                            continue
-                        }
+                    '\\' -> {
+                        append('\\')
+                        index += 2
+                        continue
                     }
                 }
-                append(current)
-                index += 1
             }
+            append(current)
+            index += 1
         }
     }
 

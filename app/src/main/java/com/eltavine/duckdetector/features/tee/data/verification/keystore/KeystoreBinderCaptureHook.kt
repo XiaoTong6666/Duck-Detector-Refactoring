@@ -154,12 +154,10 @@ object KeystoreBinderCaptureHook {
         return cacheField.get(null) as MutableMap<String, IBinder>
     }
 
-    private fun resolveLegacyInterfaceName(): String {
-        return runCatching {
-            Class.forName("android.security.keystore.IKeystoreService")
-            "android.security.keystore.IKeystoreService"
-        }.getOrDefault("android.security.IKeystoreService")
-    }
+    private fun resolveLegacyInterfaceName(): String = runCatching {
+        Class.forName("android.security.keystore.IKeystoreService")
+        "android.security.keystore.IKeystoreService"
+    }.getOrDefault("android.security.IKeystoreService")
 
     private fun restoreLocked() {
         runCatching {
@@ -184,6 +182,7 @@ object KeystoreBinderCaptureHook {
             val result = invokeTarget(realService, method, args)
             return when (method.name) {
                 "getSecurityLevel" -> result?.let(::wrapKeystore2SecurityLevelIfPossible) ?: result
+
                 "getKeyEntry" -> {
                     val alias = tryExtractAlias(args, 0)
                     alias?.let { captureGetKeyEntry(it, result) }
@@ -232,12 +231,10 @@ object KeystoreBinderCaptureHook {
         private val proxyService: Any,
         private val interfaceDescriptor: String,
     ) : InvocationHandler {
-        override fun invoke(proxy: Any?, method: Method, args: Array<out Any?>?): Any? {
-            return when (method.name) {
-                "queryLocalInterface" -> proxyService
-                "getInterfaceDescriptor" -> interfaceDescriptor
-                else -> invokeTarget(realBinder, method, args)
-            }
+        override fun invoke(proxy: Any?, method: Method, args: Array<out Any?>?): Any? = when (method.name) {
+            "queryLocalInterface" -> proxyService
+            "getInterfaceDescriptor" -> interfaceDescriptor
+            else -> invokeTarget(realBinder, method, args)
         }
     }
 
@@ -279,9 +276,7 @@ object KeystoreBinderCaptureHook {
         return tryGetFieldValue(descriptor, "alias") as? String
     }
 
-    private fun tryGetByteArrayField(target: Any?, fieldName: String): ByteArray? {
-        return tryGetFieldValue(target, fieldName) as? ByteArray
-    }
+    private fun tryGetByteArrayField(target: Any?, fieldName: String): ByteArray? = tryGetFieldValue(target, fieldName) as? ByteArray
 
     private fun tryGetFieldValue(target: Any?, fieldName: String): Any? {
         if (target == null) {
@@ -290,13 +285,11 @@ object KeystoreBinderCaptureHook {
         return readField(target.javaClass, target, fieldName)
     }
 
-    private fun readField(type: Class<*>, target: Any, fieldName: String): Any? {
-        return runCatching {
-            val field = findField(type, fieldName)
-            field.isAccessible = true
-            field.get(target)
-        }.getOrNull()
-    }
+    private fun readField(type: Class<*>, target: Any, fieldName: String): Any? = runCatching {
+        val field = findField(type, fieldName)
+        field.isAccessible = true
+        field.get(target)
+    }.getOrNull()
 
     private fun findField(type: Class<*>, fieldName: String): Field {
         var current: Class<*>? = type
@@ -307,11 +300,9 @@ object KeystoreBinderCaptureHook {
         throw NoSuchFieldException(fieldName)
     }
 
-    private fun invokeTarget(target: Any, method: Method, args: Array<out Any?>?): Any? {
-        return try {
-            method.invoke(target, *(args ?: emptyArray()))
-        } catch (throwable: InvocationTargetException) {
-            throw throwable.cause ?: throwable
-        }
+    private fun invokeTarget(target: Any, method: Method, args: Array<out Any?>?): Any? = try {
+        method.invoke(target, *(args ?: emptyArray()))
+    } catch (throwable: InvocationTargetException) {
+        throw throwable.cause ?: throwable
     }
 }

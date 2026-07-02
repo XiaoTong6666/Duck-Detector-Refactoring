@@ -19,14 +19,6 @@ package com.eltavine.duckdetector.features.tee.data.verification.crl
 import com.eltavine.duckdetector.features.tee.data.preferences.TeeNetworkPrefs
 import com.eltavine.duckdetector.features.tee.data.preferences.TeeNetworkPrefsStore
 import com.eltavine.duckdetector.features.tee.domain.TeeNetworkMode
-import java.math.BigInteger
-import java.io.IOException
-import java.net.SocketTimeoutException
-import java.security.Principal
-import java.security.PublicKey
-import java.security.cert.X509Certificate
-import java.util.Date
-import javax.security.auth.x500.X500Principal
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
@@ -34,6 +26,14 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.IOException
+import java.math.BigInteger
+import java.net.SocketTimeoutException
+import java.security.Principal
+import java.security.PublicKey
+import java.security.cert.X509Certificate
+import java.util.Date
+import javax.security.auth.x500.X500Principal
 
 class CrlStatusServiceTest {
 
@@ -56,7 +56,7 @@ class CrlStatusServiceTest {
                 """{"entries":{"1":{"status":"REVOKED","reason":"keyCompromise"}}}"""
             },
             embeddedStatusProvider = embeddedStatusProvider(
-                """{"entries":{}}"""
+                """{"entries":{}}""",
             ),
         )
 
@@ -89,7 +89,7 @@ class CrlStatusServiceTest {
                 ""
             },
             embeddedStatusProvider = embeddedStatusProvider(
-                """{"entries":{"1":{"status":"REVOKED","reason":"embedded"}}}"""
+                """{"entries":{"1":{"status":"REVOKED","reason":"embedded"}}}""",
             ),
         )
 
@@ -121,7 +121,7 @@ class CrlStatusServiceTest {
                 throw IOException("offline")
             },
             embeddedStatusProvider = embeddedStatusProvider(
-                """{"entries":{"1":{"status":"REVOKED","reason":"embedded"}}}"""
+                """{"entries":{"1":{"status":"REVOKED","reason":"embedded"}}}""",
             ),
         )
 
@@ -155,7 +155,7 @@ class CrlStatusServiceTest {
                 """{"entries":{"1":{"status":"GOOD"}}}"""
             },
             embeddedStatusProvider = embeddedStatusProvider(
-                """{"entries":{"1":{"status":"REVOKED","reason":"embedded"}}}"""
+                """{"entries":{"1":{"status":"REVOKED","reason":"embedded"}}}""",
             ),
         )
 
@@ -165,7 +165,7 @@ class CrlStatusServiceTest {
         assertEquals(1, fetchCount)
         assertTrue(result.networkState.summary.contains("matched 1 revoked/suspended entry"))
         assertTrue(
-            result.networkState.detail.orEmpty().contains("Direct HTTPS fetch still succeeded")
+            result.networkState.detail.orEmpty().contains("Direct HTTPS fetch still succeeded"),
         )
         assertEquals(1, result.revokedCertificates.size)
         assertEquals("embedded", result.revokedCertificates.single().reason)
@@ -186,7 +186,7 @@ class CrlStatusServiceTest {
             networkStatusProvider = CrlNetworkStatusProvider { true },
             feedFetcher = CrlFeedFetcher { """{"entries":{}}""" },
             embeddedStatusProvider = embeddedStatusProvider(
-                """{"entries":{"8616ef30679ed43cc2b43e3c97a2319e":{"status":"REVOKED","reason":"KEY_COMPROMISE"}}}"""
+                """{"entries":{"8616ef30679ed43cc2b43e3c97a2319e":{"status":"REVOKED","reason":"KEY_COMPROMISE"}}}""",
             ),
         )
 
@@ -246,7 +246,7 @@ class CrlStatusServiceTest {
                 """{"entries":{"${LOCAL_MASS_ABUSE_SERIAL_DEC}":{"status":"REVOKED","reason":"KEY_COMPROMISE"}}}"""
             },
             embeddedStatusProvider = embeddedStatusProvider(
-                """{"entries":{"8616ef30679ed43cc2b43e3c97a2319e":{"status":"REVOKED","reason":"KEY_COMPROMISE"}}}"""
+                """{"entries":{"8616ef30679ed43cc2b43e3c97a2319e":{"status":"REVOKED","reason":"KEY_COMPROMISE"}}}""",
             ),
         )
 
@@ -277,7 +277,7 @@ class CrlStatusServiceTest {
                 """{"entries":{"8616ef30679ed43cc2b43e3c97a2319e":{"status":"GOOD"}}}"""
             },
             embeddedStatusProvider = embeddedStatusProvider(
-                """{"entries":{"8616ef30679ed43cc2b43e3c97a2319e":{"status":"REVOKED","reason":"KEY_COMPROMISE"}}}"""
+                """{"entries":{"8616ef30679ed43cc2b43e3c97a2319e":{"status":"REVOKED","reason":"KEY_COMPROMISE"}}}""",
             ),
         )
 
@@ -382,7 +382,7 @@ class CrlStatusServiceTest {
             networkStatusProvider = CrlNetworkStatusProvider { true },
             feedFetcher = CrlFeedFetcher { """{"entries":[]}""" },
             embeddedStatusProvider = embeddedStatusProvider(
-                """{"entries":{"1":{"status":"REVOKED","reason":"embedded"}}}"""
+                """{"entries":{"1":{"status":"REVOKED","reason":"embedded"}}}""",
             ),
         )
 
@@ -409,7 +409,7 @@ class CrlStatusServiceTest {
             networkStatusProvider = CrlNetworkStatusProvider { true },
             feedFetcher = CrlFeedFetcher { throw IllegalStateException("boom") },
             embeddedStatusProvider = embeddedStatusProvider(
-                """{"entries":{"1":{"status":"REVOKED","reason":"embedded"}}}"""
+                """{"entries":{"1":{"status":"REVOKED","reason":"embedded"}}}""",
             ),
         )
 
@@ -442,7 +442,7 @@ class CrlStatusServiceTest {
                 """{"entries":{}}"""
             },
             embeddedStatusProvider = embeddedStatusProvider(
-                """{"entries":{"1":{"status":"REVOKED","reason":"embedded"}}}"""
+                """{"entries":{"1":{"status":"REVOKED","reason":"embedded"}}}""",
             ),
         )
 
@@ -512,9 +512,7 @@ class CrlStatusServiceTest {
         }
     }
 
-    private fun embeddedStatusProvider(json: String): CrlEmbeddedStatusProvider {
-        return CrlEmbeddedStatusProvider { json }
-    }
+    private fun embeddedStatusProvider(json: String): CrlEmbeddedStatusProvider = CrlEmbeddedStatusProvider { json }
 
     @Suppress("DEPRECATION")
     private class FakeX509Certificate(
@@ -531,9 +529,7 @@ class CrlStatusServiceTest {
 
         override fun toString(): String = "FakeX509Certificate($serialHex)"
 
-        override fun getPublicKey(): PublicKey {
-            throw UnsupportedOperationException()
-        }
+        override fun getPublicKey(): PublicKey = throw UnsupportedOperationException()
 
         override fun checkValidity() = Unit
 

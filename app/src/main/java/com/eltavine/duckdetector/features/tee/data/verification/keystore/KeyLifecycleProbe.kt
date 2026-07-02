@@ -35,7 +35,7 @@ class KeyLifecycleProbe {
             )
             val firstSerial = AndroidKeyStoreTools.readLeafCertificate(
                 keyStore,
-                alias
+                alias,
             )?.serialNumber?.toString(16)
             val created = keyStore.containsAlias(alias)
             AndroidKeyStoreTools.safeDelete(keyStore, alias)
@@ -48,7 +48,7 @@ class KeyLifecycleProbe {
             )
             val secondSerial = AndroidKeyStoreTools.readLeafCertificate(
                 keyStore,
-                alias
+                alias,
             )?.serialNumber?.toString(16)
             KeyLifecycleResult(
                 created = created,

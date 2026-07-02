@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
+@file:Suppress("ktlint:standard:function-naming")
+
 package com.eltavine.duckdetector.ui.shell
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Home
@@ -87,9 +89,7 @@ fun FloatingAppTabSwitcher(
     }
 }
 
-private fun iconFor(destination: AppDestination): ImageVector {
-    return when (destination) {
-        AppDestination.MAIN -> Icons.Rounded.Home
-        AppDestination.SETTINGS -> Icons.Rounded.Settings
-    }
+private fun iconFor(destination: AppDestination): ImageVector = when (destination) {
+    AppDestination.MAIN -> Icons.Rounded.Home
+    AppDestination.SETTINGS -> Icons.Rounded.Settings
 }

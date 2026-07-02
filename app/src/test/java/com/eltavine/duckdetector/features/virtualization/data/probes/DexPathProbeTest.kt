@@ -40,7 +40,7 @@ class DexPathProbeTest {
         assertTrue(
             result.signals.any {
                 it.label == "Host dex path" &&
-                        it.severity == VirtualizationSignalSeverity.DANGER
+                    it.severity == VirtualizationSignalSeverity.DANGER
             },
         )
         assertTrue(result.hostPathHit)
@@ -61,7 +61,7 @@ class DexPathProbeTest {
         assertTrue(
             result.signals.any {
                 it.label == "Prepended third-party dex" &&
-                        it.severity == VirtualizationSignalSeverity.DANGER
+                    it.severity == VirtualizationSignalSeverity.DANGER
             },
         )
     }
@@ -79,7 +79,7 @@ class DexPathProbeTest {
         assertTrue(
             result.signals.any {
                 it.label == "Classpath/source mismatch" &&
-                        it.severity == VirtualizationSignalSeverity.WARNING
+                    it.severity == VirtualizationSignalSeverity.WARNING
             },
         )
     }

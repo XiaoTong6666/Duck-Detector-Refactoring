@@ -42,19 +42,15 @@ data class DeviceInfoReport(
         get() = sections.sumOf { it.entries.size }
 
     companion object {
-        fun loading(): DeviceInfoReport {
-            return DeviceInfoReport(
-                stage = DeviceInfoStage.LOADING,
-                sections = emptyList(),
-            )
-        }
+        fun loading(): DeviceInfoReport = DeviceInfoReport(
+            stage = DeviceInfoStage.LOADING,
+            sections = emptyList(),
+        )
 
-        fun failed(message: String): DeviceInfoReport {
-            return DeviceInfoReport(
-                stage = DeviceInfoStage.FAILED,
-                sections = emptyList(),
-                errorMessage = message,
-            )
-        }
+        fun failed(message: String): DeviceInfoReport = DeviceInfoReport(
+            stage = DeviceInfoStage.FAILED,
+            sections = emptyList(),
+            errorMessage = message,
+        )
     }
 }

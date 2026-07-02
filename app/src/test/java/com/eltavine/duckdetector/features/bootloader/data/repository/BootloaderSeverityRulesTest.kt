@@ -55,12 +55,12 @@ class BootloaderSeverityRulesTest {
     fun `key pair generation failure is treated as critical attestation failure`() {
         assertTrue(
             BootloaderSeverityRules.isKeyPairGenerationFailure(
-                "failed to generate a key pair"
+                "failed to generate a key pair",
             ),
         )
         assertFalse(
             BootloaderSeverityRules.isKeyPairGenerationFailure(
-                "Attestation collection failed"
+                "Attestation collection failed",
             ),
         )
     }

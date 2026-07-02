@@ -20,7 +20,6 @@ import com.eltavine.duckdetector.features.tee.data.keystore.AndroidKeyStoreTools
 import java.security.KeyStore
 import java.security.Signature
 import java.security.cert.X509Certificate
-import java.security.spec.ECGenParameterSpec
 import kotlin.math.roundToInt
 
 class KeyPairConsistencyProbe {

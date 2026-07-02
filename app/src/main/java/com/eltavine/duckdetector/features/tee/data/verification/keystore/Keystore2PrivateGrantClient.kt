@@ -30,9 +30,7 @@ class Keystore2PrivateGrantClient(
 
     fun lookupBinder(): IBinder? = binderClient.lookupBinder()
 
-    fun constantsSnapshot(): Keystore2PrivateGrantConstants {
-        return resolveConstants()
-    }
+    fun constantsSnapshot(): Keystore2PrivateGrantConstants = resolveConstants()
 
     fun grantAliasToUid(alias: String, uid: Int): Keystore2PrivateGrantResult {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
@@ -49,24 +47,22 @@ class Keystore2PrivateGrantClient(
         }
     }
 
-    fun grantAliasToUid(service: Any, alias: String, uid: Int): Keystore2PrivateGrantResult {
-        return runCatching {
-            val constants = resolveConstants()
-            grantAliasToUid(
-                service = service,
-                alias = alias,
-                uid = uid,
-                accessVector = constants.grantAccessVector,
-                constants = constants,
-            )
-        }.getOrElse { throwable ->
-            grantFailureResult(
-                phase = Keystore2PrivateGrantPhase.PRIVATE_GRANT,
-                detail = "private grant failed: ${describeThrowable(throwable)}",
-                errorKind = classifyFailure(throwable),
-                throwable = throwable,
-            )
-        }
+    fun grantAliasToUid(service: Any, alias: String, uid: Int): Keystore2PrivateGrantResult = runCatching {
+        val constants = resolveConstants()
+        grantAliasToUid(
+            service = service,
+            alias = alias,
+            uid = uid,
+            accessVector = constants.grantAccessVector,
+            constants = constants,
+        )
+    }.getOrElse { throwable ->
+        grantFailureResult(
+            phase = Keystore2PrivateGrantPhase.PRIVATE_GRANT,
+            detail = "private grant failed: ${describeThrowable(throwable)}",
+            errorKind = classifyFailure(throwable),
+            throwable = throwable,
+        )
     }
 
     fun grantAliasToUid(
@@ -74,18 +70,16 @@ class Keystore2PrivateGrantClient(
         alias: String,
         uid: Int,
         accessVector: Int,
-    ): Keystore2PrivateGrantResult {
-        return runCatching {
-            val constants = resolveConstants()
-            grantAliasToUid(service, alias, uid, accessVector, constants)
-        }.getOrElse { throwable ->
-            grantFailureResult(
-                phase = Keystore2PrivateGrantPhase.PRIVATE_GRANT,
-                detail = "private grant failed: ${describeThrowable(throwable)}",
-                errorKind = classifyFailure(throwable),
-                throwable = throwable,
-            )
-        }
+    ): Keystore2PrivateGrantResult = runCatching {
+        val constants = resolveConstants()
+        grantAliasToUid(service, alias, uid, accessVector, constants)
+    }.getOrElse { throwable ->
+        grantFailureResult(
+            phase = Keystore2PrivateGrantPhase.PRIVATE_GRANT,
+            detail = "private grant failed: ${describeThrowable(throwable)}",
+            errorKind = classifyFailure(throwable),
+            throwable = throwable,
+        )
     }
 
     fun revokeAliasGrant(alias: String, uid: Int): Keystore2PrivateGrantResult {
@@ -103,17 +97,15 @@ class Keystore2PrivateGrantClient(
         }
     }
 
-    fun revokeAliasGrant(service: Any, alias: String, uid: Int): Keystore2PrivateGrantResult {
-        return runCatching {
-            revokeAliasGrant(service, alias, uid, resolveConstants())
-        }.getOrElse { throwable ->
-            grantFailureResult(
-                phase = Keystore2PrivateGrantPhase.PRIVATE_UNGRANT,
-                detail = "private ungrant failed: ${describeThrowable(throwable)}",
-                errorKind = classifyFailure(throwable),
-                throwable = throwable,
-            )
-        }
+    fun revokeAliasGrant(service: Any, alias: String, uid: Int): Keystore2PrivateGrantResult = runCatching {
+        revokeAliasGrant(service, alias, uid, resolveConstants())
+    }.getOrElse { throwable ->
+        grantFailureResult(
+            phase = Keystore2PrivateGrantPhase.PRIVATE_UNGRANT,
+            detail = "private ungrant failed: ${describeThrowable(throwable)}",
+            errorKind = classifyFailure(throwable),
+            throwable = throwable,
+        )
     }
 
     fun readOwnerChain(alias: String): Keystore2PrivateGrantChainResult {
@@ -131,17 +123,15 @@ class Keystore2PrivateGrantClient(
         }
     }
 
-    fun readOwnerChain(service: Any, alias: String): Keystore2PrivateGrantChainResult {
-        return runCatching {
-            readOwnerChain(service, alias, resolveConstants())
-        }.getOrElse { throwable ->
-            grantFailureResult(
-                phase = Keystore2PrivateGrantPhase.PRIVATE_GET_KEY_ENTRY_APP,
-                detail = "private getKeyEntry(APP) failed: ${describeThrowable(throwable)}",
-                errorKind = classifyFailure(throwable),
-                throwable = throwable,
-            )
-        }
+    fun readOwnerChain(service: Any, alias: String): Keystore2PrivateGrantChainResult = runCatching {
+        readOwnerChain(service, alias, resolveConstants())
+    }.getOrElse { throwable ->
+        grantFailureResult(
+            phase = Keystore2PrivateGrantPhase.PRIVATE_GET_KEY_ENTRY_APP,
+            detail = "private getKeyEntry(APP) failed: ${describeThrowable(throwable)}",
+            errorKind = classifyFailure(throwable),
+            throwable = throwable,
+        )
     }
 
     fun readGrantChain(grantId: Long): Keystore2PrivateGrantChainResult {
@@ -159,17 +149,15 @@ class Keystore2PrivateGrantClient(
         }
     }
 
-    fun readGrantChain(service: Any, grantId: Long): Keystore2PrivateGrantChainResult {
-        return runCatching {
-            readGrantChain(service, grantId, resolveConstants())
-        }.getOrElse { throwable ->
-            grantFailureResult(
-                phase = Keystore2PrivateGrantPhase.PRIVATE_GET_KEY_ENTRY_GRANT,
-                detail = "private getKeyEntry(GRANT) failed: ${describeThrowable(throwable)}",
-                errorKind = classifyFailure(throwable),
-                throwable = throwable,
-            )
-        }
+    fun readGrantChain(service: Any, grantId: Long): Keystore2PrivateGrantChainResult = runCatching {
+        readGrantChain(service, grantId, resolveConstants())
+    }.getOrElse { throwable ->
+        grantFailureResult(
+            phase = Keystore2PrivateGrantPhase.PRIVATE_GET_KEY_ENTRY_GRANT,
+            detail = "private getKeyEntry(GRANT) failed: ${describeThrowable(throwable)}",
+            errorKind = classifyFailure(throwable),
+            throwable = throwable,
+        )
     }
 
     fun readGrantEntry(service: Any, grantId: Long): Keystore2PrivateGrantResult {
@@ -303,15 +291,13 @@ class Keystore2PrivateGrantClient(
         alias: String,
         uid: Int,
         constants: Keystore2PrivateGrantConstants,
-    ): Keystore2PrivateGrantResult {
-        return grantAliasToUid(
-            service = service,
-            alias = alias,
-            uid = uid,
-            accessVector = constants.grantAccessVector,
-            constants = constants,
-        )
-    }
+    ): Keystore2PrivateGrantResult = grantAliasToUid(
+        service = service,
+        alias = alias,
+        uid = uid,
+        accessVector = constants.grantAccessVector,
+        constants = constants,
+    )
 
     private fun grantAliasToUid(
         service: Any,
@@ -379,29 +365,25 @@ class Keystore2PrivateGrantClient(
         service: Any,
         alias: String,
         constants: Keystore2PrivateGrantConstants,
-    ): Keystore2PrivateGrantChainResult {
-        return readChainFromDescriptor(
-            service = service,
-            descriptor = createDescriptor(alias, constants.domainApp),
-            phase = Keystore2PrivateGrantPhase.PRIVATE_GET_KEY_ENTRY_APP,
-            emptyDetail = "private getKeyEntry(APP) returned an empty certificate chain.",
-            successDetailPrefix = "private getKeyEntry(APP)",
-        )
-    }
+    ): Keystore2PrivateGrantChainResult = readChainFromDescriptor(
+        service = service,
+        descriptor = createDescriptor(alias, constants.domainApp),
+        phase = Keystore2PrivateGrantPhase.PRIVATE_GET_KEY_ENTRY_APP,
+        emptyDetail = "private getKeyEntry(APP) returned an empty certificate chain.",
+        successDetailPrefix = "private getKeyEntry(APP)",
+    )
 
     private fun readGrantChain(
         service: Any,
         grantId: Long,
         constants: Keystore2PrivateGrantConstants,
-    ): Keystore2PrivateGrantChainResult {
-        return readChainFromDescriptor(
-            service = service,
-            descriptor = createDescriptor(grantId, constants.domainGrant),
-            phase = Keystore2PrivateGrantPhase.PRIVATE_GET_KEY_ENTRY_GRANT,
-            emptyDetail = "private getKeyEntry(GRANT) returned an empty certificate chain.",
-            successDetailPrefix = "private getKeyEntry(GRANT)",
-        )
-    }
+    ): Keystore2PrivateGrantChainResult = readChainFromDescriptor(
+        service = service,
+        descriptor = createDescriptor(grantId, constants.domainGrant),
+        phase = Keystore2PrivateGrantPhase.PRIVATE_GET_KEY_ENTRY_GRANT,
+        emptyDetail = "private getKeyEntry(GRANT) returned an empty certificate chain.",
+        successDetailPrefix = "private getKeyEntry(GRANT)",
+    )
 
     private fun createDescriptor(alias: String, domain: Int): Any {
         val descriptorClass = loadClass(CLASS_KEY_DESCRIPTOR)
@@ -423,45 +405,39 @@ class Keystore2PrivateGrantClient(
         return descriptor
     }
 
-    private fun createKeystoreService(binder: IBinder): Any? {
-        return runCatching {
-            val stubClass = loadClass("$CLASS_IKEYSTORE_SERVICE\$Stub")
-            val asInterface = stubClass.getMethod("asInterface", IBinder::class.java)
-            asInterface.invoke(null, binder)
-        }.getOrNull()
-    }
+    private fun createKeystoreService(binder: IBinder): Any? = runCatching {
+        val stubClass = loadClass("$CLASS_IKEYSTORE_SERVICE\$Stub")
+        val asInterface = stubClass.getMethod("asInterface", IBinder::class.java)
+        asInterface.invoke(null, binder)
+    }.getOrNull()
 
-    private fun resolveConstants(): Keystore2PrivateGrantConstants {
-        return Keystore2PrivateGrantConstants(
-            domainApp = resolveStaticInt(CLASS_DOMAIN, "APP", DOMAIN_APP_FALLBACK),
-            domainGrant = resolveStaticInt(CLASS_DOMAIN, "GRANT", DOMAIN_GRANT_FALLBACK),
-            permissionUse = resolveStaticInt(CLASS_KEY_PERMISSION, "USE", KEY_PERMISSION_USE_FALLBACK),
-            permissionGetInfo = resolveStaticInt(CLASS_KEY_PERMISSION, "GET_INFO", KEY_PERMISSION_GET_INFO_FALLBACK),
-            transactionGetKeyEntry = resolveStaticInt(
-                "$CLASS_IKEYSTORE_SERVICE\$Stub",
-                "TRANSACTION_getKeyEntry",
-                TRANSACTION_GET_KEY_ENTRY_FALLBACK,
-            ),
-            transactionGrant = resolveStaticInt(
-                "$CLASS_IKEYSTORE_SERVICE\$Stub",
-                "TRANSACTION_grant",
-                TRANSACTION_GRANT_FALLBACK,
-            ),
-            transactionUngrant = resolveStaticInt(
-                "$CLASS_IKEYSTORE_SERVICE\$Stub",
-                "TRANSACTION_ungrant",
-                TRANSACTION_UNGRANT_FALLBACK,
-            ),
-        )
-    }
+    private fun resolveConstants(): Keystore2PrivateGrantConstants = Keystore2PrivateGrantConstants(
+        domainApp = resolveStaticInt(CLASS_DOMAIN, "APP", DOMAIN_APP_FALLBACK),
+        domainGrant = resolveStaticInt(CLASS_DOMAIN, "GRANT", DOMAIN_GRANT_FALLBACK),
+        permissionUse = resolveStaticInt(CLASS_KEY_PERMISSION, "USE", KEY_PERMISSION_USE_FALLBACK),
+        permissionGetInfo = resolveStaticInt(CLASS_KEY_PERMISSION, "GET_INFO", KEY_PERMISSION_GET_INFO_FALLBACK),
+        transactionGetKeyEntry = resolveStaticInt(
+            "$CLASS_IKEYSTORE_SERVICE\$Stub",
+            "TRANSACTION_getKeyEntry",
+            TRANSACTION_GET_KEY_ENTRY_FALLBACK,
+        ),
+        transactionGrant = resolveStaticInt(
+            "$CLASS_IKEYSTORE_SERVICE\$Stub",
+            "TRANSACTION_grant",
+            TRANSACTION_GRANT_FALLBACK,
+        ),
+        transactionUngrant = resolveStaticInt(
+            "$CLASS_IKEYSTORE_SERVICE\$Stub",
+            "TRANSACTION_ungrant",
+            TRANSACTION_UNGRANT_FALLBACK,
+        ),
+    )
 
-    private fun resolveStaticInt(className: String, fieldName: String, fallback: Int): Int {
-        return runCatching {
-            val field = loadClass(className).getField(fieldName)
-            field.isAccessible = true
-            field.getInt(null)
-        }.getOrDefault(fallback)
-    }
+    private fun resolveStaticInt(className: String, fieldName: String, fallback: Int): Int = runCatching {
+        val field = loadClass(className).getField(fieldName)
+        field.isAccessible = true
+        field.getInt(null)
+    }.getOrDefault(fallback)
 
     private fun chainFromKeyEntryResponse(response: Any): GrantDomainCertificateChain {
         val leaf = readByteArrayField(response, "certificate")
@@ -486,16 +462,12 @@ class Keystore2PrivateGrantClient(
         }.getOrNull()
     }
 
-    private fun readByteArrayField(target: Any?, name: String): ByteArray? {
-        return readFieldValue(target, name) as? ByteArray
-    }
+    private fun readByteArrayField(target: Any?, name: String): ByteArray? = readFieldValue(target, name) as? ByteArray
 
-    private fun readLongField(target: Any?, name: String): Long? {
-        return when (val raw = readFieldValue(target, name)) {
-            is Long -> raw
-            is Int -> raw.toLong()
-            else -> null
-        }
+    private fun readLongField(target: Any?, name: String): Long? = when (val raw = readFieldValue(target, name)) {
+        is Long -> raw
+        is Int -> raw.toLong()
+        else -> null
     }
 
     private fun setField(target: Any, name: String, value: Any?) {
@@ -508,18 +480,16 @@ class Keystore2PrivateGrantClient(
         runCatching { HiddenApiBypass.addHiddenApiExemptions("") }
     }
 
-    private fun loadClass(className: String): Class<*> {
-        return try {
-            Class.forName(className)
-        } catch (primary: ClassNotFoundException) {
+    private fun loadClass(className: String): Class<*> = try {
+        Class.forName(className)
+    } catch (primary: ClassNotFoundException) {
+        try {
+            ClassLoader.getSystemClassLoader().loadClass(className)
+        } catch (secondary: ClassNotFoundException) {
             try {
-                ClassLoader.getSystemClassLoader().loadClass(className)
-            } catch (secondary: ClassNotFoundException) {
-                try {
-                    HiddenApiBypass.invoke(Class::class.java, null, "forName", className) as Class<*>
-                } catch (throwable: Throwable) {
-                    throw ClassNotFoundException("Unable to load hidden class $className", throwable)
-                }
+                HiddenApiBypass.invoke(Class::class.java, null, "forName", className) as Class<*>
+            } catch (throwable: Throwable) {
+                throw ClassNotFoundException("Unable to load hidden class $className", throwable)
             }
         }
     }
@@ -537,12 +507,10 @@ class Keystore2PrivateGrantClient(
         }
     }
 
-    private fun extractServiceSpecificErrorCode(throwable: Throwable): Int? {
-        return findThrowable(throwable) { current ->
-            current.javaClass.name == "android.os.ServiceSpecificException"
-        }?.let { serviceSpecific ->
-            readFieldValue(serviceSpecific, "errorCode") as? Int
-        }
+    private fun extractServiceSpecificErrorCode(throwable: Throwable): Int? = findThrowable(throwable) { current ->
+        current.javaClass.name == "android.os.ServiceSpecificException"
+    }?.let { serviceSpecific ->
+        readFieldValue(serviceSpecific, "errorCode") as? Int
     }
 
     private fun findThrowable(
@@ -655,21 +623,17 @@ data class Keystore2PrivateGrantDescriptorSpec(
     val alias: String?,
 ) {
     companion object {
-        fun app(alias: String): Keystore2PrivateGrantDescriptorSpec {
-            return Keystore2PrivateGrantDescriptorSpec(
-                domain = Keystore2PrivateGrantClient.DOMAIN_APP_FALLBACK,
-                nspace = -1L,
-                alias = alias,
-            )
-        }
+        fun app(alias: String): Keystore2PrivateGrantDescriptorSpec = Keystore2PrivateGrantDescriptorSpec(
+            domain = Keystore2PrivateGrantClient.DOMAIN_APP_FALLBACK,
+            nspace = -1L,
+            alias = alias,
+        )
 
-        fun grant(grantId: Long): Keystore2PrivateGrantDescriptorSpec {
-            return Keystore2PrivateGrantDescriptorSpec(
-                domain = Keystore2PrivateGrantClient.DOMAIN_GRANT_FALLBACK,
-                nspace = grantId,
-                alias = null,
-            )
-        }
+        fun grant(grantId: Long): Keystore2PrivateGrantDescriptorSpec = Keystore2PrivateGrantDescriptorSpec(
+            domain = Keystore2PrivateGrantClient.DOMAIN_GRANT_FALLBACK,
+            nspace = grantId,
+            alias = null,
+        )
     }
 }
 
@@ -687,15 +651,13 @@ data class Keystore2PrivateGrantResult(
             errorKind: Keystore2PrivateGrantErrorKind = Keystore2PrivateGrantErrorKind.SERVICE_UNAVAILABLE,
             detail: String,
             throwable: Throwable? = null,
-        ): Keystore2PrivateGrantResult {
-            return Keystore2PrivateGrantResult(
-                available = false,
-                phase = phase,
-                errorKind = errorKind,
-                detail = detail,
-                throwable = throwable,
-            )
-        }
+        ): Keystore2PrivateGrantResult = Keystore2PrivateGrantResult(
+            available = false,
+            phase = phase,
+            errorKind = errorKind,
+            detail = detail,
+            throwable = throwable,
+        )
     }
 }
 
@@ -713,15 +675,13 @@ data class Keystore2PrivateGrantChainResult(
             errorKind: Keystore2PrivateGrantErrorKind = Keystore2PrivateGrantErrorKind.SERVICE_UNAVAILABLE,
             detail: String,
             throwable: Throwable? = null,
-        ): Keystore2PrivateGrantChainResult {
-            return Keystore2PrivateGrantChainResult(
-                available = false,
-                phase = phase,
-                errorKind = errorKind,
-                detail = detail,
-                throwable = throwable,
-            )
-        }
+        ): Keystore2PrivateGrantChainResult = Keystore2PrivateGrantChainResult(
+            available = false,
+            phase = phase,
+            errorKind = errorKind,
+            detail = detail,
+            throwable = throwable,
+        )
     }
 }
 
@@ -744,17 +704,15 @@ enum class Keystore2PrivateGrantErrorKind {
     UNGRANT_FAILED,
 }
 
-internal fun buildDefaultKeystore2PrivateGrantConstants(): Keystore2PrivateGrantConstants {
-    return Keystore2PrivateGrantConstants(
-        domainApp = Keystore2PrivateGrantClient.DOMAIN_APP_FALLBACK,
-        domainGrant = Keystore2PrivateGrantClient.DOMAIN_GRANT_FALLBACK,
-        permissionUse = Keystore2PrivateGrantClient.KEY_PERMISSION_USE_FALLBACK,
-        permissionGetInfo = Keystore2PrivateGrantClient.KEY_PERMISSION_GET_INFO_FALLBACK,
-        transactionGetKeyEntry = Keystore2PrivateGrantClient.TRANSACTION_GET_KEY_ENTRY_FALLBACK,
-        transactionGrant = Keystore2PrivateGrantClient.TRANSACTION_GRANT_FALLBACK,
-        transactionUngrant = Keystore2PrivateGrantClient.TRANSACTION_UNGRANT_FALLBACK,
-    )
-}
+internal fun buildDefaultKeystore2PrivateGrantConstants(): Keystore2PrivateGrantConstants = Keystore2PrivateGrantConstants(
+    domainApp = Keystore2PrivateGrantClient.DOMAIN_APP_FALLBACK,
+    domainGrant = Keystore2PrivateGrantClient.DOMAIN_GRANT_FALLBACK,
+    permissionUse = Keystore2PrivateGrantClient.KEY_PERMISSION_USE_FALLBACK,
+    permissionGetInfo = Keystore2PrivateGrantClient.KEY_PERMISSION_GET_INFO_FALLBACK,
+    transactionGetKeyEntry = Keystore2PrivateGrantClient.TRANSACTION_GET_KEY_ENTRY_FALLBACK,
+    transactionGrant = Keystore2PrivateGrantClient.TRANSACTION_GRANT_FALLBACK,
+    transactionUngrant = Keystore2PrivateGrantClient.TRANSACTION_UNGRANT_FALLBACK,
+)
 
 internal fun classifyKeystore2PrivateGrantFailure(
     throwableClassName: String,
@@ -771,15 +729,19 @@ internal fun classifyKeystore2PrivateGrantFailure(
     return when {
         text.contains("No key found by the given alias", ignoreCase = true) ||
             text.contains("KEY_NOT_FOUND", ignoreCase = true) -> Keystore2PrivateGrantErrorKind.KEY_NOT_FOUND
+
         text.contains("permission denied", ignoreCase = true) ||
             text.contains("PERMISSION_DENIED", ignoreCase = true) -> Keystore2PrivateGrantErrorKind.PERMISSION_DENIED
+
         throwableClassName.contains("ReflectiveOperationException") ||
             throwableClassName.contains("NoSuchMethod") ||
             throwableClassName.contains("NoSuchField") ||
             throwableClassName.contains("ClassNotFound") -> Keystore2PrivateGrantErrorKind.HIDDEN_API_FAILURE
+
         throwableClassName.contains("Parcel") ||
             throwableClassName.contains("InvocationTargetException") ||
             throwableClassName.contains("IllegalAccess") -> Keystore2PrivateGrantErrorKind.PARCEL_OR_REFLECTION_FAILURE
+
         else -> Keystore2PrivateGrantErrorKind.SERVICE_UNAVAILABLE
     }
 }

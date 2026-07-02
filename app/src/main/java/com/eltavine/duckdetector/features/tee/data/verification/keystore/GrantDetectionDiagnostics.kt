@@ -60,12 +60,10 @@ internal object GrantThrowableFormatter {
     }
 }
 
-internal fun appendGrantDetail(detail: String, extra: String): String {
-    return when {
-        detail.isBlank() -> extra
-        extra.isBlank() -> detail
-        else -> "$detail; $extra"
-    }
+internal fun appendGrantDetail(detail: String, extra: String): String = when {
+    detail.isBlank() -> extra
+    extra.isBlank() -> detail
+    else -> "$detail; $extra"
 }
 
 internal fun combineGrantStageDetails(

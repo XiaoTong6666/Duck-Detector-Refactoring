@@ -31,50 +31,48 @@ class TeeGrantDomainGranteeService : Service() {
             data: Parcel,
             reply: Parcel?,
             flags: Int,
-        ): Boolean {
-            return when (code) {
-                INTERFACE_TRANSACTION -> {
-                    reply?.writeString(TeeGrantDomainGranteeProtocol.DESCRIPTOR)
-                    true
-                }
-
-                TeeGrantDomainGranteeProtocol.TRANSACTION_GET_UID -> {
-                    data.enforceInterface(TeeGrantDomainGranteeProtocol.DESCRIPTOR)
-                    reply?.writeNoException()
-                    reply?.writeInt(Process.myUid())
-                    true
-                }
-
-                TeeGrantDomainGranteeProtocol.TRANSACTION_READ_GRANTED_CHAIN -> {
-                    data.enforceInterface(TeeGrantDomainGranteeProtocol.DESCRIPTOR)
-                    val grantId = data.readLong()
-                    val keystore2Binder = data.readStrongBinder()
-                    val result = readGrantedCertificateChain(grantId, keystore2Binder)
-                    reply?.writeNoException()
-                    result.writeToParcel(reply)
-                    true
-                }
-
-                TeeGrantDomainGranteeProtocol.TRANSACTION_READ_GRANTED_CHAIN_PUBLIC -> {
-                    data.enforceInterface(TeeGrantDomainGranteeProtocol.DESCRIPTOR)
-                    val grantId = data.readLong()
-                    val result = readGrantedCertificateChainJavaApi(grantId, hiddenApi = false)
-                    reply?.writeNoException()
-                    result.writeToParcel(reply)
-                    true
-                }
-
-                TeeGrantDomainGranteeProtocol.TRANSACTION_READ_GRANTED_CHAIN_HIDDEN -> {
-                    data.enforceInterface(TeeGrantDomainGranteeProtocol.DESCRIPTOR)
-                    val grantId = data.readLong()
-                    val result = readGrantedCertificateChainJavaApi(grantId, hiddenApi = true)
-                    reply?.writeNoException()
-                    result.writeToParcel(reply)
-                    true
-                }
-
-                else -> super.onTransact(code, data, reply, flags)
+        ): Boolean = when (code) {
+            INTERFACE_TRANSACTION -> {
+                reply?.writeString(TeeGrantDomainGranteeProtocol.DESCRIPTOR)
+                true
             }
+
+            TeeGrantDomainGranteeProtocol.TRANSACTION_GET_UID -> {
+                data.enforceInterface(TeeGrantDomainGranteeProtocol.DESCRIPTOR)
+                reply?.writeNoException()
+                reply?.writeInt(Process.myUid())
+                true
+            }
+
+            TeeGrantDomainGranteeProtocol.TRANSACTION_READ_GRANTED_CHAIN -> {
+                data.enforceInterface(TeeGrantDomainGranteeProtocol.DESCRIPTOR)
+                val grantId = data.readLong()
+                val keystore2Binder = data.readStrongBinder()
+                val result = readGrantedCertificateChain(grantId, keystore2Binder)
+                reply?.writeNoException()
+                result.writeToParcel(reply)
+                true
+            }
+
+            TeeGrantDomainGranteeProtocol.TRANSACTION_READ_GRANTED_CHAIN_PUBLIC -> {
+                data.enforceInterface(TeeGrantDomainGranteeProtocol.DESCRIPTOR)
+                val grantId = data.readLong()
+                val result = readGrantedCertificateChainJavaApi(grantId, hiddenApi = false)
+                reply?.writeNoException()
+                result.writeToParcel(reply)
+                true
+            }
+
+            TeeGrantDomainGranteeProtocol.TRANSACTION_READ_GRANTED_CHAIN_HIDDEN -> {
+                data.enforceInterface(TeeGrantDomainGranteeProtocol.DESCRIPTOR)
+                val grantId = data.readLong()
+                val result = readGrantedCertificateChainJavaApi(grantId, hiddenApi = true)
+                reply?.writeNoException()
+                result.writeToParcel(reply)
+                true
+            }
+
+            else -> super.onTransact(code, data, reply, flags)
         }
     }
 

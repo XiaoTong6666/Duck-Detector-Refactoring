@@ -98,9 +98,7 @@ class AuditAvcSideChannelProbe {
 
     internal fun parseCanonicalSignature(
         line: String,
-    ): AuditAvcSignature? {
-        return parseCanonicalRecord(line)?.signature
-    }
+    ): AuditAvcSignature? = parseCanonicalRecord(line)?.signature
 
     internal fun evaluateSuspiciousActors(
         output: String,

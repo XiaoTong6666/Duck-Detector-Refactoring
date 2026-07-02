@@ -22,10 +22,10 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.preferencesDataStoreFile
-import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import java.io.IOException
 
 data class PackageVisibilityReviewPrefs(
     val restrictedInventoryAcknowledged: Boolean,
@@ -49,7 +49,7 @@ class PackageVisibilityReviewStore private constructor(
         .map { prefs ->
             PackageVisibilityReviewPrefs(
                 restrictedInventoryAcknowledged =
-                    prefs[KEY_RESTRICTED_INVENTORY_ACKNOWLEDGED] ?: false,
+                prefs[KEY_RESTRICTED_INVENTORY_ACKNOWLEDGED] ?: false,
             )
         }
 
@@ -66,13 +66,11 @@ class PackageVisibilityReviewStore private constructor(
         private val KEY_RESTRICTED_INVENTORY_ACKNOWLEDGED =
             booleanPreferencesKey("restricted_inventory_acknowledged")
 
-        fun getInstance(context: Context): PackageVisibilityReviewStore {
-            return instance ?: synchronized(this) {
-                instance
-                    ?: PackageVisibilityReviewStore(context.applicationContext).also { created ->
-                        instance = created
-                    }
-            }
+        fun getInstance(context: Context): PackageVisibilityReviewStore = instance ?: synchronized(this) {
+            instance
+                ?: PackageVisibilityReviewStore(context.applicationContext).also { created ->
+                    instance = created
+                }
         }
     }
 }

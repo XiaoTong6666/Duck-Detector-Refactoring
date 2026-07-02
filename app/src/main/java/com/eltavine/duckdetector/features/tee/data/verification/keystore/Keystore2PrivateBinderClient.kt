@@ -43,19 +43,17 @@ class Keystore2PrivateBinderClient {
         }.getOrNull()
     }
 
-    fun buildGetKeyEntryRequest(alias: String): Keystore2BinderRequest {
-        return Keystore2BinderRequest(
-            interfaceDescriptor = INTERFACE_DESCRIPTOR,
-            transactionCode = TRANSACTION_GET_KEY_ENTRY,
-            alias = alias,
-        ) { data ->
-            data.writeInterfaceToken(INTERFACE_DESCRIPTOR)
-            data.writeInt(1)
-            data.writeInt(0)
-            data.writeLong(-1L)
-            data.writeString(alias)
-            data.writeByteArray(null)
-        }
+    fun buildGetKeyEntryRequest(alias: String): Keystore2BinderRequest = Keystore2BinderRequest(
+        interfaceDescriptor = INTERFACE_DESCRIPTOR,
+        transactionCode = TRANSACTION_GET_KEY_ENTRY,
+        alias = alias,
+    ) { data ->
+        data.writeInterfaceToken(INTERFACE_DESCRIPTOR)
+        data.writeInt(1)
+        data.writeInt(0)
+        data.writeLong(-1L)
+        data.writeString(alias)
+        data.writeByteArray(null)
     }
 
     fun executeRequest(
@@ -85,9 +83,7 @@ class Keystore2PrivateBinderClient {
         }
     }
 
-    fun transactGetKeyEntry(binder: IBinder, alias: String): BinderTransactionResult {
-        return executeRequest(binder, buildGetKeyEntryRequest(alias))
-    }
+    fun transactGetKeyEntry(binder: IBinder, alias: String): BinderTransactionResult = executeRequest(binder, buildGetKeyEntryRequest(alias))
 
     fun openSession(
         useStrongBox: Boolean = false,
@@ -252,6 +248,7 @@ class Keystore2PrivateBinderClient {
                         }
                     },
                 )
+
                 else -> GenerateKeyReplyCaptureResult(
                     available = false,
                     rawRequest = capture.rawRequest,
@@ -276,19 +273,15 @@ class Keystore2PrivateBinderClient {
         getKeyEntryResponse(service, keyDescriptor)
     }
 
-    fun getKeyEntryResponse(service: Any, keyDescriptor: Any): Any? {
-        return service.javaClass
-            .getMethod("getKeyEntry", keyDescriptor.javaClass)
-            .invoke(service, keyDescriptor)
-    }
+    fun getKeyEntryResponse(service: Any, keyDescriptor: Any): Any? = service.javaClass
+        .getMethod("getKeyEntry", keyDescriptor.javaClass)
+        .invoke(service, keyDescriptor)
 
     fun getMetadata(keyEntryResponse: Any): Any? = getFieldValue(keyEntryResponse, "metadata")
 
-    fun getReturnedDescriptor(keyEntryResponse: Any): Any? {
-        return getMetadata(keyEntryResponse)?.let { metadata ->
-            getFieldValue(metadata, "key")
-        } ?: getFieldValue(keyEntryResponse, "key")
-    }
+    fun getReturnedDescriptor(keyEntryResponse: Any): Any? = getMetadata(keyEntryResponse)?.let { metadata ->
+        getFieldValue(metadata, "key")
+    } ?: getFieldValue(keyEntryResponse, "key")
 
     fun resolveFollowUpDescriptor(requestedDescriptor: Any, keyMetadataOrResponse: Any?): Any {
         val returnedDescriptor = keyMetadataOrResponse?.let(::getReturnedDescriptor) ?: return requestedDescriptor
@@ -298,10 +291,12 @@ class Keystore2PrivateBinderClient {
             // AOSP 在成功生成后可能把后续操作入口切到 KEY_ID 语义；继续拿原 alias descriptor 调隐藏接口，部分设备会直接打成 KEY_NOT_FOUND。
             // AOSP may switch follow-up operations to KEY_ID semantics after generateKey; reusing the original alias descriptor can trigger KEY_NOT_FOUND on some devices.
             getDescriptorDomain(returnedDescriptor) == keyIdDomain -> returnedDescriptor
+
             returnedNamespace != null && returnedNamespace >= 0L -> createKeyIdDescriptor(
                 nspace = returnedNamespace,
                 aliasHint = getDescriptorAlias(requestedDescriptor),
             )
+
             else -> returnedDescriptor
         }
     }
@@ -327,9 +322,7 @@ class Keystore2PrivateBinderClient {
         }
     }
 
-    fun getMetadataAuthorizations(metadata: Any): Array<Any?> {
-        return toObjectArray(getFieldValue(metadata, "authorizations"))
-    }
+    fun getMetadataAuthorizations(metadata: Any): Array<Any?> = toObjectArray(getFieldValue(metadata, "authorizations"))
 
     fun getAuthorizationTag(authorization: Any): Int? {
         val keyParameter = getFieldValue(authorization, "keyParameter") ?: return null
@@ -341,12 +334,10 @@ class Keystore2PrivateBinderClient {
         return getKeyParameterIntValue(keyParameter)
     }
 
-    fun getKeyOriginValue(name: String): Int? {
-        return runCatching {
-            val originClass = loadClass("android.hardware.security.keymint.KeyOrigin")
-            originClass.getField(name).getInt(null)
-        }.getOrNull()
-    }
+    fun getKeyOriginValue(name: String): Int? = runCatching {
+        val originClass = loadClass("android.hardware.security.keymint.KeyOrigin")
+        originClass.getField(name).getInt(null)
+    }.getOrNull()
 
     fun createKeyIdDescriptor(nspace: Long, aliasHint: String? = null): Any {
         val descriptorClass = loadClass(CLASS_KEY_DESCRIPTOR)
@@ -371,59 +362,45 @@ class Keystore2PrivateBinderClient {
         }
     }
 
-    fun getDomainKeyId(): Int {
-        return runCatching {
-            val domainClass = loadClass("android.system.keystore2.Domain")
-            domainClass.getField("KEY_ID").getInt(null)
-        }.getOrDefault(DOMAIN_KEY_ID_FALLBACK)
-    }
+    fun getDomainKeyId(): Int = runCatching {
+        val domainClass = loadClass("android.system.keystore2.Domain")
+        domainClass.getField("KEY_ID").getInt(null)
+    }.getOrDefault(DOMAIN_KEY_ID_FALLBACK)
 
-    fun getTagValue(name: String): Int? {
-        return runCatching {
-            val tagClass = loadClass("android.hardware.security.keymint.Tag")
-            tagClass.getField(name).getInt(null)
-        }.getOrNull()
-    }
+    fun getTagValue(name: String): Int? = runCatching {
+        val tagClass = loadClass("android.hardware.security.keymint.Tag")
+        tagClass.getField(name).getInt(null)
+    }.getOrNull()
 
-    fun getKeyPurposeValue(name: String): Int? {
-        return runCatching {
-            val purposeClass = loadClass("android.hardware.security.keymint.KeyPurpose")
-            purposeClass.getField(name).getInt(null)
-        }.getOrNull()
-    }
+    fun getKeyPurposeValue(name: String): Int? = runCatching {
+        val purposeClass = loadClass("android.hardware.security.keymint.KeyPurpose")
+        purposeClass.getField(name).getInt(null)
+    }.getOrNull()
 
-    fun getDigestValue(name: String): Int? {
-        return runCatching {
-            val digestClass = loadClass("android.hardware.security.keymint.Digest")
-            digestClass.getField(name).getInt(null)
-        }.getOrNull()
-    }
+    fun getDigestValue(name: String): Int? = runCatching {
+        val digestClass = loadClass("android.hardware.security.keymint.Digest")
+        digestClass.getField(name).getInt(null)
+    }.getOrNull()
 
-    fun getAlgorithmValue(name: String): Int? {
-        return runCatching {
-            val algorithmClass = loadClass("android.hardware.security.keymint.Algorithm")
-            algorithmClass.getField(name).getInt(null)
-        }.getOrNull()
-    }
+    fun getAlgorithmValue(name: String): Int? = runCatching {
+        val algorithmClass = loadClass("android.hardware.security.keymint.Algorithm")
+        algorithmClass.getField(name).getInt(null)
+    }.getOrNull()
 
-    fun getKeyMintErrorCodeValue(name: String): Int? {
-        return runCatching {
-            val errorCodeClass = loadClass("android.hardware.security.keymint.ErrorCode")
-            errorCodeClass.getField(name).getInt(null)
-        }.getOrNull()
-    }
+    fun getKeyMintErrorCodeValue(name: String): Int? = runCatching {
+        val errorCodeClass = loadClass("android.hardware.security.keymint.ErrorCode")
+        errorCodeClass.getField(name).getInt(null)
+    }.getOrNull()
 
     fun deleteKey(service: Any, keyDescriptor: Any) {
         deleteKeyChecked(service, keyDescriptor)
     }
 
-    fun deleteKeyChecked(service: Any, keyDescriptor: Any): Throwable? {
-        return runCatching {
-            service.javaClass
-                .getMethod("deleteKey", keyDescriptor.javaClass)
-                .invoke(service, keyDescriptor)
-        }.exceptionOrNull()
-    }
+    fun deleteKeyChecked(service: Any, keyDescriptor: Any): Throwable? = runCatching {
+        service.javaClass
+            .getMethod("deleteKey", keyDescriptor.javaClass)
+            .invoke(service, keyDescriptor)
+    }.exceptionOrNull()
 
     fun listEntries(service: Any): Array<Any?> {
         val method = service.javaClass.methods.firstOrNull {
@@ -483,8 +460,10 @@ class Keystore2PrivateBinderClient {
                 it.parameterTypes.size == 3 &&
                 it.parameterTypes[0].isAssignableFrom(keyDescriptor.javaClass) &&
                 it.parameterTypes[1].isArray &&
-                (it.parameterTypes[2] == Boolean::class.javaPrimitiveType ||
-                    it.parameterTypes[2] == Boolean::class.java)
+                (
+                    it.parameterTypes[2] == Boolean::class.javaPrimitiveType ||
+                        it.parameterTypes[2] == Boolean::class.java
+                    )
         }?.let { exactMethod ->
             exactMethod.isAccessible = true
             return exactMethod.invoke(securityLevel, keyDescriptor, array, false)
@@ -515,15 +494,11 @@ class Keystore2PrivateBinderClient {
             ?: getFieldValue(createOperationResponse, "operation")
     }
 
-    fun getCertificateBlob(keyEntryResponse: Any): ByteArray? {
-        return (getFieldValue(keyEntryResponse, "certificate") as? ByteArray)
-            ?: (getMetadata(keyEntryResponse)?.let { getFieldValue(it, "certificate") } as? ByteArray)
-    }
+    fun getCertificateBlob(keyEntryResponse: Any): ByteArray? = (getFieldValue(keyEntryResponse, "certificate") as? ByteArray)
+        ?: (getMetadata(keyEntryResponse)?.let { getFieldValue(it, "certificate") } as? ByteArray)
 
-    fun getCertificateChainBlob(keyEntryResponse: Any): ByteArray? {
-        return (getFieldValue(keyEntryResponse, "certificateChain") as? ByteArray)
-            ?: (getMetadata(keyEntryResponse)?.let { getFieldValue(it, "certificateChain") } as? ByteArray)
-    }
+    fun getCertificateChainBlob(keyEntryResponse: Any): ByteArray? = (getFieldValue(keyEntryResponse, "certificateChain") as? ByteArray)
+        ?: (getMetadata(keyEntryResponse)?.let { getFieldValue(it, "certificateChain") } as? ByteArray)
 
     fun abortOperation(operation: Any?) {
         if (operation == null) {
@@ -532,17 +507,11 @@ class Keystore2PrivateBinderClient {
         operation.javaClass.getMethod("abort").invoke(operation)
     }
 
-    fun updateOperation(operation: Any, input: ByteArray): Any? {
-        return operation.javaClass.getMethod("update", ByteArray::class.java).invoke(operation, input)
-    }
+    fun updateOperation(operation: Any, input: ByteArray): Any? = operation.javaClass.getMethod("update", ByteArray::class.java).invoke(operation, input)
 
-    fun updateAadOperation(operation: Any, input: ByteArray): Any? {
-        return operation.javaClass.getMethod("updateAad", ByteArray::class.java).invoke(operation, input)
-    }
+    fun updateAadOperation(operation: Any, input: ByteArray): Any? = operation.javaClass.getMethod("updateAad", ByteArray::class.java).invoke(operation, input)
 
-    fun isServiceSpecificException(throwable: Throwable): Boolean {
-        return findThrowable(throwable) { it.javaClass.name == "android.os.ServiceSpecificException" } != null
-    }
+    fun isServiceSpecificException(throwable: Throwable): Boolean = findThrowable(throwable) { it.javaClass.name == "android.os.ServiceSpecificException" } != null
 
     fun extractServiceSpecificErrorCode(throwable: Throwable): Int? {
         val serviceSpecific = findThrowable(throwable) {
@@ -641,29 +610,25 @@ class Keystore2PrivateBinderClient {
         )
     }
 
-    private fun buildSigningKeyParameters(attest: Boolean): List<Any> {
-        return buildList {
-            add(createKeyParameter(0x10000002, 3))
-            add(createKeyParameter(0x30000003, 256))
-            add(createKeyParameter(0x1000000A, 1))
-            add(createKeyParameter(0x20000001, 2))
-            add(createKeyParameter(0x20000005, 4))
-            add(createKeyParameter(0x700001F7, true))
-            if (attest) {
-                add(createKeyParameter(0x900002C4.toInt(), ByteArray(32).also(SecureRandom()::nextBytes)))
-            }
+    private fun buildSigningKeyParameters(attest: Boolean): List<Any> = buildList {
+        add(createKeyParameter(0x10000002, 3))
+        add(createKeyParameter(0x30000003, 256))
+        add(createKeyParameter(0x1000000A, 1))
+        add(createKeyParameter(0x20000001, 2))
+        add(createKeyParameter(0x20000005, 4))
+        add(createKeyParameter(0x700001F7, true))
+        if (attest) {
+            add(createKeyParameter(0x900002C4.toInt(), ByteArray(32).also(SecureRandom()::nextBytes)))
         }
     }
 
-    private fun buildGenerateModeSigningKeyParameters(): List<Any> {
-        return buildList {
-            add(createKeyParameter(0x10000002, 3))
-            add(createKeyParameter(0x1000000A, 1))
-            add(createKeyParameter(0x20000005, 4))
-            add(createKeyParameter(0x20000001, 2))
-            add(createKeyParameter(0x900002C4.toInt(), ByteArray(32).also(SecureRandom()::nextBytes)))
-            add(createKeyParameter(0x700001F7, true))
-        }
+    private fun buildGenerateModeSigningKeyParameters(): List<Any> = buildList {
+        add(createKeyParameter(0x10000002, 3))
+        add(createKeyParameter(0x1000000A, 1))
+        add(createKeyParameter(0x20000005, 4))
+        add(createKeyParameter(0x20000001, 2))
+        add(createKeyParameter(0x900002C4.toInt(), ByteArray(32).also(SecureRandom()::nextBytes)))
+        add(createKeyParameter(0x700001F7, true))
     }
 
     private fun createKeyParameter(tag: Int, value: Any): Any {
@@ -712,15 +677,13 @@ class Keystore2PrivateBinderClient {
         }.getOrNull()
     }
 
-    fun resolveSecurityLevel(service: Any, level: Int): Any? {
-        return runCatching {
-            val method = service.javaClass.methods.firstOrNull {
-                it.name == "getSecurityLevel" && it.parameterTypes.size == 1
-            } ?: throw NoSuchMethodException("Unable to find hidden getSecurityLevel(int) on ${service.javaClass.name}")
-            method.isAccessible = true
-            method.invoke(service, level)
-        }.getOrNull()
-    }
+    fun resolveSecurityLevel(service: Any, level: Int): Any? = runCatching {
+        val method = service.javaClass.methods.firstOrNull {
+            it.name == "getSecurityLevel" && it.parameterTypes.size == 1
+        } ?: throw NoSuchMethodException("Unable to find hidden getSecurityLevel(int) on ${service.javaClass.name}")
+        method.isAccessible = true
+        method.invoke(service, level)
+    }.getOrNull()
 
     private fun createPrivateKeystoreServiceProxy(
         rawBinder: IBinder,
@@ -764,72 +727,72 @@ class Keystore2PrivateBinderClient {
         realSecurityLevel: Any,
         diagnosticsCollector: CapturedThrowableCollector,
         captureGenerateKeyReplies: Boolean,
-    ): Any {
-        return runCatching {
-            val securityLevelInterface = loadClass(CLASS_IKEYSTORE_SECURITY_LEVEL)
-            val securityLevelProxyClass = loadClass("${CLASS_IKEYSTORE_SECURITY_LEVEL}\$Stub\$Proxy")
-            val asBinderMethod = realSecurityLevel.javaClass.getMethod("asBinder")
-            val rawBinder = asBinderMethod.invoke(realSecurityLevel) as IBinder
+    ): Any = runCatching {
+        val securityLevelInterface = loadClass(CLASS_IKEYSTORE_SECURITY_LEVEL)
+        val securityLevelProxyClass = loadClass("${CLASS_IKEYSTORE_SECURITY_LEVEL}\$Stub\$Proxy")
+        val asBinderMethod = realSecurityLevel.javaClass.getMethod("asBinder")
+        val rawBinder = asBinderMethod.invoke(realSecurityLevel) as IBinder
 
-            val binderProxy = Proxy.newProxyInstance(
-                ClassLoader.getSystemClassLoader(),
-                arrayOf(IBinder::class.java),
-            ) { _, method, args ->
-                when (method.name) {
-                    "queryLocalInterface" -> null
-                    "transact" -> {
-                        val transactionCode = args[0] as Int
-                        val data = args[1] as Parcel
-                        val reply = args[2] as? Parcel
-                        val success = rawBinder.transact(
-                            transactionCode,
-                            data,
-                            reply,
-                            args[3] as Int,
+        val binderProxy = Proxy.newProxyInstance(
+            ClassLoader.getSystemClassLoader(),
+            arrayOf(IBinder::class.java),
+        ) { _, method, args ->
+            when (method.name) {
+                "queryLocalInterface" -> null
+
+                "transact" -> {
+                    val transactionCode = args[0] as Int
+                    val data = args[1] as Parcel
+                    val reply = args[2] as? Parcel
+                    val success = rawBinder.transact(
+                        transactionCode,
+                        data,
+                        reply,
+                        args[3] as Int,
+                    )
+                    // generateKey 指纹检测依赖原始 reply bytes，所以只能在 transact 边界抓包，晚一步就只剩解包后的对象了。
+                    // The generateKey fingerprint depends on raw reply bytes, so capture has to happen at the transact boundary before the parcel is decoded.
+                    if (captureGenerateKeyReplies) {
+                        captureGenerateKeyReplyFromTransact(
+                            transactionCode = transactionCode,
+                            data = data,
+                            reply = reply,
+                            transactReturned = success,
                         )
-                        // generateKey 指纹检测依赖原始 reply bytes，所以只能在 transact 边界抓包，晚一步就只剩解包后的对象了。
-                        // The generateKey fingerprint depends on raw reply bytes, so capture has to happen at the transact boundary before the parcel is decoded.
-                        if (captureGenerateKeyReplies) {
-                            captureGenerateKeyReplyFromTransact(
-                                transactionCode = transactionCode,
-                                data = data,
-                                reply = reply,
-                                transactReturned = success,
-                            )
-                        }
-                        success
                     }
-                    else -> invokeProxyMethod(
-                        rawBinder,
-                        method,
-                        args,
-                        diagnosticsCollector = diagnosticsCollector,
-                        failurePhase = "securityLevelBinder.${method.name}",
-                    )
+                    success
                 }
-            } as IBinder
 
-            val constructor = securityLevelProxyClass.getDeclaredConstructor(IBinder::class.java)
-            constructor.isAccessible = true
-            val stubProxy = constructor.newInstance(binderProxy)
-            Proxy.newProxyInstance(
-                ClassLoader.getSystemClassLoader(),
-                arrayOf(securityLevelInterface),
-            ) { _, method, args ->
-                if (method.name == "asBinder") {
-                    binderProxy
-                } else {
-                    invokeProxyMethod(
-                        stubProxy,
-                        method,
-                        args,
-                        diagnosticsCollector = diagnosticsCollector,
-                        failurePhase = "securityLevel.${method.name}",
-                    )
-                }
+                else -> invokeProxyMethod(
+                    rawBinder,
+                    method,
+                    args,
+                    diagnosticsCollector = diagnosticsCollector,
+                    failurePhase = "securityLevelBinder.${method.name}",
+                )
             }
-        }.getOrElse { realSecurityLevel }
-    }
+        } as IBinder
+
+        val constructor = securityLevelProxyClass.getDeclaredConstructor(IBinder::class.java)
+        constructor.isAccessible = true
+        val stubProxy = constructor.newInstance(binderProxy)
+        Proxy.newProxyInstance(
+            ClassLoader.getSystemClassLoader(),
+            arrayOf(securityLevelInterface),
+        ) { _, method, args ->
+            if (method.name == "asBinder") {
+                binderProxy
+            } else {
+                invokeProxyMethod(
+                    stubProxy,
+                    method,
+                    args,
+                    diagnosticsCollector = diagnosticsCollector,
+                    failurePhase = "securityLevel.${method.name}",
+                )
+            }
+        }
+    }.getOrElse { realSecurityLevel }
 
     private fun invokeProxyMethod(
         target: Any,
@@ -838,21 +801,19 @@ class Keystore2PrivateBinderClient {
         mapper: ((Any?) -> Any?)? = null,
         diagnosticsCollector: CapturedThrowableCollector? = null,
         failurePhase: String? = null,
-    ): Any? {
-        return try {
-            val result = method.invoke(target, *(args ?: emptyArray()))
-            mapper?.invoke(result) ?: result
-        } catch (throwable: InvocationTargetException) {
-            val cause = throwable.cause ?: throwable
-            if (diagnosticsCollector != null && failurePhase != null) {
-                diagnosticsCollector.record(
-                    phase = failurePhase,
-                    summary = describeThrowable(cause),
-                    throwable = cause,
-                )
-            }
-            throw cause
+    ): Any? = try {
+        val result = method.invoke(target, *(args ?: emptyArray()))
+        mapper?.invoke(result) ?: result
+    } catch (throwable: InvocationTargetException) {
+        val cause = throwable.cause ?: throwable
+        if (diagnosticsCollector != null && failurePhase != null) {
+            diagnosticsCollector.record(
+                phase = failurePhase,
+                summary = describeThrowable(cause),
+                throwable = cause,
+            )
         }
+        throw cause
     }
 
     private fun captureReplySnapshot(reply: Parcel): Keystore2ReplySnapshot? {
@@ -929,11 +890,9 @@ class Keystore2PrivateBinderClient {
         }
     }
 
-    private fun rawReplyPrefix(rawReply: ByteArray): String {
-        return rawReply
-            .take(MAX_REPLY_PREFIX_BYTES)
-            .joinToString(" ") { "%02X".format(it.toInt() and 0xFF) }
-    }
+    private fun rawReplyPrefix(rawReply: ByteArray): String = rawReply
+        .take(MAX_REPLY_PREFIX_BYTES)
+        .joinToString(" ") { "%02X".format(it.toInt() and 0xFF) }
 
     private fun getKeyParameterIntValue(keyParameter: Any): Int? {
         val value = getFieldValue(keyParameter, "value") ?: return null
@@ -968,17 +927,15 @@ class Keystore2PrivateBinderClient {
         field.set(target, value)
     }
 
-    private fun getFieldValue(target: Any, name: String): Any? {
-        return runCatching {
-            val field = target.javaClass.getField(name)
-            field.isAccessible = true
-            field.get(target)
-        }.recoverCatching {
-            val field = target.javaClass.getDeclaredField(name)
-            field.isAccessible = true
-            field.get(target)
-        }.getOrNull()
-    }
+    private fun getFieldValue(target: Any, name: String): Any? = runCatching {
+        val field = target.javaClass.getField(name)
+        field.isAccessible = true
+        field.get(target)
+    }.recoverCatching {
+        val field = target.javaClass.getDeclaredField(name)
+        field.isAccessible = true
+        field.get(target)
+    }.getOrNull()
 
     fun toObjectArray(value: Any?): Array<Any?> {
         if (value == null || !value.javaClass.isArray) {
@@ -991,17 +948,15 @@ class Keystore2PrivateBinderClient {
     private fun buildListEntriesArgs(
         parameterTypes: Array<Class<*>>,
         startPastAlias: String? = null,
-    ): Array<Any?> {
-        return parameterTypes.map { type ->
-            when {
-                type == Int::class.javaPrimitiveType || type == Int::class.java -> 0
-                type == Long::class.javaPrimitiveType || type == Long::class.java -> -1L
-                type == String::class.java -> startPastAlias
-                type == Boolean::class.javaPrimitiveType || type == Boolean::class.java -> false
-                else -> null
-            }
-        }.toTypedArray()
-    }
+    ): Array<Any?> = parameterTypes.map { type ->
+        when {
+            type == Int::class.javaPrimitiveType || type == Int::class.java -> 0
+            type == Long::class.javaPrimitiveType || type == Long::class.java -> -1L
+            type == String::class.java -> startPastAlias
+            type == Boolean::class.javaPrimitiveType || type == Boolean::class.java -> false
+            else -> null
+        }
+    }.toTypedArray()
 
     private fun findThrowable(
         throwable: Throwable,
@@ -1025,18 +980,16 @@ class Keystore2PrivateBinderClient {
         return current
     }
 
-    private fun loadClass(className: String): Class<*> {
-        return try {
-            Class.forName(className)
-        } catch (primary: ClassNotFoundException) {
+    private fun loadClass(className: String): Class<*> = try {
+        Class.forName(className)
+    } catch (primary: ClassNotFoundException) {
+        try {
+            ClassLoader.getSystemClassLoader().loadClass(className)
+        } catch (secondary: ClassNotFoundException) {
             try {
-                ClassLoader.getSystemClassLoader().loadClass(className)
-            } catch (secondary: ClassNotFoundException) {
-                try {
-                    HiddenApiBypass.invoke(Class::class.java, null, "forName", className) as Class<*>
-                } catch (throwable: Throwable) {
-                    throw ClassNotFoundException("Unable to load hidden class $className", throwable)
-                }
+                HiddenApiBypass.invoke(Class::class.java, null, "forName", className) as Class<*>
+            } catch (throwable: Throwable) {
+                throw ClassNotFoundException("Unable to load hidden class $className", throwable)
             }
         }
     }
@@ -1095,18 +1048,16 @@ private class GenerateKeyReplyCaptureSlot {
     fun toSnapshot(
         throwable: Throwable? = null,
         defaultFailureReason: String,
-    ): GenerateKeyReplyCaptureSnapshot {
-        return GenerateKeyReplyCaptureSnapshot(
-            rawRequest = rawRequest,
-            requestPrefix = requestPrefix,
-            rawReply = rawReply,
-            rawPrefix = rawPrefix,
-            transactionCode = transactionCode,
-            transactReturned = transactReturned,
-            throwable = throwable,
-            failureReason = failureReason ?: if (rawReply == null) defaultFailureReason else null,
-        )
-    }
+    ): GenerateKeyReplyCaptureSnapshot = GenerateKeyReplyCaptureSnapshot(
+        rawRequest = rawRequest,
+        requestPrefix = requestPrefix,
+        rawReply = rawReply,
+        rawPrefix = rawPrefix,
+        transactionCode = transactionCode,
+        transactReturned = transactReturned,
+        throwable = throwable,
+        failureReason = failureReason ?: if (rawReply == null) defaultFailureReason else null,
+    )
 }
 
 data class GenerateKeyReplyCaptureResult(
@@ -1215,22 +1166,26 @@ internal fun keyParameterSetterNameForTag(tag: Int): String {
             702 -> "setOrigin"
             else -> "setInteger"
         }
+
         0x30000000, 0x40000000 -> "setInteger"
+
         0x50000000, 0xA0000000.toInt() -> "setLongInteger"
+
         0x60000000 -> "setDateTime"
+
         0x70000000 -> "setBoolValue"
+
         0x80000000.toInt(), 0x90000000.toInt() -> "setBlob"
+
         else -> "setInteger"
     }
 }
 
-internal fun keyParameterParameterType(value: Any): Class<*> {
-    return when (value) {
-        is Int -> Int::class.javaPrimitiveType ?: Int::class.java
-        is Long -> Long::class.javaPrimitiveType ?: Long::class.java
-        is Boolean -> Boolean::class.javaPrimitiveType ?: Boolean::class.java
-        else -> value.javaClass
-    }
+internal fun keyParameterParameterType(value: Any): Class<*> = when (value) {
+    is Int -> Int::class.javaPrimitiveType ?: Int::class.java
+    is Long -> Long::class.javaPrimitiveType ?: Long::class.java
+    is Boolean -> Boolean::class.javaPrimitiveType ?: Boolean::class.java
+    else -> value.javaClass
 }
 
 internal fun capturedThrowableFingerprint(

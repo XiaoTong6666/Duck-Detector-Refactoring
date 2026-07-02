@@ -18,13 +18,6 @@ package com.eltavine.duckdetector.features.tee.data.attestation
 
 import com.eltavine.duckdetector.features.tee.domain.TeeCertificateItem
 import com.eltavine.duckdetector.features.tee.domain.TeeTier
-import java.math.BigInteger
-import java.nio.charset.StandardCharsets
-import java.security.MessageDigest
-import java.security.cert.X509Certificate
-import java.text.SimpleDateFormat
-import java.util.Base64
-import java.util.Locale
 import org.bouncycastle.asn1.ASN1Boolean
 import org.bouncycastle.asn1.ASN1Encodable
 import org.bouncycastle.asn1.ASN1Enumerated
@@ -36,6 +29,13 @@ import org.bouncycastle.asn1.ASN1Primitive
 import org.bouncycastle.asn1.ASN1Sequence
 import org.bouncycastle.asn1.ASN1Set
 import org.bouncycastle.asn1.ASN1TaggedObject
+import java.math.BigInteger
+import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
+import java.security.cert.X509Certificate
+import java.text.SimpleDateFormat
+import java.util.Base64
+import java.util.Locale
 
 class AttestationExtensionParser {
 
@@ -78,19 +78,19 @@ class AttestationExtensionParser {
                 osPatchLevel = tags[706]?.let {
                     formatPatchLevel(
                         ASN1Integer.getInstance(it).value,
-                        false
+                        false,
                     )
                 },
                 vendorPatchLevel = tags[718]?.let {
                     formatPatchLevel(
                         ASN1Integer.getInstance(it).value,
-                        true
+                        true,
                     )
                 },
                 bootPatchLevel = tags[719]?.let {
                     formatPatchLevel(
                         ASN1Integer.getInstance(it).value,
-                        true
+                        true,
                     )
                 },
                 keyProperties = parseKeyProperties(tags),
@@ -115,34 +115,32 @@ class AttestationExtensionParser {
     private fun emptySnapshot(
         chain: List<X509Certificate>,
         errorMessage: String,
-    ): AttestationSnapshot {
-        return AttestationSnapshot(
-            tier = TeeTier.UNKNOWN,
-            attestationVersion = null,
-            keymasterVersion = null,
-            attestationTier = null,
-            keymasterTier = null,
-            challengeVerified = false,
-            challengeSummary = null,
-            rootOfTrust = null,
-            osVersion = null,
-            osPatchLevel = null,
-            vendorPatchLevel = null,
-            bootPatchLevel = null,
-            keyProperties = AttestedKeyProperties(),
-            authState = AttestedAuthState(),
-            applicationInfo = AttestedApplicationInfo(),
-            deviceInfo = AttestedDeviceInfo(),
-            deviceUniqueAttestation = false,
-            trustedAttestationIndex = null,
-            rawCertificates = chain,
-            displayCertificates = buildDisplayCertificates(
-                chain = chain,
-                trustedAttestationIndex = trustedAttestationIndex(chain),
-            ),
-            errorMessage = errorMessage,
-        )
-    }
+    ): AttestationSnapshot = AttestationSnapshot(
+        tier = TeeTier.UNKNOWN,
+        attestationVersion = null,
+        keymasterVersion = null,
+        attestationTier = null,
+        keymasterTier = null,
+        challengeVerified = false,
+        challengeSummary = null,
+        rootOfTrust = null,
+        osVersion = null,
+        osPatchLevel = null,
+        vendorPatchLevel = null,
+        bootPatchLevel = null,
+        keyProperties = AttestedKeyProperties(),
+        authState = AttestedAuthState(),
+        applicationInfo = AttestedApplicationInfo(),
+        deviceInfo = AttestedDeviceInfo(),
+        deviceUniqueAttestation = false,
+        trustedAttestationIndex = null,
+        rawCertificates = chain,
+        displayCertificates = buildDisplayCertificates(
+            chain = chain,
+            trustedAttestationIndex = trustedAttestationIndex(chain),
+        ),
+        errorMessage = errorMessage,
+    )
 
     private fun buildDisplayCertificates(
         chain: List<X509Certificate>,
@@ -199,19 +197,17 @@ class AttestationExtensionParser {
         )
     }
 
-    private fun parseDeviceInfo(tags: Map<Int, ASN1Encodable>): AttestedDeviceInfo {
-        return AttestedDeviceInfo(
-            brand = tags[710]?.let(::parseOctetsAsString),
-            device = tags[711]?.let(::parseOctetsAsString),
-            product = tags[712]?.let(::parseOctetsAsString),
-            serial = tags[713]?.let(::parseOctetsAsString),
-            imei = tags[714]?.let(::parseOctetsAsString),
-            meid = tags[715]?.let(::parseOctetsAsString),
-            manufacturer = tags[716]?.let(::parseOctetsAsString),
-            model = tags[717]?.let(::parseOctetsAsString),
-            secondImei = tags[723]?.let(::parseOctetsAsString),
-        )
-    }
+    private fun parseDeviceInfo(tags: Map<Int, ASN1Encodable>): AttestedDeviceInfo = AttestedDeviceInfo(
+        brand = tags[710]?.let(::parseOctetsAsString),
+        device = tags[711]?.let(::parseOctetsAsString),
+        product = tags[712]?.let(::parseOctetsAsString),
+        serial = tags[713]?.let(::parseOctetsAsString),
+        imei = tags[714]?.let(::parseOctetsAsString),
+        meid = tags[715]?.let(::parseOctetsAsString),
+        manufacturer = tags[716]?.let(::parseOctetsAsString),
+        model = tags[717]?.let(::parseOctetsAsString),
+        secondImei = tags[723]?.let(::parseOctetsAsString),
+    )
 
     private fun parseKeyProperties(tags: Map<Int, ASN1Encodable>): AttestedKeyProperties {
         val algorithm = tags[2]?.let { mapAlgorithm(ASN1Integer.getInstance(it).value.toInt()) }
@@ -279,9 +275,7 @@ class AttestationExtensionParser {
         }
     }
 
-    private fun parseOctetsAsString(value: ASN1Encodable): String {
-        return String(ASN1OctetString.getInstance(value).octets, StandardCharsets.UTF_8)
-    }
+    private fun parseOctetsAsString(value: ASN1Encodable): String = String(ASN1OctetString.getInstance(value).octets, StandardCharsets.UTF_8)
 
     private fun mapCertificate(
         index: Int,
@@ -300,7 +294,7 @@ class AttestationExtensionParser {
                 index == trustedAttestationIndex -> "Attestation certificate"
                 index == 0 -> "Generated key certificate"
                 index == totalCount - 1 -> "Root certificate"
-                else -> "Intermediate ${index}"
+                else -> "Intermediate $index"
             },
             subject = prettyDn(cert.subjectX500Principal.name),
             issuer = prettyDn(cert.issuerX500Principal.name),
@@ -312,22 +306,22 @@ class AttestationExtensionParser {
         )
     }
 
-    private fun prettyDn(input: String): String {
-        return Regex("CN=([^,]+)").find(input)?.groupValues?.getOrNull(1) ?: input
-    }
+    private fun prettyDn(input: String): String = Regex("CN=([^,]+)").find(input)?.groupValues?.getOrNull(1) ?: input
 
     private fun formatPatchLevel(value: BigInteger, includeDay: Boolean): String? {
         val raw = value.toString().padStart(if (includeDay) 8 else 6, '0')
         return when {
             raw.all { it == '0' } -> null
+
             includeDay && raw.length >= 8 -> "${raw.substring(0, 4)}-${
                 raw.substring(
                     4,
-                    6
+                    6,
                 )
             }-${raw.substring(6, 8)}"
 
             !includeDay && raw.length >= 6 -> "${raw.substring(0, 4)}-${raw.substring(4, 6)}"
+
             else -> raw
         }
     }
@@ -335,16 +329,14 @@ class AttestationExtensionParser {
     private fun formatOsVersion(value: BigInteger): String {
         val raw = value.toString().padStart(6, '0')
         return "${raw.substring(0, 2).trimStart('0').ifBlank { "0" }}." +
-                "${raw.substring(2, 4).trimStart('0').ifBlank { "0" }}." +
-                raw.substring(4, 6).trimStart('0').ifBlank { "0" }
+            "${raw.substring(2, 4).trimStart('0').ifBlank { "0" }}." +
+            raw.substring(4, 6).trimStart('0').ifBlank { "0" }
     }
 
-    private fun formatChallengeSummary(challenge: ByteArray): String {
-        return "len=${challenge.size}, sha256=${
-            MessageDigest.getInstance("SHA-256").digest(challenge).toHex().take(12)
-        }, " +
-                "b64=${Base64.getEncoder().encodeToString(challenge).take(18)}"
-    }
+    private fun formatChallengeSummary(challenge: ByteArray): String = "len=${challenge.size}, sha256=${
+        MessageDigest.getInstance("SHA-256").digest(challenge).toHex().take(12)
+    }, " +
+        "b64=${Base64.getEncoder().encodeToString(challenge).take(18)}"
 
     private fun unwrapOctetString(data: ByteArray?): ByteArray {
         if (data == null) {
@@ -356,13 +348,11 @@ class AttestationExtensionParser {
         }
     }
 
-    private fun mapTier(value: Int): TeeTier? {
-        return when (value) {
-            0 -> TeeTier.SOFTWARE
-            1 -> TeeTier.TEE
-            2 -> TeeTier.STRONGBOX
-            else -> TeeTier.UNKNOWN
-        }
+    private fun mapTier(value: Int): TeeTier? = when (value) {
+        0 -> TeeTier.SOFTWARE
+        1 -> TeeTier.TEE
+        2 -> TeeTier.STRONGBOX
+        else -> TeeTier.UNKNOWN
     }
 
     private fun mapAlgorithm(value: Int): String = when (value) {
@@ -430,28 +420,20 @@ class AttestationExtensionParser {
         }
     }
 
-    private fun extractInt(value: ASN1Encodable): Int? {
-        return when (value) {
-            is ASN1Integer -> value.value.toInt()
-            is ASN1Enumerated -> value.value.toInt()
-            is ASN1ObjectIdentifier -> value.id.toIntOrNull()
-            else -> runCatching { ASN1Integer.getInstance(value).value.toInt() }.getOrNull()
-        }
+    private fun extractInt(value: ASN1Encodable): Int? = when (value) {
+        is ASN1Integer -> value.value.toInt()
+        is ASN1Enumerated -> value.value.toInt()
+        is ASN1ObjectIdentifier -> value.id.toIntOrNull()
+        else -> runCatching { ASN1Integer.getInstance(value).value.toInt() }.getOrNull()
     }
 
-    private fun trustedAttestationIndex(chain: List<X509Certificate>): Int? {
-        return chain.indices.reversed().firstOrNull { index ->
-            hasAttestationExtension(chain[index])
-        }
+    private fun trustedAttestationIndex(chain: List<X509Certificate>): Int? = chain.indices.reversed().firstOrNull { index ->
+        hasAttestationExtension(chain[index])
     }
 
-    private fun hasAttestationExtension(certificate: X509Certificate): Boolean {
-        return certificate.getExtensionValue(KEY_ATTESTATION_OID) != null
-    }
+    private fun hasAttestationExtension(certificate: X509Certificate): Boolean = certificate.getExtensionValue(KEY_ATTESTATION_OID) != null
 
-    private fun ByteArray.toHex(): String {
-        return joinToString(separator = "") { byte -> "%02x".format(byte) }
-    }
+    private fun ByteArray.toHex(): String = joinToString(separator = "") { byte -> "%02x".format(byte) }
 
     companion object {
         private const val KEY_ATTESTATION_OID = "1.3.6.1.4.1.11129.2.1.17"

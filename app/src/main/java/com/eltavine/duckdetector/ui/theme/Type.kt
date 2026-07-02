@@ -46,7 +46,8 @@ val Typography = Typography(
             fontSize = 57.sp,
             lineHeight = 64.sp,
             letterSpacing = (-0.25).sp,
-        ), LineBreak.Heading
+        ),
+        LineBreak.Heading,
     ),
     displayMedium = wrapAwareStyle(
         TextStyle(
@@ -55,7 +56,8 @@ val Typography = Typography(
             fontSize = 45.sp,
             lineHeight = 52.sp,
             letterSpacing = 0.sp,
-        ), LineBreak.Heading
+        ),
+        LineBreak.Heading,
     ),
     displaySmall = wrapAwareStyle(
         TextStyle(
@@ -64,7 +66,8 @@ val Typography = Typography(
             fontSize = 36.sp,
             lineHeight = 44.sp,
             letterSpacing = 0.sp,
-        ), LineBreak.Heading
+        ),
+        LineBreak.Heading,
     ),
     headlineLarge = wrapAwareStyle(
         TextStyle(
@@ -73,7 +76,8 @@ val Typography = Typography(
             fontSize = 32.sp,
             lineHeight = 40.sp,
             letterSpacing = 0.sp,
-        ), LineBreak.Heading
+        ),
+        LineBreak.Heading,
     ),
     headlineMedium = wrapAwareStyle(
         TextStyle(
@@ -82,7 +86,8 @@ val Typography = Typography(
             fontSize = 28.sp,
             lineHeight = 36.sp,
             letterSpacing = 0.sp,
-        ), LineBreak.Heading
+        ),
+        LineBreak.Heading,
     ),
     headlineSmall = wrapAwareStyle(
         TextStyle(
@@ -91,7 +96,8 @@ val Typography = Typography(
             fontSize = 24.sp,
             lineHeight = 32.sp,
             letterSpacing = 0.sp,
-        ), LineBreak.Heading
+        ),
+        LineBreak.Heading,
     ),
     titleLarge = wrapAwareStyle(
         TextStyle(
@@ -100,7 +106,8 @@ val Typography = Typography(
             fontSize = 22.sp,
             lineHeight = 28.sp,
             letterSpacing = 0.sp,
-        ), LineBreak.Heading
+        ),
+        LineBreak.Heading,
     ),
     titleMedium = wrapAwareStyle(
         TextStyle(
@@ -109,7 +116,8 @@ val Typography = Typography(
             fontSize = 16.sp,
             lineHeight = 24.sp,
             letterSpacing = 0.15.sp,
-        ), LineBreak.Heading
+        ),
+        LineBreak.Heading,
     ),
     titleSmall = wrapAwareStyle(
         TextStyle(
@@ -118,7 +126,8 @@ val Typography = Typography(
             fontSize = 14.sp,
             lineHeight = 20.sp,
             letterSpacing = 0.1.sp,
-        ), LineBreak.Paragraph
+        ),
+        LineBreak.Paragraph,
     ),
     bodyLarge = wrapAwareStyle(
         TextStyle(
@@ -127,7 +136,8 @@ val Typography = Typography(
             fontSize = 16.sp,
             lineHeight = 24.sp,
             letterSpacing = 0.5.sp,
-        ), LineBreak.Paragraph
+        ),
+        LineBreak.Paragraph,
     ),
     bodyMedium = wrapAwareStyle(
         TextStyle(
@@ -136,7 +146,8 @@ val Typography = Typography(
             fontSize = 14.sp,
             lineHeight = 20.sp,
             letterSpacing = 0.25.sp,
-        ), LineBreak.Paragraph
+        ),
+        LineBreak.Paragraph,
     ),
     bodySmall = wrapAwareStyle(
         TextStyle(
@@ -145,7 +156,8 @@ val Typography = Typography(
             fontSize = 12.sp,
             lineHeight = 16.sp,
             letterSpacing = 0.4.sp,
-        ), LineBreak.Paragraph
+        ),
+        LineBreak.Paragraph,
     ),
     labelLarge = wrapAwareStyle(
         TextStyle(
@@ -154,7 +166,8 @@ val Typography = Typography(
             fontSize = 14.sp,
             lineHeight = 20.sp,
             letterSpacing = 0.1.sp,
-        ), LineBreak.Paragraph
+        ),
+        LineBreak.Paragraph,
     ),
     labelMedium = wrapAwareStyle(
         TextStyle(
@@ -163,7 +176,8 @@ val Typography = Typography(
             fontSize = 12.sp,
             lineHeight = 16.sp,
             letterSpacing = 0.5.sp,
-        ), LineBreak.Paragraph
+        ),
+        LineBreak.Paragraph,
     ),
     labelSmall = wrapAwareStyle(
         TextStyle(
@@ -172,6 +186,7 @@ val Typography = Typography(
             fontSize = 11.sp,
             lineHeight = 16.sp,
             letterSpacing = 0.5.sp,
-        ), LineBreak.Paragraph
+        ),
+        LineBreak.Paragraph,
     ),
 )

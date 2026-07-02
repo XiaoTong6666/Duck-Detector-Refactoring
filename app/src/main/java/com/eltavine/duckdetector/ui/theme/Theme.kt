@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("ktlint:standard:function-naming")
+
 package com.eltavine.duckdetector.ui.theme
 
 import android.app.Activity
@@ -43,6 +45,7 @@ fun DuckDetectorTheme(
         }
 
         darkTheme -> darkColorScheme()
+
         else -> lightColorScheme()
     }
     val view = LocalView.current

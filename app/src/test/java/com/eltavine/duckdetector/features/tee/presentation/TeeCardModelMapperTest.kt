@@ -79,7 +79,8 @@ class TeeCardModelMapperTest {
 
         assertEquals(
             listOf("Verdict", "Tier", "Trust", "Score"),
-            model.headerFacts.map { it.label })
+            model.headerFacts.map { it.label },
+        )
         assertEquals("72", model.headerFacts.last().value)
         assertTrue(model.factGroups.single().rows.single().value.contains("Java-style"))
         assertTrue(model.actions.none { it.id == TeeFooterActionId.RESCAN })
@@ -188,7 +189,7 @@ class TeeCardModelMapperTest {
                     TeeSignal(
                         "Signals",
                         "0 policy hard • 0 policy review • 1 local",
-                        TeeSignalLevel.WARN
+                        TeeSignalLevel.WARN,
                     ),
                 ),
                 sections = listOf(
@@ -844,7 +845,7 @@ class TeeCardModelMapperTest {
         assertNull(model.rkpBadgeLabel)
         assertEquals(
             DetectorStatus.warning(),
-            model.headerFacts.single { it.label == "Trust" }.status
+            model.headerFacts.single { it.label == "Trust" }.status,
         )
     }
 

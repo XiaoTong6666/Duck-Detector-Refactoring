@@ -97,20 +97,16 @@ data class LSPosedDirtyPolicyProbeResult(
             }
         }
 
-    private fun ruleLabel(value: Boolean?): String {
-        return when (value) {
-            true -> "allowed"
-            false -> "denied"
-            null -> "unknown"
-        }
+    private fun ruleLabel(value: Boolean?): String = when (value) {
+        true -> "allowed"
+        false -> "denied"
+        null -> "unknown"
     }
 
-    private fun yesNoLabel(value: Boolean?): String {
-        return when (value) {
-            true -> "yes"
-            false -> "no"
-            null -> "unknown"
-        }
+    private fun yesNoLabel(value: Boolean?): String = when (value) {
+        true -> "yes"
+        false -> "no"
+        null -> "unknown"
     }
 }
 
@@ -242,28 +238,22 @@ class LSPosedDirtyPolicyProbe {
         nativeValue: Boolean?,
         javaTrack: DirtyPolicyTrack,
         javaValue: Boolean?,
-    ): Boolean? {
-        return aggregateVerdict(
-            nativeValue.takeIf { nativeTrack.reportable },
-            javaValue.takeIf { javaTrack.reportable },
-        )
+    ): Boolean? = aggregateVerdict(
+        nativeValue.takeIf { nativeTrack.reportable },
+        javaValue.takeIf { javaTrack.reportable },
+    )
+
+    private fun aggregateVerdict(nativeValue: Boolean?, javaValue: Boolean?): Boolean? = when {
+        nativeValue != null && javaValue != null && nativeValue != javaValue -> null
+        nativeValue == true || javaValue == true -> true
+        nativeValue == false || javaValue == false -> false
+        else -> null
     }
 
-    private fun aggregateVerdict(nativeValue: Boolean?, javaValue: Boolean?): Boolean? {
-        return when {
-            nativeValue != null && javaValue != null && nativeValue != javaValue -> null
-            nativeValue == true || javaValue == true -> true
-            nativeValue == false || javaValue == false -> false
-            else -> null
-        }
-    }
-
-    private fun mergeBoolean(nativeValue: Boolean?, javaValue: Boolean?): Boolean? {
-        return when {
-            nativeValue != null && javaValue != null && nativeValue != javaValue -> null
-            nativeValue != null -> nativeValue
-            else -> javaValue
-        }
+    private fun mergeBoolean(nativeValue: Boolean?, javaValue: Boolean?): Boolean? = when {
+        nativeValue != null && javaValue != null && nativeValue != javaValue -> null
+        nativeValue != null -> nativeValue
+        else -> javaValue
     }
 
     private fun mergeReportedBoolean(
@@ -271,54 +261,50 @@ class LSPosedDirtyPolicyProbe {
         nativeValue: Boolean?,
         javaTrack: DirtyPolicyTrack,
         javaValue: Boolean?,
-    ): Boolean? {
-        return mergeBoolean(
-            nativeValue.takeIf { nativeTrack.reportable },
-            javaValue.takeIf { javaTrack.reportable },
-        )
-    }
+    ): Boolean? = mergeBoolean(
+        nativeValue.takeIf { nativeTrack.reportable },
+        javaValue.takeIf { javaTrack.reportable },
+    )
 
     private fun dirtyPolicyTrack(
         snapshot: SelinuxContextValiditySnapshot,
         source: String,
-    ): DirtyPolicyTrack {
-        return if (source == "native") {
-            DirtyPolicyTrack(
-                source = source,
-                available = snapshot.dirtyPolicyAvailable,
-                probeAttempted = snapshot.dirtyPolicyProbeAttempted,
-                carrierContext = snapshot.dirtyPolicyCarrierContext,
-                carrierMatchesExpected = snapshot.dirtyPolicyCarrierMatchesExpected,
-                controlsPassed = snapshot.dirtyPolicyControlsPassed,
-                stable = snapshot.dirtyPolicyStable,
-                queryMethod = snapshot.dirtyPolicyQueryMethod.ifBlank { "android.os.SELinux.checkSELinuxAccess" },
-                accessControlAllowed = snapshot.dirtyPolicyAccessControlAllowed,
-                negativeControlRejected = snapshot.dirtyPolicyNegativeControlRejected,
-                systemServerExecmemAllowed = snapshot.dirtyPolicySystemServerExecmemAllowed,
-                magiskBinderCallAllowed = snapshot.dirtyPolicyMagiskBinderCallAllowed,
-                ksuFileReadAllowed = snapshot.dirtyPolicyKsuFileReadAllowed,
-                lsposedFileReadAllowed = snapshot.dirtyPolicyLsposedFileReadAllowed,
-                failureReason = snapshot.dirtyPolicyFailureReason,
-            )
-        } else {
-            DirtyPolicyTrack(
-                source = source,
-                available = snapshot.javaDirtyPolicyAvailable,
-                probeAttempted = snapshot.javaDirtyPolicyProbeAttempted,
-                carrierContext = snapshot.javaDirtyPolicyCarrierContext,
-                carrierMatchesExpected = snapshot.javaDirtyPolicyCarrierMatchesExpected,
-                controlsPassed = snapshot.javaDirtyPolicyControlsPassed,
-                stable = snapshot.javaDirtyPolicyStable,
-                queryMethod = snapshot.javaDirtyPolicyQueryMethod.ifBlank { "android.os.SELinux.checkSELinuxAccess" },
-                accessControlAllowed = snapshot.javaDirtyPolicyAccessControlAllowed,
-                negativeControlRejected = snapshot.javaDirtyPolicyNegativeControlRejected,
-                systemServerExecmemAllowed = snapshot.javaDirtyPolicySystemServerExecmemAllowed,
-                magiskBinderCallAllowed = snapshot.javaDirtyPolicyMagiskBinderCallAllowed,
-                ksuFileReadAllowed = snapshot.javaDirtyPolicyKsuFileReadAllowed,
-                lsposedFileReadAllowed = snapshot.javaDirtyPolicyLsposedFileReadAllowed,
-                failureReason = snapshot.javaDirtyPolicyFailureReason,
-            )
-        }
+    ): DirtyPolicyTrack = if (source == "native") {
+        DirtyPolicyTrack(
+            source = source,
+            available = snapshot.dirtyPolicyAvailable,
+            probeAttempted = snapshot.dirtyPolicyProbeAttempted,
+            carrierContext = snapshot.dirtyPolicyCarrierContext,
+            carrierMatchesExpected = snapshot.dirtyPolicyCarrierMatchesExpected,
+            controlsPassed = snapshot.dirtyPolicyControlsPassed,
+            stable = snapshot.dirtyPolicyStable,
+            queryMethod = snapshot.dirtyPolicyQueryMethod.ifBlank { "android.os.SELinux.checkSELinuxAccess" },
+            accessControlAllowed = snapshot.dirtyPolicyAccessControlAllowed,
+            negativeControlRejected = snapshot.dirtyPolicyNegativeControlRejected,
+            systemServerExecmemAllowed = snapshot.dirtyPolicySystemServerExecmemAllowed,
+            magiskBinderCallAllowed = snapshot.dirtyPolicyMagiskBinderCallAllowed,
+            ksuFileReadAllowed = snapshot.dirtyPolicyKsuFileReadAllowed,
+            lsposedFileReadAllowed = snapshot.dirtyPolicyLsposedFileReadAllowed,
+            failureReason = snapshot.dirtyPolicyFailureReason,
+        )
+    } else {
+        DirtyPolicyTrack(
+            source = source,
+            available = snapshot.javaDirtyPolicyAvailable,
+            probeAttempted = snapshot.javaDirtyPolicyProbeAttempted,
+            carrierContext = snapshot.javaDirtyPolicyCarrierContext,
+            carrierMatchesExpected = snapshot.javaDirtyPolicyCarrierMatchesExpected,
+            controlsPassed = snapshot.javaDirtyPolicyControlsPassed,
+            stable = snapshot.javaDirtyPolicyStable,
+            queryMethod = snapshot.javaDirtyPolicyQueryMethod.ifBlank { "android.os.SELinux.checkSELinuxAccess" },
+            accessControlAllowed = snapshot.javaDirtyPolicyAccessControlAllowed,
+            negativeControlRejected = snapshot.javaDirtyPolicyNegativeControlRejected,
+            systemServerExecmemAllowed = snapshot.javaDirtyPolicySystemServerExecmemAllowed,
+            magiskBinderCallAllowed = snapshot.javaDirtyPolicyMagiskBinderCallAllowed,
+            ksuFileReadAllowed = snapshot.javaDirtyPolicyKsuFileReadAllowed,
+            lsposedFileReadAllowed = snapshot.javaDirtyPolicyLsposedFileReadAllowed,
+            failureReason = snapshot.javaDirtyPolicyFailureReason,
+        )
     }
 
     private data class DirtyPolicyTrack(
@@ -341,19 +327,17 @@ class LSPosedDirtyPolicyProbe {
         val reportable: Boolean
             get() = available && probeAttempted && carrierMatchesExpected
 
-        fun summary(): String {
-            return buildString {
-                append(if (reportable) "reportable" else "unavailable")
-                append(" carrier=")
-                append(carrierContext ?: "<unreadable>")
-                append(" controls=")
-                append(if (controlsPassed) "passed" else "failed")
-                append(" stable=")
-                append(if (stable) "yes" else "no")
-                failureReason?.takeIf { it.isNotBlank() }?.let {
-                    append(" reason=")
-                    append(it)
-                }
+        fun summary(): String = buildString {
+            append(if (reportable) "reportable" else "unavailable")
+            append(" carrier=")
+            append(carrierContext ?: "<unreadable>")
+            append(" controls=")
+            append(if (controlsPassed) "passed" else "failed")
+            append(" stable=")
+            append(if (stable) "yes" else "no")
+            failureReason?.takeIf { it.isNotBlank() }?.let {
+                append(" reason=")
+                append(it)
             }
         }
     }
@@ -364,14 +348,12 @@ class LSPosedDirtyPolicyProbe {
         value: String,
         severity: LSPosedSignalSeverity,
         detail: String,
-    ): LSPosedSignal {
-        return LSPosedSignal(
-            id = id,
-            label = label,
-            value = value,
-            group = LSPosedSignalGroup.POLICY,
-            severity = severity,
-            detail = detail,
-        )
-    }
+    ): LSPosedSignal = LSPosedSignal(
+        id = id,
+        label = label,
+        value = value,
+        group = LSPosedSignalGroup.POLICY,
+        severity = severity,
+        detail = detail,
+    )
 }

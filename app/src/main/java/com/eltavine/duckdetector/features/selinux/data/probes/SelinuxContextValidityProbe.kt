@@ -109,13 +109,9 @@ class SelinuxContextValidityProbe(
     private val nativeBridge: SelinuxContextValidityBridge = SelinuxContextValidityBridge(),
 ) {
 
-    fun inspectLocal(): SelinuxContextValidityProbeResult {
-        return nativeBridge.collectLocalSnapshot().toProbeResult()
-    }
+    fun inspectLocal(): SelinuxContextValidityProbeResult = nativeBridge.collectLocalSnapshot().toProbeResult()
 
-    fun interpret(snapshot: SelinuxContextValiditySnapshot): SelinuxContextValidityProbeResult {
-        return snapshot.toProbeResult()
-    }
+    fun interpret(snapshot: SelinuxContextValiditySnapshot): SelinuxContextValidityProbeResult = snapshot.toProbeResult()
 
     internal fun SelinuxContextValiditySnapshot.toProbeResult(): SelinuxContextValidityProbeResult {
         val state = when {

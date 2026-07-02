@@ -52,7 +52,9 @@ class OperationErrorPathProbe(
             val returnedDescriptor = binderClient.getReturnedDescriptor(response)
             val descriptor = when {
                 returnedDescriptor == null -> binderClient.createKeyDescriptor(alias)
+
                 binderClient.getDescriptorDomain(returnedDescriptor) == binderClient.getDomainKeyId() -> returnedDescriptor
+
                 else -> {
                     val namespace = binderClient.getDescriptorNamespace(returnedDescriptor)
                         ?: return OperationErrorPathResult(
@@ -168,19 +170,17 @@ class OperationErrorPathProbe(
         securityLevel: Any,
         descriptor: Any,
         parameters: List<Any>,
-    ): CreatedOperation {
-        return runCatching {
-            val response = binderClient.createOperation(securityLevel, descriptor, parameters)
-            CreatedOperation(
-                succeeded = true,
-                operation = binderClient.getOperationHandle(response),
-            )
-        }.getOrElse { throwable ->
-            CreatedOperation(
-                succeeded = false,
-                detail = binderClient.describeThrowable(throwable),
-            )
-        }
+    ): CreatedOperation = runCatching {
+        val response = binderClient.createOperation(securityLevel, descriptor, parameters)
+        CreatedOperation(
+            succeeded = true,
+            operation = binderClient.getOperationHandle(response),
+        )
+    }.getOrElse { throwable ->
+        CreatedOperation(
+            succeeded = false,
+            detail = binderClient.describeThrowable(throwable),
+        )
     }
 
     private data class CreatedOperation(
@@ -213,13 +213,11 @@ class OperationErrorPathProbe(
             return Build.HARDWARE.startsWith("mt", ignoreCase = true)
         }
 
-        private fun readSystemProperty(key: String): String? {
-            return runCatching {
-                Class.forName("android.os.SystemProperties")
-                    .getMethod("get", String::class.java, String::class.java)
-                    .invoke(null, key, "") as String
-            }.getOrNull()?.takeIf { it.isNotBlank() }
-        }
+        private fun readSystemProperty(key: String): String? = runCatching {
+            Class.forName("android.os.SystemProperties")
+                .getMethod("get", String::class.java, String::class.java)
+                .invoke(null, key, "") as String
+        }.getOrNull()?.takeIf { it.isNotBlank() }
     }
 }
 

@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
 
 private const val VERSION_CODE_BASE = 300
 private const val VERSION_NAME_ZONE_ID = "Asia/Singapore"
-private const val isAlphaVersion = true
+private const val IS_ALPHA_VERSION = true
 
 class DuckDetectorAndroidApplicationConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
@@ -40,7 +40,7 @@ class DuckDetectorAndroidApplicationConventionPlugin : Plugin<Project> {
             .orElse(
                 providers.of(GitShortHashValueSource::class.java) {
                     parameters.repositoryRoot.set(rootDir.absolutePath)
-                }
+                },
             )
             .orElse("unknown")
         val buildTimeUtc = providers.gradleProperty("duckdetector.buildTimeUtc")
@@ -48,7 +48,7 @@ class DuckDetectorAndroidApplicationConventionPlugin : Plugin<Project> {
             .orElse(
                 providers.of(GitCommitTimestampValueSource::class.java) {
                     parameters.repositoryRoot.set(rootDir.absolutePath)
-                }
+                },
             )
             .orElse("unknown")
         val versionCode = providers.of(GitCommitCountValueSource::class.java) {
@@ -92,7 +92,7 @@ class DuckDetectorAndroidApplicationConventionPlugin : Plugin<Project> {
                 testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
                 buildConfigField("String", "BUILD_TIME_UTC", "\"${buildTimeUtc.get()}\"")
                 buildConfigField("String", "BUILD_HASH", "\"${buildHash.get()}\"")
-                buildConfigField("boolean", "isAlphaVersion", isAlphaVersion.toString())
+                buildConfigField("boolean", "isAlphaVersion", IS_ALPHA_VERSION.toString())
             }
 
             if (file("src/main/cpp/CMakeLists.txt").exists()) {
@@ -166,33 +166,33 @@ class DuckDetectorAndroidApplicationConventionPlugin : Plugin<Project> {
             ) {
                 endpointUrl.set(
                     providers.gradleProperty("duckdetector.githubContributors.url")
-                        .orElse(GITHUB_CONTRIBUTORS_API_URL)
+                        .orElse(GITHUB_CONTRIBUTORS_API_URL),
                 )
                 authToken.set(
                     providers.gradleProperty("duckdetector.githubContributors.token")
                         .orElse(providers.environmentVariable("GITHUB_TOKEN"))
-                        .orElse(providers.environmentVariable("GH_TOKEN"))
+                        .orElse(providers.environmentVariable("GH_TOKEN")),
                 )
                 maxAttempts.set(
                     providers.gradleProperty("duckdetector.githubContributors.maxAttempts")
                         .map(String::toInt)
-                        .orElse(4)
+                        .orElse(4),
                 )
                 connectTimeoutMillis.set(
                     providers.gradleProperty("duckdetector.githubContributors.connectTimeoutMillis")
                         .map(String::toInt)
-                        .orElse(5_000)
+                        .orElse(5_000),
                 )
                 readTimeoutMillis.set(
                     providers.gradleProperty("duckdetector.githubContributors.readTimeoutMillis")
                         .map(String::toInt)
-                        .orElse(10_000)
+                        .orElse(10_000),
                 )
                 contributorsAssetFile.set(
-                    layout.projectDirectory.file("src/main/assets/$GITHUB_CONTRIBUTORS_ASSET_FILE_NAME")
+                    layout.projectDirectory.file("src/main/assets/$GITHUB_CONTRIBUTORS_ASSET_FILE_NAME"),
                 )
                 avatarOutputDirectory.set(
-                    layout.projectDirectory.dir("src/main/assets/$GITHUB_CONTRIBUTORS_AVATAR_DIRECTORY")
+                    layout.projectDirectory.dir("src/main/assets/$GITHUB_CONTRIBUTORS_AVATAR_DIRECTORY"),
                 )
             }
             tasks.named("preBuild").configure {
@@ -209,36 +209,36 @@ class DuckDetectorAndroidApplicationConventionPlugin : Plugin<Project> {
                             .map(String::toBoolean)
                             .orElse(
                                 providers.environmentVariable("DUCKDETECTOR_TEE_CRL_REFRESH")
-                                    .map(String::toBoolean)
+                                    .map(String::toBoolean),
                             )
-                            .orElse(false)
+                            .orElse(false),
                     )
                     endpointUrl.set(
                         providers.gradleProperty("duckdetector.teeCrl.url")
-                            .orElse(TEE_CRL_STATUS_URL)
+                            .orElse(TEE_CRL_STATUS_URL),
                     )
                     maxAttempts.set(
                         providers.gradleProperty("duckdetector.teeCrl.maxAttempts")
                             .map(String::toInt)
-                            .orElse(5)
+                            .orElse(5),
                     )
                     connectTimeoutMillis.set(
                         providers.gradleProperty("duckdetector.teeCrl.connectTimeoutMillis")
                             .map(String::toInt)
-                            .orElse(5_000)
+                            .orElse(5_000),
                     )
                     readTimeoutMillis.set(
                         providers.gradleProperty("duckdetector.teeCrl.readTimeoutMillis")
                             .map(String::toInt)
-                            .orElse(5_000)
+                            .orElse(5_000),
                     )
                     fallbackAsset.set(
                         layout.projectDirectory.file(
-                            "src/main/assets/$TEE_CRL_FALLBACK_ASSET_FILE_NAME"
-                        )
+                            "src/main/assets/$TEE_CRL_FALLBACK_ASSET_FILE_NAME",
+                        ),
                     )
                     outputDirectory.set(
-                        layout.buildDirectory.dir("generated/teeCrl/${variant.name}/assets")
+                        layout.buildDirectory.dir("generated/teeCrl/${variant.name}/assets"),
                     )
                 }
                 variant.sources.assets?.addGeneratedSourceDirectory(

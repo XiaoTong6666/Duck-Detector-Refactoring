@@ -69,39 +69,35 @@ data class SelinuxReport(
     val errorMessage: String? = null,
 ) {
     companion object {
-        fun loading(): SelinuxReport {
-            return SelinuxReport(
-                stage = SelinuxStage.LOADING,
-                mode = SelinuxMode.UNKNOWN,
-                resolvedStatusLabel = "Scanning",
-                filesystemMounted = false,
-                paradoxDetected = false,
-                methods = emptyList(),
-                processContext = null,
-                contextType = null,
-                policyAnalysis = null,
-                auditIntegrity = null,
-                androidVersion = "",
-                apiLevel = 0,
-            )
-        }
+        fun loading(): SelinuxReport = SelinuxReport(
+            stage = SelinuxStage.LOADING,
+            mode = SelinuxMode.UNKNOWN,
+            resolvedStatusLabel = "Scanning",
+            filesystemMounted = false,
+            paradoxDetected = false,
+            methods = emptyList(),
+            processContext = null,
+            contextType = null,
+            policyAnalysis = null,
+            auditIntegrity = null,
+            androidVersion = "",
+            apiLevel = 0,
+        )
 
-        fun failed(message: String): SelinuxReport {
-            return SelinuxReport(
-                stage = SelinuxStage.FAILED,
-                mode = SelinuxMode.UNKNOWN,
-                resolvedStatusLabel = "Failed",
-                filesystemMounted = false,
-                paradoxDetected = false,
-                methods = emptyList(),
-                processContext = null,
-                contextType = null,
-                policyAnalysis = null,
-                auditIntegrity = null,
-                androidVersion = "",
-                apiLevel = 0,
-                errorMessage = message,
-            )
-        }
+        fun failed(message: String): SelinuxReport = SelinuxReport(
+            stage = SelinuxStage.FAILED,
+            mode = SelinuxMode.UNKNOWN,
+            resolvedStatusLabel = "Failed",
+            filesystemMounted = false,
+            paradoxDetected = false,
+            methods = emptyList(),
+            processContext = null,
+            contextType = null,
+            policyAnalysis = null,
+            auditIntegrity = null,
+            androidVersion = "",
+            apiLevel = 0,
+            errorMessage = message,
+        )
     }
 }

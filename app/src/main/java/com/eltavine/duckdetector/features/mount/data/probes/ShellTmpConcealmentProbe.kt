@@ -167,37 +167,31 @@ class ShellTmpConcealmentProbe {
         )
     }
 
-    private fun canStat(path: String): Boolean {
-        return try {
-            Os.lstat(path)
-            true
-        } catch (_: ErrnoException) {
-            false
-        } catch (_: Throwable) {
-            false
-        }
+    private fun canStat(path: String): Boolean = try {
+        Os.lstat(path)
+        true
+    } catch (_: ErrnoException) {
+        false
+    } catch (_: Throwable) {
+        false
     }
 
-    private fun resolveAccessState(path: String): ShellTmpAccessState {
-        return try {
-            Os.lstat(path)
-            ShellTmpAccessState.ACCESSIBLE
-        } catch (error: ErrnoException) {
-            when (error.errno) {
-                OsConstants.ENOENT -> ShellTmpAccessState.MISSING
-                OsConstants.EACCES, OsConstants.EPERM -> ShellTmpAccessState.DENIED
-                else -> ShellTmpAccessState.ERROR
-            }
-        } catch (_: Throwable) {
-            ShellTmpAccessState.ERROR
+    private fun resolveAccessState(path: String): ShellTmpAccessState = try {
+        Os.lstat(path)
+        ShellTmpAccessState.ACCESSIBLE
+    } catch (error: ErrnoException) {
+        when (error.errno) {
+            OsConstants.ENOENT -> ShellTmpAccessState.MISSING
+            OsConstants.EACCES, OsConstants.EPERM -> ShellTmpAccessState.DENIED
+            else -> ShellTmpAccessState.ERROR
         }
+    } catch (_: Throwable) {
+        ShellTmpAccessState.ERROR
     }
 
-    private fun readMountInfo(): String {
-        return runCatching {
-            File(MOUNTINFO_PATH).takeIf { it.exists() && it.canRead() }?.readText().orEmpty()
-        }.getOrDefault("")
-    }
+    private fun readMountInfo(): String = runCatching {
+        File(MOUNTINFO_PATH).takeIf { it.exists() && it.canRead() }?.readText().orEmpty()
+    }.getOrDefault("")
 
     internal fun parseDedicatedMounts(
         raw: String,

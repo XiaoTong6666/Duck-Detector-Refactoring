@@ -22,10 +22,10 @@ import com.eltavine.duckdetector.features.su.domain.SuMethodOutcome
 import com.eltavine.duckdetector.features.su.domain.SuMethodResult
 import com.eltavine.duckdetector.features.su.domain.SuReport
 import com.eltavine.duckdetector.features.su.domain.SuStage
-import java.io.File
-import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.util.concurrent.TimeUnit
 
 class SuRepository(
     private val nativeBridge: SuNativeBridge = SuNativeBridge(),
@@ -71,7 +71,7 @@ class SuRepository(
         val nativeSnapshot = nativeBridge.collectSnapshot()
         val selfContext = nativeSnapshot.selfContext.ifBlank { readSelfContextFallback() }
         val selfContextAbnormal = nativeSnapshot.selfContextAbnormal ||
-                isAbnormalContext(selfContext)
+            isAbnormalContext(selfContext)
 
         val methods = buildMethods(
             foundSuBinaries = foundSuBinaries.toList(),
@@ -189,17 +189,15 @@ class SuRepository(
         }
     }
 
-    private fun readSelfContextFallback(): String {
-        return try {
-            val file = File(PROC_ATTR_PATH)
-            if (file.exists() && file.canRead()) {
-                file.readText().trim().replace("\u0000", "")
-            } else {
-                ""
-            }
-        } catch (_: Exception) {
+    private fun readSelfContextFallback(): String = try {
+        val file = File(PROC_ATTR_PATH)
+        if (file.exists() && file.canRead()) {
+            file.readText().trim().replace("\u0000", "")
+        } else {
             ""
         }
+    } catch (_: Exception) {
+        ""
     }
 
     private fun isAbnormalContext(context: String): Boolean {

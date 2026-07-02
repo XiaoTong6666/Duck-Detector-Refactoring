@@ -18,9 +18,9 @@ package com.eltavine.duckdetector.features.tee.data.verification.keystore
 
 import android.content.Context
 import com.eltavine.duckdetector.features.tee.data.attestation.AttestationSnapshot
+import org.lsposed.hiddenapibypass.HiddenApiBypass
 import java.lang.reflect.InvocationTargetException
 import java.security.MessageDigest
-import org.lsposed.hiddenapibypass.HiddenApiBypass
 
 class SupplementaryAttestationInfoProbe(
     private val context: Context,
@@ -36,11 +36,15 @@ class SupplementaryAttestationInfoProbe(
         val anomalyKind = when {
             expectedHash != null && attestedHash == null && expectsModuleHash ->
                 SupplementaryAttestationInfoAnomalyKind.MISSING_ATTESTATION_MODULE_HASH
+
             expectedHash != null && attestedHash != null && expectedHash != attestedHash ->
                 SupplementaryAttestationInfoAnomalyKind.MISMATCH
+
             expectedHash == null && attestedHash != null ->
                 SupplementaryAttestationInfoAnomalyKind.UNEXPECTED_ATTESTATION_MODULE_HASH
+
             expectedHash == null -> SupplementaryAttestationInfoAnomalyKind.UNSUPPORTED
+
             else -> SupplementaryAttestationInfoAnomalyKind.NONE
         }
         return SupplementaryAttestationInfoResult(
@@ -75,48 +79,42 @@ class SupplementaryAttestationInfoProbe(
         managerClass: Class<*>,
         manager: Any,
         tag: Int,
-    ): ByteArray {
-        return try {
-            val method = managerClass.getDeclaredMethod(
+    ): ByteArray = try {
+        val method = managerClass.getDeclaredMethod(
+            "getSupplementaryAttestationInfo",
+            Int::class.javaPrimitiveType!!,
+        )
+        method.isAccessible = true
+        method.invoke(manager, tag) as ByteArray
+    } catch (throwable: InvocationTargetException) {
+        throw throwable.cause ?: throwable
+    } catch (throwable: Throwable) {
+        try {
+            HiddenApiBypass.invoke(
+                managerClass,
+                manager,
                 "getSupplementaryAttestationInfo",
-                Int::class.javaPrimitiveType!!,
-            )
-            method.isAccessible = true
-            method.invoke(manager, tag) as ByteArray
-        } catch (throwable: InvocationTargetException) {
-            throw throwable.cause ?: throwable
-        } catch (throwable: Throwable) {
-            try {
-                HiddenApiBypass.invoke(
-                    managerClass,
-                    manager,
-                    "getSupplementaryAttestationInfo",
-                    tag,
-                ) as ByteArray
-            } catch (bypassThrowable: InvocationTargetException) {
-                throw bypassThrowable.cause ?: bypassThrowable
-            }
+                tag,
+            ) as ByteArray
+        } catch (bypassThrowable: InvocationTargetException) {
+            throw bypassThrowable.cause ?: bypassThrowable
         }
     }
 
-    private fun moduleHashTag(managerClass: Class<*>): Int {
-        return runCatching { managerClass.getField("MODULE_HASH").getInt(null) }
-            .getOrElse {
-                runCatching {
-                    loadClass(CLASS_KEYMINT_TAG).getField("MODULE_HASH").getInt(null)
-                }.getOrDefault(MODULE_HASH_TAG)
-            }
-    }
+    private fun moduleHashTag(managerClass: Class<*>): Int = runCatching { managerClass.getField("MODULE_HASH").getInt(null) }
+        .getOrElse {
+            runCatching {
+                loadClass(CLASS_KEYMINT_TAG).getField("MODULE_HASH").getInt(null)
+            }.getOrDefault(MODULE_HASH_TAG)
+        }
 
-    private fun loadClass(className: String): Class<*> {
-        return try {
-            Class.forName(className)
-        } catch (primary: ClassNotFoundException) {
-            try {
-                ClassLoader.getSystemClassLoader().loadClass(className)
-            } catch (secondary: ClassNotFoundException) {
-                HiddenApiBypass.invoke(Class::class.java, null, "forName", className) as Class<*>
-            }
+    private fun loadClass(className: String): Class<*> = try {
+        Class.forName(className)
+    } catch (primary: ClassNotFoundException) {
+        try {
+            ClassLoader.getSystemClassLoader().loadClass(className)
+        } catch (secondary: ClassNotFoundException) {
+            HiddenApiBypass.invoke(Class::class.java, null, "forName", className) as Class<*>
         }
     }
 
@@ -125,14 +123,12 @@ class SupplementaryAttestationInfoProbe(
         anomalyKind: SupplementaryAttestationInfoAnomalyKind,
         expectedHash: String?,
         attestedHash: String?,
-    ): String {
-        return buildString {
-            append(fetchDetail)
-            append(" kind=")
-            append(anomalyKind.name)
-            expectedHash?.let { append(" expected=${it.take(16)}") }
-            attestedHash?.let { append(" attested=${it.take(16)}") }
-        }
+    ): String = buildString {
+        append(fetchDetail)
+        append(" kind=")
+        append(anomalyKind.name)
+        expectedHash?.let { append(" expected=${it.take(16)}") }
+        attestedHash?.let { append(" attested=${it.take(16)}") }
     }
 
     private fun describe(throwable: Throwable): String {
@@ -140,11 +136,9 @@ class SupplementaryAttestationInfoProbe(
         return "${cause.javaClass.simpleName}: ${cause.message ?: "no message"}"
     }
 
-    private fun ByteArray.sha256Hex(): String {
-        return MessageDigest.getInstance("SHA-256")
-            .digest(this)
-            .joinToString(separator = "") { byte -> "%02x".format(byte) }
-    }
+    private fun ByteArray.sha256Hex(): String = MessageDigest.getInstance("SHA-256")
+        .digest(this)
+        .joinToString(separator = "") { byte -> "%02x".format(byte) }
 
     private data class ModuleInfoFetchResult(
         val moduleInfoDer: ByteArray?,

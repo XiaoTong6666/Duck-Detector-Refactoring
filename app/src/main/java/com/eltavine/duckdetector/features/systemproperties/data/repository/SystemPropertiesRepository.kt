@@ -98,10 +98,10 @@ class SystemPropertiesRepository(
 
         val allSignals =
             ruleSignals +
-                    buildSignals +
-                    sourceSignals +
-                    consistencySignals +
-                    propAreaSignals
+                buildSignals +
+                sourceSignals +
+                consistencySignals +
+                propAreaSignals
         if (
             allSignals.isEmpty() &&
             infoSignals.isEmpty() &&
@@ -166,10 +166,12 @@ class SystemPropertiesRepository(
     ): SystemPropertySignal {
         val severity = when {
             matchesDanger(rule, read.preferredValue) -> SystemPropertySeverity.DANGER
+
             matchesWarning(rule, read.preferredValue) -> SystemPropertySeverity.WARNING
+
             rule.expectedSafeValue?.equals(
                 read.preferredValue,
-                ignoreCase = true
+                ignoreCase = true,
             ) == true -> SystemPropertySeverity.SAFE
 
             else -> SystemPropertySeverity.NEUTRAL
@@ -251,17 +253,15 @@ class SystemPropertiesRepository(
     private fun buildInfoSignal(
         property: String,
         read: MultiSourcePropertyRead,
-    ): SystemPropertySignal {
-        return SystemPropertySignal(
-            property = property,
-            description = friendlyInfoLabel(property),
-            value = read.preferredValue,
-            category = read.category,
-            severity = SystemPropertySeverity.NEUTRAL,
-            source = read.preferredSource,
-            detail = "Collected via ${sourceLabel(read.preferredSource)}.",
-        )
-    }
+    ): SystemPropertySignal = SystemPropertySignal(
+        property = property,
+        description = friendlyInfoLabel(property),
+        value = read.preferredValue,
+        category = read.category,
+        severity = SystemPropertySeverity.NEUTRAL,
+        source = read.preferredSource,
+        detail = "Collected via ${sourceLabel(read.preferredSource)}.",
+    )
 
     private fun buildBuildConstantSignals(): List<SystemPropertySignal> {
         val signals = mutableListOf<SystemPropertySignal>()
@@ -286,12 +286,13 @@ class SystemPropertiesRepository(
         Build.TAGS?.takeIf { it.isNotBlank() }?.let { tags ->
             val severity = when {
                 tags.contains("test-keys", ignoreCase = true) ||
-                        tags.contains(
-                            "dev-keys",
-                            ignoreCase = true
-                        ) -> SystemPropertySeverity.DANGER
+                    tags.contains(
+                        "dev-keys",
+                        ignoreCase = true,
+                    ) -> SystemPropertySeverity.DANGER
 
                 tags.contains("release-keys", ignoreCase = true) -> SystemPropertySeverity.SAFE
+
                 else -> SystemPropertySeverity.NEUTRAL
             }
             signals += SystemPropertySignal(
@@ -331,24 +332,22 @@ class SystemPropertiesRepository(
 
     internal fun buildPropAreaSignals(
         nativeSnapshot: SystemPropertiesNativeSnapshot,
-    ): List<SystemPropertySignal> {
-        return nativeSnapshot.propAreaFindings.map { finding ->
-            SystemPropertySignal(
-                property = "prop_area hole: ${finding.context}",
-                description = "Raw property area layout residue",
-                value = "${finding.holeCount} hole(s)",
-                category = SystemPropertyCategory.PROPERTY_CONSISTENCY,
-                severity = propAreaSeverity(finding.context),
-                source = SystemPropertySource.NATIVE_LIBC,
-                detail = buildString {
-                    append("Context: ")
-                    append(finding.context)
-                    append(". ")
-                    append(finding.detail.ifBlank { "Found hole in prop area: ${finding.context}" })
-                    append(". Native /dev/__properties__ layout scan.")
-                },
-            )
-        }
+    ): List<SystemPropertySignal> = nativeSnapshot.propAreaFindings.map { finding ->
+        SystemPropertySignal(
+            property = "prop_area hole: ${finding.context}",
+            description = "Raw property area layout residue",
+            value = "${finding.holeCount} hole(s)",
+            category = SystemPropertyCategory.PROPERTY_CONSISTENCY,
+            severity = propAreaSeverity(finding.context),
+            source = SystemPropertySource.NATIVE_LIBC,
+            detail = buildString {
+                append("Context: ")
+                append(finding.context)
+                append(". ")
+                append(finding.detail.ifBlank { "Found hole in prop area: ${finding.context}" })
+                append(". Native /dev/__properties__ layout scan.")
+            },
+        )
     }
 
     internal fun buildPropAreaMethod(
@@ -356,27 +355,25 @@ class SystemPropertiesRepository(
         propAreaContextCount: Int,
         propAreaHoleCount: Int,
         propAreaSignals: List<SystemPropertySignal>,
-    ): SystemPropertiesMethodResult {
-        return SystemPropertiesMethodResult(
-            label = "Prop area layout",
-            summary = when {
-                !propAreaAvailable -> "Unavailable"
-                propAreaHoleCount > 0 -> "$propAreaHoleCount hole(s)"
-                else -> "Clean"
-            },
-            outcome = when {
-                propAreaSignals.any { it.severity == SystemPropertySeverity.DANGER } -> SystemPropertiesMethodOutcome.DANGER
-                propAreaSignals.isNotEmpty() -> SystemPropertiesMethodOutcome.WARNING
-                propAreaAvailable -> SystemPropertiesMethodOutcome.CLEAN
-                else -> SystemPropertiesMethodOutcome.SUPPORT
-            },
-            detail = if (propAreaAvailable) {
-                "Raw /dev/__properties__ layout scan across $propAreaContextCount area(s)."
-            } else {
-                "Raw /dev/__properties__ layout scan unavailable."
-            },
-        )
-    }
+    ): SystemPropertiesMethodResult = SystemPropertiesMethodResult(
+        label = "Prop area layout",
+        summary = when {
+            !propAreaAvailable -> "Unavailable"
+            propAreaHoleCount > 0 -> "$propAreaHoleCount hole(s)"
+            else -> "Clean"
+        },
+        outcome = when {
+            propAreaSignals.any { it.severity == SystemPropertySeverity.DANGER } -> SystemPropertiesMethodOutcome.DANGER
+            propAreaSignals.isNotEmpty() -> SystemPropertiesMethodOutcome.WARNING
+            propAreaAvailable -> SystemPropertiesMethodOutcome.CLEAN
+            else -> SystemPropertiesMethodOutcome.SUPPORT
+        },
+        detail = if (propAreaAvailable) {
+            "Raw /dev/__properties__ layout scan across $propAreaContextCount area(s)."
+        } else {
+            "Raw /dev/__properties__ layout scan unavailable."
+        },
+    )
 
     private fun buildMethods(
         ruleSignals: List<SystemPropertySignal>,
@@ -532,59 +529,51 @@ class SystemPropertiesRepository(
     private fun matchesWarning(
         rule: SystemPropertyRule,
         value: String,
-    ): Boolean {
-        return rule.warningValues.any { warning ->
-            warning.equals(value, ignoreCase = true)
-        }
+    ): Boolean = rule.warningValues.any { warning ->
+        warning.equals(value, ignoreCase = true)
     }
 
     private fun infoCategory(
         property: String,
-    ): SystemPropertyCategory {
-        return if (property.contains("fingerprint", ignoreCase = true)) {
-            SystemPropertyCategory.BUILD_FINGERPRINT
-        } else {
-            SystemPropertyCategory.DEVICE_INFO
-        }
+    ): SystemPropertyCategory = if (property.contains("fingerprint", ignoreCase = true)) {
+        SystemPropertyCategory.BUILD_FINGERPRINT
+    } else {
+        SystemPropertyCategory.DEVICE_INFO
     }
 
     private fun friendlyInfoLabel(
         property: String,
-    ): String {
-        return when (property) {
-            "ro.build.fingerprint" -> "System fingerprint"
-            "ro.bootimage.build.fingerprint" -> "Boot image fingerprint"
-            "ro.vendor.build.fingerprint" -> "Vendor fingerprint"
-            "ro.system.build.fingerprint" -> "System partition fingerprint"
-            "ro.build.display.id" -> "Build display ID"
-            "ro.build.version.release" -> "Android version"
-            "ro.build.version.sdk" -> "SDK level"
-            "ro.build.version.security_patch" -> "Security patch"
-            "ro.product.model" -> "Model"
-            "ro.product.brand" -> "Brand"
-            "ro.product.device" -> "Device codename"
-            "ro.product.manufacturer" -> "Manufacturer"
-            "ro.hardware" -> "Hardware"
-            "ro.boot.vbmeta.hash_alg" -> "VBMeta hash algorithm"
-            "ro.boot.vbmeta.size" -> "VBMeta size"
-            "ro.boot.vbmeta.digest" -> "VBMeta digest"
-            "ro.boot.avb_version" -> "AVB version"
-            else -> property
-        }
+    ): String = when (property) {
+        "ro.build.fingerprint" -> "System fingerprint"
+        "ro.bootimage.build.fingerprint" -> "Boot image fingerprint"
+        "ro.vendor.build.fingerprint" -> "Vendor fingerprint"
+        "ro.system.build.fingerprint" -> "System partition fingerprint"
+        "ro.build.display.id" -> "Build display ID"
+        "ro.build.version.release" -> "Android version"
+        "ro.build.version.sdk" -> "SDK level"
+        "ro.build.version.security_patch" -> "Security patch"
+        "ro.product.model" -> "Model"
+        "ro.product.brand" -> "Brand"
+        "ro.product.device" -> "Device codename"
+        "ro.product.manufacturer" -> "Manufacturer"
+        "ro.hardware" -> "Hardware"
+        "ro.boot.vbmeta.hash_alg" -> "VBMeta hash algorithm"
+        "ro.boot.vbmeta.size" -> "VBMeta size"
+        "ro.boot.vbmeta.digest" -> "VBMeta digest"
+        "ro.boot.avb_version" -> "AVB version"
+        else -> property
     }
 
     private fun sourceLabel(
         source: SystemPropertySource,
-    ): String {
-        return when (source) {
-            SystemPropertySource.REFLECTION -> "reflection"
-            SystemPropertySource.GETPROP -> "getprop"
-            SystemPropertySource.JVM -> "System.getProperty"
-            SystemPropertySource.BUILD -> "Build constant"
-            SystemPropertySource.NATIVE_LIBC -> "native libc"
-            SystemPropertySource.CMDLINE -> "/proc/cmdline"
-            SystemPropertySource.BOOTCONFIG -> "/proc/bootconfig"
-        }
+    ): String = when (source) {
+        SystemPropertySource.REFLECTION -> "reflection"
+        SystemPropertySource.GETPROP -> "getprop"
+        SystemPropertySource.JVM -> "System.getProperty"
+        SystemPropertySource.BUILD -> "Build constant"
+        SystemPropertySource.NATIVE_LIBC -> "native libc"
+        SystemPropertySource.CMDLINE -> "/proc/cmdline"
+        SystemPropertySource.BOOTCONFIG -> "/proc/bootconfig"
     }
 
     private companion object {
@@ -598,6 +587,5 @@ class SystemPropertiesRepository(
                 SystemPropertySeverity.WARNING
             }
         }
-
     }
 }

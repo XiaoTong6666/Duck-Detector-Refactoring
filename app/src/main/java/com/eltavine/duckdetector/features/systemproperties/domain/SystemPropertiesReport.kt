@@ -109,17 +109,19 @@ data class SystemPropertiesReport(
 
     val bootSignalCount: Int
         get() = signals.count {
-            (it.category == SystemPropertyCategory.VERIFIED_BOOT ||
-                    it.category == SystemPropertyCategory.PARTITION_VERITY) &&
-                    it.severity != SystemPropertySeverity.SAFE &&
-                    it.severity != SystemPropertySeverity.NEUTRAL
+            (
+                it.category == SystemPropertyCategory.VERIFIED_BOOT ||
+                    it.category == SystemPropertyCategory.PARTITION_VERITY
+                ) &&
+                it.severity != SystemPropertySeverity.SAFE &&
+                it.severity != SystemPropertySeverity.NEUTRAL
         }
 
     val buildProfileSignalCount: Int
         get() = signals.count {
             it.category == SystemPropertyCategory.BUILD_PROFILE &&
-                    it.severity != SystemPropertySeverity.SAFE &&
-                    it.severity != SystemPropertySeverity.NEUTRAL
+                it.severity != SystemPropertySeverity.SAFE &&
+                it.severity != SystemPropertySeverity.NEUTRAL
         }
 
     val sourceMismatchCount: Int
@@ -130,55 +132,53 @@ data class SystemPropertiesReport(
 
     val runtimeSignalCount: Int
         get() = signals.count {
-            (it.category == SystemPropertyCategory.SECURITY_CORE ||
+            (
+                it.category == SystemPropertyCategory.SECURITY_CORE ||
                     it.category == SystemPropertyCategory.ROOT_RUNTIME ||
-                    it.category == SystemPropertyCategory.CUSTOM_ROM) &&
-                    it.severity != SystemPropertySeverity.SAFE &&
-                    it.severity != SystemPropertySeverity.NEUTRAL
+                    it.category == SystemPropertyCategory.CUSTOM_ROM
+                ) &&
+                it.severity != SystemPropertySeverity.SAFE &&
+                it.severity != SystemPropertySeverity.NEUTRAL
         }
 
     companion object {
-        fun loading(): SystemPropertiesReport {
-            return SystemPropertiesReport(
-                stage = SystemPropertiesStage.LOADING,
-                signals = emptyList(),
-                infoSignals = emptyList(),
-                checkedRuleCount = 0,
-                observedRuleCount = 0,
-                infoPropertyCount = 0,
-                reflectionHitCount = 0,
-                getpropHitCount = 0,
-                jvmHitCount = 0,
-                nativeHitCount = 0,
-                bootParamHitCount = 0,
-                buildSignalCount = 0,
-                propAreaAvailable = false,
-                propAreaContextCount = 0,
-                propAreaHoleCount = 0,
-                methods = emptyList(),
-            )
-        }
+        fun loading(): SystemPropertiesReport = SystemPropertiesReport(
+            stage = SystemPropertiesStage.LOADING,
+            signals = emptyList(),
+            infoSignals = emptyList(),
+            checkedRuleCount = 0,
+            observedRuleCount = 0,
+            infoPropertyCount = 0,
+            reflectionHitCount = 0,
+            getpropHitCount = 0,
+            jvmHitCount = 0,
+            nativeHitCount = 0,
+            bootParamHitCount = 0,
+            buildSignalCount = 0,
+            propAreaAvailable = false,
+            propAreaContextCount = 0,
+            propAreaHoleCount = 0,
+            methods = emptyList(),
+        )
 
-        fun failed(message: String): SystemPropertiesReport {
-            return SystemPropertiesReport(
-                stage = SystemPropertiesStage.FAILED,
-                signals = emptyList(),
-                infoSignals = emptyList(),
-                checkedRuleCount = 0,
-                observedRuleCount = 0,
-                infoPropertyCount = 0,
-                reflectionHitCount = 0,
-                getpropHitCount = 0,
-                jvmHitCount = 0,
-                nativeHitCount = 0,
-                bootParamHitCount = 0,
-                buildSignalCount = 0,
-                propAreaAvailable = false,
-                propAreaContextCount = 0,
-                propAreaHoleCount = 0,
-                methods = emptyList(),
-                errorMessage = message,
-            )
-        }
+        fun failed(message: String): SystemPropertiesReport = SystemPropertiesReport(
+            stage = SystemPropertiesStage.FAILED,
+            signals = emptyList(),
+            infoSignals = emptyList(),
+            checkedRuleCount = 0,
+            observedRuleCount = 0,
+            infoPropertyCount = 0,
+            reflectionHitCount = 0,
+            getpropHitCount = 0,
+            jvmHitCount = 0,
+            nativeHitCount = 0,
+            bootParamHitCount = 0,
+            buildSignalCount = 0,
+            propAreaAvailable = false,
+            propAreaContextCount = 0,
+            propAreaHoleCount = 0,
+            methods = emptyList(),
+            errorMessage = message,
+        )
     }
 }

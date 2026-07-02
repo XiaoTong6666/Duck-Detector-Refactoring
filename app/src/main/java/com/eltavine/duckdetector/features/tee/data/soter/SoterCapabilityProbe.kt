@@ -104,7 +104,9 @@ class SoterCapabilityProbe internal constructor(
                 val challenge = "$TEST_CHALLENGE_PREFIX${System.currentTimeMillis()}"
                 val sessionResult = client.initSigh(testAlias, challenge)
                 signSessionOk =
-                    sessionResult != null && sessionResult.resultCode == 0 && sessionResult.session != 0L
+                    sessionResult != null &&
+                    sessionResult.resultCode == 0 &&
+                    sessionResult.session != 0L
                 val sessionId = sessionResult?.session ?: -1L
                 summary += ", signing resultCode=${sessionResult?.resultCode ?: -1}, session=$sessionId"
             } catch (throwable: Throwable) {
@@ -209,9 +211,7 @@ class SoterCapabilityProbe internal constructor(
         return state
     }
 
-    private fun isCleanupNonFatal(result: SoterCoreResult): Boolean {
-        return result.errCode == 7 || result.errCode == -5 || result.errCode == -300
-    }
+    private fun isCleanupNonFatal(result: SoterCoreResult): Boolean = result.errCode == 7 || result.errCode == -5 || result.errCode == -300
 
     private class PrepareState(
         val askPreExisted: Boolean,
@@ -282,17 +282,13 @@ private class AndroidSoterClient(
 
     override fun isTrebleServiceConnected(): Boolean = SoterCore.isTrebleServiceConnected()
 
-    override fun isSupportFingerprint(): Boolean =
-        SoterCore.isSupportBiometric(appContext, ConstantsSoter.FINGERPRINT_AUTH)
+    override fun isSupportFingerprint(): Boolean = SoterCore.isSupportBiometric(appContext, ConstantsSoter.FINGERPRINT_AUTH)
 
-    override fun isSystemHasFingerprint(): Boolean =
-        SoterCore.isSystemHasBiometric(appContext, ConstantsSoter.FINGERPRINT_AUTH)
+    override fun isSystemHasFingerprint(): Boolean = SoterCore.isSystemHasBiometric(appContext, ConstantsSoter.FINGERPRINT_AUTH)
 
-    override fun isSupportBiometric(biometricType: Int): Boolean =
-        SoterCore.isSupportBiometric(appContext, biometricType)
+    override fun isSupportBiometric(biometricType: Int): Boolean = SoterCore.isSupportBiometric(appContext, biometricType)
 
-    override fun isSystemHasBiometric(biometricType: Int): Boolean =
-        SoterCore.isSystemHasBiometric(appContext, biometricType)
+    override fun isSystemHasBiometric(biometricType: Int): Boolean = SoterCore.isSystemHasBiometric(appContext, biometricType)
 
     override fun hasAppGlobalSecureKey(): Boolean = SoterCore.hasAppGlobalSecureKey()
 
@@ -306,11 +302,9 @@ private class AndroidSoterClient(
 
     override fun getAuthKeyModel(alias: String): Any? = SoterCore.getAuthKeyModel(alias)
 
-    override fun initSigh(alias: String, challenge: String): SoterSessionResult? =
-        SoterCore.initSigh(alias, challenge)
+    override fun initSigh(alias: String, challenge: String): SoterSessionResult? = SoterCore.initSigh(alias, challenge)
 
-    override fun removeAuthKey(alias: String, autoDeleteAsk: Boolean): SoterCoreResult? =
-        SoterCore.removeAuthKey(alias, autoDeleteAsk)
+    override fun removeAuthKey(alias: String, autoDeleteAsk: Boolean): SoterCoreResult? = SoterCore.removeAuthKey(alias, autoDeleteAsk)
 
     override fun removeAppGlobalSecureKey(): SoterCoreResult? = SoterCore.removeAppGlobalSecureKey()
 }

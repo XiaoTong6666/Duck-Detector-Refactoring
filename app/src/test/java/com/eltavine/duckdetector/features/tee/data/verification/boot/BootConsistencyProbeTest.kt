@@ -169,37 +169,33 @@ class BootConsistencyProbeTest {
         assertTrue(result.detail.contains("does not guarantee", ignoreCase = true))
     }
 
-    private fun rootOfTrust(hash: String): RootOfTrustSnapshot {
-        return RootOfTrustSnapshot(
-            verifiedBootKeyHex = "112233",
-            deviceLocked = true,
-            verifiedBootState = "Verified",
-            verifiedBootHashHex = hash,
-        )
-    }
+    private fun rootOfTrust(hash: String): RootOfTrustSnapshot = RootOfTrustSnapshot(
+        verifiedBootKeyHex = "112233",
+        deviceLocked = true,
+        verifiedBootState = "Verified",
+        verifiedBootHashHex = hash,
+    )
 
-    private fun snapshot(rootOfTrust: RootOfTrustSnapshot?): AttestationSnapshot {
-        return AttestationSnapshot(
-            tier = TeeTier.TEE,
-            attestationVersion = 4,
-            keymasterVersion = 4,
-            attestationTier = TeeTier.TEE,
-            keymasterTier = TeeTier.TEE,
-            challengeVerified = true,
-            challengeSummary = "len=32",
-            rootOfTrust = rootOfTrust,
-            osVersion = "14.0.0",
-            osPatchLevel = "2026-03",
-            vendorPatchLevel = null,
-            bootPatchLevel = null,
-            keyProperties = AttestedKeyProperties(),
-            authState = AttestedAuthState(),
-            applicationInfo = AttestedApplicationInfo(),
-            deviceInfo = AttestedDeviceInfo(),
-            deviceUniqueAttestation = false,
-            trustedAttestationIndex = 0,
-            rawCertificates = emptyList(),
-            displayCertificates = emptyList(),
-        )
-    }
+    private fun snapshot(rootOfTrust: RootOfTrustSnapshot?): AttestationSnapshot = AttestationSnapshot(
+        tier = TeeTier.TEE,
+        attestationVersion = 4,
+        keymasterVersion = 4,
+        attestationTier = TeeTier.TEE,
+        keymasterTier = TeeTier.TEE,
+        challengeVerified = true,
+        challengeSummary = "len=32",
+        rootOfTrust = rootOfTrust,
+        osVersion = "14.0.0",
+        osPatchLevel = "2026-03",
+        vendorPatchLevel = null,
+        bootPatchLevel = null,
+        keyProperties = AttestedKeyProperties(),
+        authState = AttestedAuthState(),
+        applicationInfo = AttestedApplicationInfo(),
+        deviceInfo = AttestedDeviceInfo(),
+        deviceUniqueAttestation = false,
+        trustedAttestationIndex = 0,
+        rawCertificates = emptyList(),
+        displayCertificates = emptyList(),
+    )
 }

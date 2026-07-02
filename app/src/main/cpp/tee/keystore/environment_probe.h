@@ -22,14 +22,14 @@
 
 namespace ducktee::keystore {
 
-    struct EnvironmentSnapshot {
-        bool tracing_detected = false;
-        int page_size = 0;
-        std::string timing_summary;
-        std::vector<std::string> suspicious_mappings;
-    };
+struct EnvironmentSnapshot {
+    bool tracing_detected = false;
+    int page_size = 0;
+    std::string timing_summary;
+    std::vector<std::string> suspicious_mappings;
+};
 
-    EnvironmentSnapshot collect_environment();
+EnvironmentSnapshot collect_environment();
 
 }  // namespace ducktee::keystore
 

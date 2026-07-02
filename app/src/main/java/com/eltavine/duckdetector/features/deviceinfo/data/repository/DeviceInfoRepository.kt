@@ -77,7 +77,7 @@ class DeviceInfoRepository(
                     DeviceInfoEntry(
                         "Fingerprint",
                         Build.FINGERPRINT.orUnavailable(),
-                        detailMonospace = true
+                        detailMonospace = true,
                     ),
                     DeviceInfoEntry("Build ID", Build.ID.orUnavailable()),
                     DeviceInfoEntry("Incremental", Build.VERSION.INCREMENTAL.orUnavailable()),
@@ -102,22 +102,22 @@ class DeviceInfoRepository(
                     DeviceInfoEntry("Preview SDK", Build.VERSION.PREVIEW_SDK_INT.toString()),
                     DeviceInfoEntry(
                         "Primary ABI",
-                        Build.SUPPORTED_ABIS.firstOrNull().orUnavailable()
+                        Build.SUPPORTED_ABIS.firstOrNull().orUnavailable(),
                     ),
                     DeviceInfoEntry(
                         "ABI list",
                         Build.SUPPORTED_ABIS.joinToString().orUnavailable(),
-                        detailMonospace = true
+                        detailMonospace = true,
                     ),
                     DeviceInfoEntry(
                         "32-bit ABIs",
                         Build.SUPPORTED_32_BIT_ABIS.joinToString().orUnavailable(),
-                        detailMonospace = true
+                        detailMonospace = true,
                     ),
                     DeviceInfoEntry(
                         "64-bit ABIs",
                         Build.SUPPORTED_64_BIT_ABIS.joinToString().orUnavailable(),
-                        detailMonospace = true
+                        detailMonospace = true,
                     ),
                 ),
             ),
@@ -140,15 +140,11 @@ class DeviceInfoRepository(
         )
     }
 
-    private fun String?.orUnavailable(): String {
-        return this?.trim()?.takeIf { it.isNotEmpty() } ?: "Unavailable"
-    }
+    private fun String?.orUnavailable(): String = this?.trim()?.takeIf { it.isNotEmpty() } ?: "Unavailable"
 
-    private fun formatDecimal(value: Float): String {
-        return if (value % 1f == 0f) {
-            value.toInt().toString()
-        } else {
-            String.format(Locale.US, "%.1f", value)
-        }
+    private fun formatDecimal(value: Float): String = if (value % 1f == 0f) {
+        value.toInt().toString()
+    } else {
+        String.format(Locale.US, "%.1f", value)
     }
 }

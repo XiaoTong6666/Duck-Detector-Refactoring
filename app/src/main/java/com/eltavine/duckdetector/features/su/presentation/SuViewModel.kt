@@ -69,13 +69,9 @@ class SuViewModel(
     }
 
     companion object {
-        fun factory(): ViewModelProvider.Factory {
-            return object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return SuViewModel(SuRepository()) as T
-                }
-            }
+        fun factory(): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T = SuViewModel(SuRepository()) as T
         }
     }
 }

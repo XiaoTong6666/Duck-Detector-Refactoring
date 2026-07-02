@@ -71,8 +71,8 @@ object VirtualizationHostAppsCatalog {
         val normalized = text.lowercase()
         return targets.firstOrNull { target ->
             normalized.contains(target.packageName.lowercase()) ||
-                    normalized.contains(target.appName.lowercase().replace(" ", "")) ||
-                    normalized.contains(target.appName.lowercase())
+                normalized.contains(target.appName.lowercase().replace(" ", "")) ||
+                normalized.contains(target.appName.lowercase())
         }
     }
 

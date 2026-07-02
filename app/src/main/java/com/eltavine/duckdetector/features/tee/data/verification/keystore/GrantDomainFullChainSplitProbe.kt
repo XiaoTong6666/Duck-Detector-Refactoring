@@ -19,9 +19,9 @@ package com.eltavine.duckdetector.features.tee.data.verification.keystore
 import android.content.Context
 import android.os.Build
 import com.eltavine.duckdetector.features.tee.data.keystore.AndroidKeyStoreTools
+import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.security.cert.X509Certificate
-import java.nio.charset.StandardCharsets
 import java.util.Locale
 
 class GrantDomainFullChainSplitProbe(
@@ -401,17 +401,11 @@ class GrantDomainFullChainSplitProbe(
             )
         }
 
-        internal fun describeThrowable(throwable: Throwable): String {
-            return GrantThrowableFormatter.describe(throwable)
-        }
+        internal fun describeThrowable(throwable: Throwable): String = GrantThrowableFormatter.describe(throwable)
 
-        internal fun isGrantAliasNotFound(throwable: Throwable): Boolean {
-            return GrantThrowableFormatter.isGrantAliasNotFound(throwable)
-        }
+        internal fun isGrantAliasNotFound(throwable: Throwable): Boolean = GrantThrowableFormatter.isGrantAliasNotFound(throwable)
 
-        internal fun appendDetail(detail: String, extra: String): String {
-            return GrantSelfDomainFullChainSplitProbe.appendDetail(detail, extra)
-        }
+        internal fun appendDetail(detail: String, extra: String): String = GrantSelfDomainFullChainSplitProbe.appendDetail(detail, extra)
 
         internal fun selectFinalResult(
             publicResult: GrantDomainFullChainSplitResult,
@@ -441,10 +435,8 @@ class GrantDomainFullChainSplitProbe(
     }
 }
 
-private fun GrantDomainFullChainSplitResult.isDanger(): Boolean {
-    return anomalyKind == GrantDomainAnomalyKind.ISOLATED_CHAIN_SPLIT ||
-        anomalyKind == GrantDomainAnomalyKind.ISOLATED_GRANT_KEY_NOT_FOUND_AFTER_OWNER_CHAIN
-}
+private fun GrantDomainFullChainSplitResult.isDanger(): Boolean = anomalyKind == GrantDomainAnomalyKind.ISOLATED_CHAIN_SPLIT ||
+    anomalyKind == GrantDomainAnomalyKind.ISOLATED_GRANT_KEY_NOT_FOUND_AFTER_OWNER_CHAIN
 
 data class GrantDomainFullChainSplitResult(
     val executed: Boolean = false,
@@ -477,13 +469,11 @@ data class GrantDomainCertificateChain(
     val certificates: List<GrantDomainCertificateFingerprint> = emptyList(),
 ) {
     companion object {
-        fun fromCertificates(certificates: List<X509Certificate>): GrantDomainCertificateChain {
-            return GrantDomainCertificateChain(
-                certificates = certificates.map { certificate ->
-                    GrantDomainCertificateFingerprint.fromDer(certificate.encoded)
-                },
-            )
-        }
+        fun fromCertificates(certificates: List<X509Certificate>): GrantDomainCertificateChain = GrantDomainCertificateChain(
+            certificates = certificates.map { certificate ->
+                GrantDomainCertificateFingerprint.fromDer(certificate.encoded)
+            },
+        )
     }
 }
 
@@ -491,9 +481,7 @@ data class GrantDomainCertificateFingerprint(
     val derLength: Int,
     val sha256: String,
 ) {
-    fun summary(): String {
-        return "len=$derLength sha256=${sha256.take(16)}"
-    }
+    fun summary(): String = "len=$derLength sha256=${sha256.take(16)}"
 
     companion object {
         fun fromDer(der: ByteArray): GrantDomainCertificateFingerprint {

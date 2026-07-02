@@ -18,6 +18,9 @@ package com.eltavine.duckdetector.features.selinux.presentation
 
 import com.eltavine.duckdetector.core.ui.model.DetectorStatus
 import com.eltavine.duckdetector.core.ui.model.InfoKind
+import com.eltavine.duckdetector.features.selinux.data.probes.SelinuxContextValidityProbe
+import com.eltavine.duckdetector.features.selinux.data.probes.SelinuxPolicyloadSeqnoProbe
+import com.eltavine.duckdetector.features.selinux.data.probes.SelinuxProcAttrCurrentProbe
 import com.eltavine.duckdetector.features.selinux.domain.SelinuxAuditIntegrityAnalysis
 import com.eltavine.duckdetector.features.selinux.domain.SelinuxAuditIntegrityState
 import com.eltavine.duckdetector.features.selinux.domain.SelinuxCheckResult
@@ -26,9 +29,6 @@ import com.eltavine.duckdetector.features.selinux.domain.SelinuxPolicyAnalysis
 import com.eltavine.duckdetector.features.selinux.domain.SelinuxPolicyWeakness
 import com.eltavine.duckdetector.features.selinux.domain.SelinuxReport
 import com.eltavine.duckdetector.features.selinux.domain.SelinuxStage
-import com.eltavine.duckdetector.features.selinux.data.probes.SelinuxContextValidityProbe
-import com.eltavine.duckdetector.features.selinux.data.probes.SelinuxPolicyloadSeqnoProbe
-import com.eltavine.duckdetector.features.selinux.data.probes.SelinuxProcAttrCurrentProbe
 import com.eltavine.duckdetector.features.selinux.ui.model.SelinuxCardModel
 import com.eltavine.duckdetector.features.selinux.ui.model.SelinuxDetailRowModel
 import com.eltavine.duckdetector.features.selinux.ui.model.SelinuxHeaderFactModel
@@ -36,38 +36,36 @@ import com.eltavine.duckdetector.features.selinux.ui.model.SelinuxImpactItemMode
 
 class SelinuxCardModelMapper {
 
-    fun map(report: SelinuxReport): SelinuxCardModel {
-        return SelinuxCardModel(
-            title = "SELinux",
-            subtitle = buildSubtitle(report),
-            status = report.toDetectorStatus(),
-            verdict = buildVerdict(report),
-            summary = buildSummary(report),
-            headerFacts = buildHeaderFacts(report),
-            stateRows = buildStateRows(report),
-            impactItems = buildImpactItems(report),
-            methodRows = buildMethodRows(report),
-            policyRows = buildPolicyRows(report.policyAnalysis),
-            policyNotes = buildPolicyNotes(report.policyAnalysis),
-            auditRows = buildAuditRows(report.auditIntegrity),
-            auditNotes = buildAuditNotes(report.auditIntegrity),
-            deviceRows = buildDeviceRows(report),
-            references = buildReferences(),
-        )
-    }
+    fun map(report: SelinuxReport): SelinuxCardModel = SelinuxCardModel(
+        title = "SELinux",
+        subtitle = buildSubtitle(report),
+        status = report.toDetectorStatus(),
+        verdict = buildVerdict(report),
+        summary = buildSummary(report),
+        headerFacts = buildHeaderFacts(report),
+        stateRows = buildStateRows(report),
+        impactItems = buildImpactItems(report),
+        methodRows = buildMethodRows(report),
+        policyRows = buildPolicyRows(report.policyAnalysis),
+        policyNotes = buildPolicyNotes(report.policyAnalysis),
+        auditRows = buildAuditRows(report.auditIntegrity),
+        auditNotes = buildAuditNotes(report.auditIntegrity),
+        deviceRows = buildDeviceRows(report),
+        references = buildReferences(),
+    )
 
-    private fun buildSubtitle(report: SelinuxReport): String {
-        return when (report.stage) {
-            SelinuxStage.LOADING -> "sysfs + getenforce + proc attr + app_zygote zygotePreload seqno + context oracle + policy + audit"
-            SelinuxStage.FAILED -> "local status probe failed"
-            SelinuxStage.READY -> buildString {
-                append("7 local checks")
-                if (report.policyAnalysis != null) {
-                    append(" + policy")
-                }
-                if (report.auditIntegrity != null) {
-                    append(" + audit integrity + side-channel")
-                }
+    private fun buildSubtitle(report: SelinuxReport): String = when (report.stage) {
+        SelinuxStage.LOADING -> "sysfs + getenforce + proc attr + app_zygote zygotePreload seqno + context oracle + policy + audit"
+
+        SelinuxStage.FAILED -> "local status probe failed"
+
+        SelinuxStage.READY -> buildString {
+            append("7 local checks")
+            if (report.policyAnalysis != null) {
+                append(" + policy")
+            }
+            if (report.auditIntegrity != null) {
+                append(" + audit integrity + side-channel")
             }
         }
     }
@@ -82,17 +80,25 @@ class SelinuxCardModelMapper {
         val appZygoteCarrierState = contextValiditySupportState(contextValidity)
         return when (report.stage) {
             SelinuxStage.LOADING -> "Scanning SELinux state"
+
             SelinuxStage.FAILED -> "SELinux scan failed"
+
             SelinuxStage.READY -> when (report.mode) {
                 SelinuxMode.ENFORCING -> when {
                     report.auditIntegrity?.state == SelinuxAuditIntegrityState.TAMPERED -> "Enforcing with audit rewrite"
+
                     contextValidity?.status == SelinuxContextValidityProbe.BITPAIR_KSU_PRESENT ->
                         "Enforcing with KSU context materialized"
+
                     policyloadSeqno?.isSecure == false -> "Enforcing with app_zygote seqno split"
+
                     procAttrCurrent?.isSecure == false -> "Enforcing with app_zygote attr-write anomaly"
+
                     dirtyPolicyHit != null -> trustedPolicyRuleVerdict()
+
                     appZygoteCarrierState == AppZygoteCarrierSupportState.UNTRUSTED ->
                         "Enforcing with untrusted app_zygote carrier"
+
                     appZygoteCarrierState == AppZygoteCarrierSupportState.FAILED ->
                         "Enforcing with reduced app_zygote coverage"
 
@@ -107,15 +113,22 @@ class SelinuxCardModelMapper {
                         "Enforcing with context split"
 
                     report.auditIntegrity?.state == SelinuxAuditIntegrityState.EXPOSED -> "Enforcing with audit exposure"
+
                     report.policyAnalysis?.weakness == SelinuxPolicyWeakness.SEVERE -> "Enforcing with weak policy"
+
                     report.auditIntegrity?.state == SelinuxAuditIntegrityState.RESIDUE -> "Enforcing with audit risk"
+
                     report.policyAnalysis?.weakness == SelinuxPolicyWeakness.MODERATE -> "Enforcing with policy drift"
+
                     report.policyAnalysis?.weakness == SelinuxPolicyWeakness.MINOR -> "Enforcing with minor drift"
+
                     else -> "Enforcing"
                 }
 
                 SelinuxMode.PERMISSIVE -> "Permissive"
+
                 SelinuxMode.DISABLED -> "Disabled"
+
                 SelinuxMode.UNKNOWN -> "Unknown"
             }
         }
@@ -212,6 +225,7 @@ class SelinuxCardModelMapper {
                                             append(it)
                                         }
                                     }
+
                                 AppZygoteCarrierSupportState.FAILED ->
                                     buildString {
                                         append("The dedicated app_zygote carrier failed before the oracle produced a trusted result, so app_zygote-only SELinux coverage was reduced.")
@@ -220,6 +234,7 @@ class SelinuxCardModelMapper {
                                             append(it)
                                         }
                                     }
+
                                 AppZygoteCarrierSupportState.AVAILABLE ->
                                     contextValidity.details ?: "The context validity oracle stayed unavailable."
                             }
@@ -277,10 +292,11 @@ class SelinuxCardModelMapper {
     private fun buildStateRows(report: SelinuxReport): List<SelinuxDetailRowModel> {
         val detectionPath = when {
             report.paradoxDetected -> "Paradox logic"
+
             report.methods.any {
                 it.status.equals(
                     "Enforcing",
-                    ignoreCase = true
+                    ignoreCase = true,
                 )
             } -> "Direct confirmation"
 
@@ -324,9 +340,13 @@ class SelinuxCardModelMapper {
             SelinuxDetailRowModel(
                 label = "Process context",
                 value = report.contextType ?: "Unknown",
-                status = if (report.processContext != null) DetectorStatus.allClear() else DetectorStatus.info(
-                    InfoKind.SUPPORT
-                ),
+                status = if (report.processContext != null) {
+                    DetectorStatus.allClear()
+                } else {
+                    DetectorStatus.info(
+                        InfoKind.SUPPORT,
+                    )
+                },
                 detail = report.processContext,
             ),
         )
@@ -365,11 +385,11 @@ class SelinuxCardModelMapper {
             SelinuxMode.ENFORCING -> {
                 items += SelinuxImpactItemModel(
                     "Mandatory access control is active.",
-                    DetectorStatus.allClear()
+                    DetectorStatus.allClear(),
                 )
                 items += SelinuxImpactItemModel(
                     "Policy violations should be blocked and logged.",
-                    DetectorStatus.allClear()
+                    DetectorStatus.allClear(),
                 )
                 if (report.paradoxDetected) {
                     items += SelinuxImpactItemModel(
@@ -546,14 +566,12 @@ class SelinuxCardModelMapper {
         }
     }
 
-    private fun methodRow(result: SelinuxCheckResult): SelinuxDetailRowModel {
-        return SelinuxDetailRowModel(
-            label = result.method,
-            value = result.status,
-            status = methodStatus(result),
-            detail = result.details,
-        )
-    }
+    private fun methodRow(result: SelinuxCheckResult): SelinuxDetailRowModel = SelinuxDetailRowModel(
+        label = result.method,
+        value = result.status,
+        status = methodStatus(result),
+        detail = result.details,
+    )
 
     private fun buildAggregatedMsdMethodRow(results: List<SelinuxCheckResult>): SelinuxDetailRowModel? {
         if (results.isEmpty()) {
@@ -707,22 +725,20 @@ class SelinuxCardModelMapper {
         )
     }
 
-    private fun buildPolicyNotes(policy: SelinuxPolicyAnalysis?): List<SelinuxImpactItemModel> {
-        return policy?.details?.map { detail ->
-            SelinuxImpactItemModel(
-                text = detail,
-                status = when {
-                    detail.contains("below minimum", ignoreCase = true) -> DetectorStatus.warning()
-                    detail.contains("missing", ignoreCase = true) -> DetectorStatus.warning()
-                    detail.contains("dangerous", ignoreCase = true) -> DetectorStatus.danger()
-                    detail.contains("permissive", ignoreCase = true) -> DetectorStatus.warning()
-                    detail.contains("normal", ignoreCase = true) -> DetectorStatus.allClear()
-                    detail.contains("meets minimum", ignoreCase = true) -> DetectorStatus.allClear()
-                    else -> DetectorStatus.info(InfoKind.SUPPORT)
-                },
-            )
-        }.orEmpty()
-    }
+    private fun buildPolicyNotes(policy: SelinuxPolicyAnalysis?): List<SelinuxImpactItemModel> = policy?.details?.map { detail ->
+        SelinuxImpactItemModel(
+            text = detail,
+            status = when {
+                detail.contains("below minimum", ignoreCase = true) -> DetectorStatus.warning()
+                detail.contains("missing", ignoreCase = true) -> DetectorStatus.warning()
+                detail.contains("dangerous", ignoreCase = true) -> DetectorStatus.danger()
+                detail.contains("permissive", ignoreCase = true) -> DetectorStatus.warning()
+                detail.contains("normal", ignoreCase = true) -> DetectorStatus.allClear()
+                detail.contains("meets minimum", ignoreCase = true) -> DetectorStatus.allClear()
+                else -> DetectorStatus.info(InfoKind.SUPPORT)
+            },
+        )
+    }.orEmpty()
 
     private fun buildAuditRows(analysis: SelinuxAuditIntegrityAnalysis?): List<SelinuxDetailRowModel> {
         if (analysis == null) {
@@ -851,96 +867,98 @@ class SelinuxCardModelMapper {
             rows += SelinuxDetailRowModel(
                 label = hit.label,
                 value = "Readable",
-                status = if (hit.strongSignal) DetectorStatus.warning() else DetectorStatus.info(
-                    InfoKind.SUPPORT
-                ),
+                status = if (hit.strongSignal) {
+                    DetectorStatus.warning()
+                } else {
+                    DetectorStatus.info(
+                        InfoKind.SUPPORT,
+                    )
+                },
                 detail = listOfNotNull(hit.value, hit.detail).joinToString(" | "),
             )
         }
         return rows
     }
 
-    private fun buildAuditNotes(analysis: SelinuxAuditIntegrityAnalysis?): List<SelinuxImpactItemModel> {
-        return analysis?.notes?.map { note ->
-            SelinuxImpactItemModel(
-                text = note,
-                status = when {
-                    note.contains("rewrite markers", ignoreCase = true) -> DetectorStatus.danger()
-                    note.contains("side-channel", ignoreCase = true) -> DetectorStatus.warning()
-                    note.contains("su-related actor", ignoreCase = true) -> DetectorStatus.warning()
-                    note.contains(
-                        "Readable auditpatch residue",
-                        ignoreCase = true
-                    ) -> DetectorStatus.warning()
+    private fun buildAuditNotes(analysis: SelinuxAuditIntegrityAnalysis?): List<SelinuxImpactItemModel> = analysis?.notes?.map { note ->
+        SelinuxImpactItemModel(
+            text = note,
+            status = when {
+                note.contains("rewrite markers", ignoreCase = true) -> DetectorStatus.danger()
 
-                    note.contains("did not expose", ignoreCase = true) -> DetectorStatus.allClear()
-                    else -> DetectorStatus.info(InfoKind.SUPPORT)
-                },
-            )
-        }.orEmpty()
-    }
+                note.contains("side-channel", ignoreCase = true) -> DetectorStatus.warning()
 
-    private fun buildDeviceRows(report: SelinuxReport): List<SelinuxDetailRowModel> {
-        return listOf(
-            SelinuxDetailRowModel(
-                label = "Android",
-                value = if (report.androidVersion.isNotBlank()) report.androidVersion else "Unknown",
-                status = DetectorStatus.info(InfoKind.SUPPORT),
-            ),
-            SelinuxDetailRowModel(
-                label = "API level",
-                value = if (report.apiLevel > 0) report.apiLevel.toString() else "Unknown",
-                status = DetectorStatus.info(InfoKind.SUPPORT),
-            ),
-            SelinuxDetailRowModel(
-                label = "Required since",
-                value = "Android 5.0 (API 21)",
-                status = DetectorStatus.info(InfoKind.SUPPORT),
-            ),
+                note.contains("su-related actor", ignoreCase = true) -> DetectorStatus.warning()
+
+                note.contains(
+                    "Readable auditpatch residue",
+                    ignoreCase = true,
+                ) -> DetectorStatus.warning()
+
+                note.contains("did not expose", ignoreCase = true) -> DetectorStatus.allClear()
+
+                else -> DetectorStatus.info(InfoKind.SUPPORT)
+            },
         )
+    }.orEmpty()
+
+    private fun buildDeviceRows(report: SelinuxReport): List<SelinuxDetailRowModel> = listOf(
+        SelinuxDetailRowModel(
+            label = "Android",
+            value = if (report.androidVersion.isNotBlank()) report.androidVersion else "Unknown",
+            status = DetectorStatus.info(InfoKind.SUPPORT),
+        ),
+        SelinuxDetailRowModel(
+            label = "API level",
+            value = if (report.apiLevel > 0) report.apiLevel.toString() else "Unknown",
+            status = DetectorStatus.info(InfoKind.SUPPORT),
+        ),
+        SelinuxDetailRowModel(
+            label = "Required since",
+            value = "Android 5.0 (API 21)",
+            status = DetectorStatus.info(InfoKind.SUPPORT),
+        ),
+    )
+
+    private fun buildReferences(): List<String> = listOf(
+        "SELinux paradox: permission denied can prove enforcing mode.",
+        "Enforcing mode blocks disallowed actions instead of only logging them.",
+        "Production Android devices are expected to run enforcing SELinux.",
+        "app_zygote can query SELinux context validity through selinux_check_context, which ultimately writes to /sys/fs/selinux/context.",
+        "A dedicated app_zygote carrier can also probe privileged context materialization by writing candidate labels to /proc/self/attr/current and classifying non-EINVAL outcomes.",
+        "The policyload/access seqno oracle must be captured inside zygotePreloadName; the isolated child may lose app_zygote SELinuxfs access and should downgrade missing coverage to info.",
+        "Audit or log surfaces can be rewritten in user space, so missing suspicious tcontext values is not always proof.",
+        "Readable AVC denial lines should be treated as audit-surface leakage, not as direct proof of a root process.",
+        "comm, exe, path, and name fields inside AVC logs are supporting hints, not standalone proof of a live su daemon.",
+    )
+
+    private fun policyWeaknessLabel(weakness: SelinuxPolicyWeakness?): String = when (weakness) {
+        SelinuxPolicyWeakness.NONE -> "Strong"
+        SelinuxPolicyWeakness.MINOR -> "Minor drift"
+        SelinuxPolicyWeakness.MODERATE -> "Review"
+        SelinuxPolicyWeakness.SEVERE -> "Weak"
+        null -> "Skipped"
     }
 
-    private fun buildReferences(): List<String> {
-        return listOf(
-            "SELinux paradox: permission denied can prove enforcing mode.",
-            "Enforcing mode blocks disallowed actions instead of only logging them.",
-            "Production Android devices are expected to run enforcing SELinux.",
-            "app_zygote can query SELinux context validity through selinux_check_context, which ultimately writes to /sys/fs/selinux/context.",
-            "A dedicated app_zygote carrier can also probe privileged context materialization by writing candidate labels to /proc/self/attr/current and classifying non-EINVAL outcomes.",
-            "The policyload/access seqno oracle must be captured inside zygotePreloadName; the isolated child may lose app_zygote SELinuxfs access and should downgrade missing coverage to info.",
-            "Audit or log surfaces can be rewritten in user space, so missing suspicious tcontext values is not always proof.",
-            "Readable AVC denial lines should be treated as audit-surface leakage, not as direct proof of a root process.",
-            "comm, exe, path, and name fields inside AVC logs are supporting hints, not standalone proof of a live su daemon.",
-        )
-    }
-
-    private fun policyWeaknessLabel(weakness: SelinuxPolicyWeakness?): String {
-        return when (weakness) {
-            SelinuxPolicyWeakness.NONE -> "Strong"
-            SelinuxPolicyWeakness.MINOR -> "Minor drift"
-            SelinuxPolicyWeakness.MODERATE -> "Review"
-            SelinuxPolicyWeakness.SEVERE -> "Weak"
-            null -> "Skipped"
-        }
-    }
-
-    private fun policyWeaknessStatus(weakness: SelinuxPolicyWeakness?): DetectorStatus {
-        return when (weakness) {
-            SelinuxPolicyWeakness.NONE -> DetectorStatus.allClear()
-            SelinuxPolicyWeakness.MINOR -> DetectorStatus.info(InfoKind.SUPPORT)
-            SelinuxPolicyWeakness.MODERATE -> DetectorStatus.warning()
-            SelinuxPolicyWeakness.SEVERE -> DetectorStatus.danger()
-            null -> DetectorStatus.info(InfoKind.SUPPORT)
-        }
+    private fun policyWeaknessStatus(weakness: SelinuxPolicyWeakness?): DetectorStatus = when (weakness) {
+        SelinuxPolicyWeakness.NONE -> DetectorStatus.allClear()
+        SelinuxPolicyWeakness.MINOR -> DetectorStatus.info(InfoKind.SUPPORT)
+        SelinuxPolicyWeakness.MODERATE -> DetectorStatus.warning()
+        SelinuxPolicyWeakness.SEVERE -> DetectorStatus.danger()
+        null -> DetectorStatus.info(InfoKind.SUPPORT)
     }
 
     private fun methodStatus(result: SelinuxCheckResult): DetectorStatus {
         if (result.method == SelinuxContextValidityProbe.METHOD_LABEL) {
             return when (result.status) {
                 SelinuxContextValidityProbe.BITPAIR_KSU_PRESENT -> DetectorStatus.danger()
+
                 SelinuxContextValidityProbe.BITPAIR_CLEAN -> DetectorStatus.allClear()
+
                 SelinuxContextValidityProbe.BITPAIR_AMBIGUOUS -> DetectorStatus.warning()
+
                 SelinuxContextValidityProbe.BITPAIR_SELF_TEST_FAILED -> DetectorStatus.warning()
+
                 else -> when (contextValiditySupportState(result)) {
                     AppZygoteCarrierSupportState.UNTRUSTED -> DetectorStatus.warning()
                     AppZygoteCarrierSupportState.FAILED -> DetectorStatus.info(InfoKind.SUPPORT)
@@ -970,64 +988,48 @@ class SelinuxCardModelMapper {
         }
     }
 
-    private fun policyClassValue(policy: SelinuxPolicyAnalysis?): String {
-        return when {
-            policy == null -> "—"
-            policy.classCount == 0 && policy.foundClasses.isEmpty() -> "Unreadable"
-            else -> policy.classCount.toString()
-        }
+    private fun policyClassValue(policy: SelinuxPolicyAnalysis?): String = when {
+        policy == null -> "—"
+        policy.classCount == 0 && policy.foundClasses.isEmpty() -> "Unreadable"
+        else -> policy.classCount.toString()
     }
 
-    private fun policyClassStatus(policy: SelinuxPolicyAnalysis?): DetectorStatus {
-        return when {
-            policy == null -> DetectorStatus.info(InfoKind.SUPPORT)
-            policy.classCount == 0 && policy.foundClasses.isEmpty() -> DetectorStatus.info(InfoKind.SUPPORT)
-            policy.classCountOk -> DetectorStatus.allClear()
-            else -> DetectorStatus.warning()
-        }
+    private fun policyClassStatus(policy: SelinuxPolicyAnalysis?): DetectorStatus = when {
+        policy == null -> DetectorStatus.info(InfoKind.SUPPORT)
+        policy.classCount == 0 && policy.foundClasses.isEmpty() -> DetectorStatus.info(InfoKind.SUPPORT)
+        policy.classCountOk -> DetectorStatus.allClear()
+        else -> DetectorStatus.warning()
     }
 
-    private fun auditIntegrityLabel(analysis: SelinuxAuditIntegrityAnalysis?): String {
-        return when (analysis?.state) {
-            SelinuxAuditIntegrityState.CLEAR -> "No signal"
-            SelinuxAuditIntegrityState.RESIDUE -> "Residue"
-            SelinuxAuditIntegrityState.EXPOSED -> "Exposed"
-            SelinuxAuditIntegrityState.TAMPERED -> "Tampered"
-            SelinuxAuditIntegrityState.INCONCLUSIVE -> "Inconclusive"
-            null -> "Skipped"
-        }
+    private fun auditIntegrityLabel(analysis: SelinuxAuditIntegrityAnalysis?): String = when (analysis?.state) {
+        SelinuxAuditIntegrityState.CLEAR -> "No signal"
+        SelinuxAuditIntegrityState.RESIDUE -> "Residue"
+        SelinuxAuditIntegrityState.EXPOSED -> "Exposed"
+        SelinuxAuditIntegrityState.TAMPERED -> "Tampered"
+        SelinuxAuditIntegrityState.INCONCLUSIVE -> "Inconclusive"
+        null -> "Skipped"
     }
 
-    private fun auditIntegrityStatus(analysis: SelinuxAuditIntegrityAnalysis?): DetectorStatus {
-        return when (analysis?.state) {
-            SelinuxAuditIntegrityState.CLEAR -> DetectorStatus.allClear()
-            SelinuxAuditIntegrityState.RESIDUE -> DetectorStatus.warning()
-            SelinuxAuditIntegrityState.EXPOSED -> DetectorStatus.warning()
-            SelinuxAuditIntegrityState.TAMPERED -> DetectorStatus.danger()
-            SelinuxAuditIntegrityState.INCONCLUSIVE -> DetectorStatus.info(InfoKind.SUPPORT)
-            null -> DetectorStatus.info(InfoKind.SUPPORT)
-        }
+    private fun auditIntegrityStatus(analysis: SelinuxAuditIntegrityAnalysis?): DetectorStatus = when (analysis?.state) {
+        SelinuxAuditIntegrityState.CLEAR -> DetectorStatus.allClear()
+        SelinuxAuditIntegrityState.RESIDUE -> DetectorStatus.warning()
+        SelinuxAuditIntegrityState.EXPOSED -> DetectorStatus.warning()
+        SelinuxAuditIntegrityState.TAMPERED -> DetectorStatus.danger()
+        SelinuxAuditIntegrityState.INCONCLUSIVE -> DetectorStatus.info(InfoKind.SUPPORT)
+        null -> DetectorStatus.info(InfoKind.SUPPORT)
     }
 
-    private fun modeStatus(mode: SelinuxMode): DetectorStatus {
-        return when (mode) {
-            SelinuxMode.ENFORCING -> DetectorStatus.allClear()
-            SelinuxMode.PERMISSIVE, SelinuxMode.DISABLED -> DetectorStatus.danger()
-            SelinuxMode.UNKNOWN -> DetectorStatus.info(InfoKind.ERROR)
-        }
+    private fun modeStatus(mode: SelinuxMode): DetectorStatus = when (mode) {
+        SelinuxMode.ENFORCING -> DetectorStatus.allClear()
+        SelinuxMode.PERMISSIVE, SelinuxMode.DISABLED -> DetectorStatus.danger()
+        SelinuxMode.UNKNOWN -> DetectorStatus.info(InfoKind.ERROR)
     }
 
-    private fun contextValidityResult(report: SelinuxReport): SelinuxCheckResult? {
-        return report.methods.firstOrNull { it.method == SelinuxContextValidityProbe.METHOD_LABEL }
-    }
+    private fun contextValidityResult(report: SelinuxReport): SelinuxCheckResult? = report.methods.firstOrNull { it.method == SelinuxContextValidityProbe.METHOD_LABEL }
 
-    private fun procAttrCurrentResult(report: SelinuxReport): SelinuxCheckResult? {
-        return report.methods.firstOrNull { it.method == SelinuxProcAttrCurrentProbe.METHOD_LABEL }
-    }
+    private fun procAttrCurrentResult(report: SelinuxReport): SelinuxCheckResult? = report.methods.firstOrNull { it.method == SelinuxProcAttrCurrentProbe.METHOD_LABEL }
 
-    private fun policyloadSeqnoResult(report: SelinuxReport): SelinuxCheckResult? {
-        return report.methods.firstOrNull { it.method == SelinuxPolicyloadSeqnoProbe.METHOD_LABEL }
-    }
+    private fun policyloadSeqnoResult(report: SelinuxReport): SelinuxCheckResult? = report.methods.firstOrNull { it.method == SelinuxPolicyloadSeqnoProbe.METHOD_LABEL }
 
     private fun SelinuxReport.toDetectorStatus(): DetectorStatus {
         val contextValidity = contextValidityResult(this)
@@ -1037,83 +1039,75 @@ class SelinuxCardModelMapper {
         val appZygoteCarrierState = contextValiditySupportState(contextValidity)
         return when (stage) {
             SelinuxStage.LOADING -> DetectorStatus.info(InfoKind.SUPPORT)
+
             SelinuxStage.FAILED -> DetectorStatus.info(InfoKind.ERROR)
+
             SelinuxStage.READY -> when (mode) {
                 SelinuxMode.ENFORCING -> when {
                     auditIntegrity?.state == SelinuxAuditIntegrityState.TAMPERED -> DetectorStatus.danger()
+
                     contextValidity?.status == SelinuxContextValidityProbe.BITPAIR_KSU_PRESENT -> DetectorStatus.danger()
+
                     policyloadSeqno?.isSecure == false -> DetectorStatus.danger()
+
                     procAttrCurrent?.isSecure == false -> DetectorStatus.danger()
+
                     dirtyPolicyHit != null -> DetectorStatus.warning()
+
                     appZygoteCarrierState == AppZygoteCarrierSupportState.UNTRUSTED -> DetectorStatus.warning()
+
                     appZygoteCarrierState == AppZygoteCarrierSupportState.FAILED -> DetectorStatus.info(InfoKind.SUPPORT)
+
                     contextValidity?.status == SelinuxContextValidityProbe.BITPAIR_SELF_TEST_FAILED -> DetectorStatus.warning()
+
                     contextValidity?.status == SelinuxContextValidityProbe.BITPAIR_AMBIGUOUS -> DetectorStatus.warning()
+
                     policyAnalysis?.weakness == SelinuxPolicyWeakness.SEVERE ||
-                            policyAnalysis?.weakness == SelinuxPolicyWeakness.MODERATE ||
-                            auditIntegrity?.state == SelinuxAuditIntegrityState.EXPOSED ||
-                            auditIntegrity?.state == SelinuxAuditIntegrityState.RESIDUE -> DetectorStatus.warning()
+                        policyAnalysis?.weakness == SelinuxPolicyWeakness.MODERATE ||
+                        auditIntegrity?.state == SelinuxAuditIntegrityState.EXPOSED ||
+                        auditIntegrity?.state == SelinuxAuditIntegrityState.RESIDUE -> DetectorStatus.warning()
 
                     else -> DetectorStatus.allClear()
                 }
 
                 SelinuxMode.PERMISSIVE, SelinuxMode.DISABLED -> DetectorStatus.danger()
+
                 SelinuxMode.UNKNOWN -> DetectorStatus.info(InfoKind.ERROR)
             }
         }
     }
 
-    private fun firstTrustedPolicyRuleHit(report: SelinuxReport): SelinuxCheckResult? {
-        return report.methods.firstOrNull {
-            isPolicyRuleMethod(it.method) &&
-                it.status == "Allowed" &&
-                it.isSecure == false &&
-                it.dirtyPolicyTrusted
-        }
+    private fun firstTrustedPolicyRuleHit(report: SelinuxReport): SelinuxCheckResult? = report.methods.firstOrNull {
+        isPolicyRuleMethod(it.method) &&
+            it.status == "Allowed" &&
+            it.isSecure == false &&
+            it.dirtyPolicyTrusted
     }
 
-    private fun isPolicyRuleMethod(method: String): Boolean {
-        return method.startsWith("Dirty sepolicy rule: ") ||
-            method.startsWith("Droidspaces checker: ") ||
-            method.startsWith("MSD checker: ")
+    private fun isPolicyRuleMethod(method: String): Boolean = method.startsWith("Dirty sepolicy rule: ") ||
+        method.startsWith("Droidspaces checker: ") ||
+        method.startsWith("MSD checker: ")
+
+    private fun isMsdPolicyRuleMethod(method: String): Boolean = method.startsWith("MSD checker: ")
+
+    private fun isDroidspacesPolicyRuleMethod(method: String): Boolean = method.startsWith("Droidspaces checker: ")
+
+    private fun policyRuleDisplayName(method: String): String = when {
+        method.startsWith("Dirty sepolicy rule: ") -> method.removePrefix("Dirty sepolicy rule: ")
+        method.startsWith("Droidspaces checker: ") -> "Droidspaces: ${method.removePrefix("Droidspaces checker: ")}"
+        method.startsWith("MSD checker: ") -> "MSD: ${method.removePrefix("MSD checker: ")}"
+        else -> method
     }
 
-    private fun isMsdPolicyRuleMethod(method: String): Boolean {
-        return method.startsWith("MSD checker: ")
-    }
+    private fun msdPolicyRuleName(method: String): String = method.removePrefix("MSD checker: ")
 
-    private fun isDroidspacesPolicyRuleMethod(method: String): Boolean {
-        return method.startsWith("Droidspaces checker: ")
-    }
+    private fun droidspacesPolicyRuleName(method: String): String = method.removePrefix("Droidspaces checker: ")
 
-    private fun policyRuleDisplayName(method: String): String {
-        return when {
-            method.startsWith("Dirty sepolicy rule: ") -> method.removePrefix("Dirty sepolicy rule: ")
-            method.startsWith("Droidspaces checker: ") -> "Droidspaces: ${method.removePrefix("Droidspaces checker: ")}"
-            method.startsWith("MSD checker: ") -> "MSD: ${method.removePrefix("MSD checker: ")}"
-            else -> method
-        }
-    }
+    private fun trustedPolicyRuleVerdict(): String = "Enforcing with dirty sepolicy rule"
 
-    private fun msdPolicyRuleName(method: String): String {
-        return method.removePrefix("MSD checker: ")
-    }
+    private fun trustedPolicyRuleSummary(result: SelinuxCheckResult): String = "A trusted DirtySepolicy-style access query reported ${policyRuleDisplayName(result.method)} as allowed."
 
-    private fun droidspacesPolicyRuleName(method: String): String {
-        return method.removePrefix("Droidspaces checker: ")
-    }
-
-    private fun trustedPolicyRuleVerdict(): String {
-        return "Enforcing with dirty sepolicy rule"
-    }
-
-    private fun trustedPolicyRuleSummary(result: SelinuxCheckResult): String {
-        return "A trusted DirtySepolicy-style access query reported ${policyRuleDisplayName(result.method)} as allowed."
-    }
-
-    private fun trustedPolicyRuleImpact(result: SelinuxCheckResult): String {
-        return "A trusted DirtySepolicy-style access rule was allowed: ${policyRuleDisplayName(result.method)}."
-    }
+    private fun trustedPolicyRuleImpact(result: SelinuxCheckResult): String = "A trusted DirtySepolicy-style access rule was allowed: ${policyRuleDisplayName(result.method)}."
 
     private fun contextValiditySupportState(result: SelinuxCheckResult?): AppZygoteCarrierSupportState {
         if (result?.method != SelinuxContextValidityProbe.METHOD_LABEL ||
@@ -1124,8 +1118,10 @@ class SelinuxCardModelMapper {
         return when {
             result.details.orEmpty().contains("Carrier state=untrusted") ->
                 AppZygoteCarrierSupportState.UNTRUSTED
+
             result.details.orEmpty().contains("Carrier state=failed") ->
                 AppZygoteCarrierSupportState.FAILED
+
             else -> AppZygoteCarrierSupportState.AVAILABLE
         }
     }

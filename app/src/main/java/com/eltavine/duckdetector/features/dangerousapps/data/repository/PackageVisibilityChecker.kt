@@ -26,17 +26,13 @@ object PackageVisibilityChecker {
     fun detect(
         context: Context,
         installedPackageCount: Int,
-    ): DangerousPackageVisibility {
-        return when (InstalledPackageVisibilityChecker.detect(context, installedPackageCount)) {
-            InstalledPackageVisibility.FULL -> DangerousPackageVisibility.FULL
-            InstalledPackageVisibility.RESTRICTED -> DangerousPackageVisibility.RESTRICTED
-            InstalledPackageVisibility.UNKNOWN -> DangerousPackageVisibility.UNKNOWN
-        }
+    ): DangerousPackageVisibility = when (InstalledPackageVisibilityChecker.detect(context, installedPackageCount)) {
+        InstalledPackageVisibility.FULL -> DangerousPackageVisibility.FULL
+        InstalledPackageVisibility.RESTRICTED -> DangerousPackageVisibility.RESTRICTED
+        InstalledPackageVisibility.UNKNOWN -> DangerousPackageVisibility.UNKNOWN
     }
 
-    fun getInstalledPackages(context: Context): Set<String> {
-        return InstalledPackageVisibilityChecker.getInstalledPackages(context)
-    }
+    fun getInstalledPackages(context: Context): Set<String> = InstalledPackageVisibilityChecker.getInstalledPackages(context)
 
     fun hasSuspiciouslyLowInventory(
         packageVisibility: DangerousPackageVisibility,

@@ -16,11 +16,11 @@
 
 package com.eltavine.duckdetector.features.tee.data.verification.keystore
 
-import java.security.Key
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.security.Key
 
 class UpdateSubcomponentStaleResponsePersistenceProbeTest {
 
@@ -243,8 +243,6 @@ class UpdateSubcomponentStaleResponsePersistenceProbeTest {
     companion object {
         private val MARKER_CERT = cert(99)
 
-        private fun cert(seed: Int): ByteArray {
-            return ByteArray(24) { index -> (seed + index).toByte() }
-        }
+        private fun cert(seed: Int): ByteArray = ByteArray(24) { index -> (seed + index).toByte() }
     }
 }

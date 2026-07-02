@@ -34,60 +34,73 @@ class NativeRootCardModelMapper {
 
     fun map(
         report: NativeRootReport,
-    ): NativeRootCardModel {
-        return NativeRootCardModel(
-            title = "Native Root",
-            subtitle = buildSubtitle(report),
-            status = report.toDetectorStatus(),
-            verdict = buildVerdict(report),
-            summary = buildSummary(report),
-            headerFacts = buildHeaderFacts(report),
-            nativeRows = buildNativeRows(report),
-            runtimeRows = buildRuntimeRows(report),
-            kernelRows = buildKernelRows(report),
-            propertyRows = buildPropertyRows(report),
-            impactItems = buildImpactItems(report),
-            methodRows = buildMethodRows(report),
-            scanRows = buildScanRows(report),
-        )
-    }
+    ): NativeRootCardModel = NativeRootCardModel(
+        title = "Native Root",
+        subtitle = buildSubtitle(report),
+        status = report.toDetectorStatus(),
+        verdict = buildVerdict(report),
+        summary = buildSummary(report),
+        headerFacts = buildHeaderFacts(report),
+        nativeRows = buildNativeRows(report),
+        runtimeRows = buildRuntimeRows(report),
+        kernelRows = buildKernelRows(report),
+        propertyRows = buildPropertyRows(report),
+        impactItems = buildImpactItems(report),
+        methodRows = buildMethodRows(report),
+        scanRows = buildScanRows(report),
+    )
 
-    private fun buildSubtitle(report: NativeRootReport): String {
-        return when (report.stage) {
-            NativeRootStage.LOADING -> "supercall + prctl + setresuid + runtime paths + /proc + isolated mount"
-            NativeRootStage.FAILED -> "native root scan failed"
-            NativeRootStage.READY -> when {
-                !report.nativeAvailable && report.findings.isEmpty() -> "native detector unavailable"
-                else -> "${report.pathCheckCount} paths · ${report.processCheckedCount} proc entries · ${report.cgroupPathCheckCount} cgroup dirs · ${report.kernelSourceCount} kernel sources · ${report.propertyCheckCount} props"
-            }
+    private fun buildSubtitle(report: NativeRootReport): String = when (report.stage) {
+        NativeRootStage.LOADING -> "supercall + prctl + setresuid + runtime paths + /proc + isolated mount"
+
+        NativeRootStage.FAILED -> "native root scan failed"
+
+        NativeRootStage.READY -> when {
+            !report.nativeAvailable && report.findings.isEmpty() -> "native detector unavailable"
+            else -> "${report.pathCheckCount} paths · ${report.processCheckedCount} proc entries · ${report.cgroupPathCheckCount} cgroup dirs · ${report.kernelSourceCount} kernel sources · ${report.propertyCheckCount} props"
         }
     }
 
-    private fun buildVerdict(report: NativeRootReport): String {
-        return when (report.stage) {
-            NativeRootStage.LOADING -> "Scanning kernel-root indicators"
-            NativeRootStage.FAILED -> "Native Root scan failed"
-            NativeRootStage.READY -> when {
-                report.kernelSuDetected && report.aPatchDetected -> "KernelSU and APatch indicators detected"
-                report.selfSuDomain -> "Current app already runs in KernelSU su domain"
-                report.kernelSuDetected && report.ksuSupercallProbeHit -> "KernelSU detected via ksu_driver"
-                report.kernelSuDetected && report.prctlProbeHit -> "KernelSU detected via prctl"
-                report.kernelSuDetected -> "KernelSU indicators detected"
-                report.aPatchDetected -> "APatch indicators detected"
-                report.magiskDetected -> "Magisk native indicators detected"
-                report.rootDetected -> "Root indicators detected"
-                report.hasDangerFindings -> "${report.dangerFindingCount} runtime root signal(s)"
-                report.mountAnchorDriftCount > 0 -> "Isolated mount drift suggests namespace tampering"
-                report.mountDriftSignalCount > 0 -> "Isolated-process namespace drift needs review"
-                report.ksuManagerPackagePresent && report.ksuManagerTraitHitCount > 0 ->
-                    "KernelSU manager weak fingerprint detected"
+    private fun buildVerdict(report: NativeRootReport): String = when (report.stage) {
+        NativeRootStage.LOADING -> "Scanning kernel-root indicators"
 
-                report.ksuManagerPackagePresent -> "KernelSU manager package detected"
-                report.hasWarningFindings -> "${report.warningFindingCount} native signal(s) need review"
-                !report.nativeAvailable -> "Native detector unavailable"
-                report.hasReducedCoverage() -> "Native root scan has reduced coverage"
-                else -> "No native root indicators"
-            }
+        NativeRootStage.FAILED -> "Native Root scan failed"
+
+        NativeRootStage.READY -> when {
+            report.kernelSuDetected && report.aPatchDetected -> "KernelSU and APatch indicators detected"
+
+            report.selfSuDomain -> "Current app already runs in KernelSU su domain"
+
+            report.kernelSuDetected && report.ksuSupercallProbeHit -> "KernelSU detected via ksu_driver"
+
+            report.kernelSuDetected && report.prctlProbeHit -> "KernelSU detected via prctl"
+
+            report.kernelSuDetected -> "KernelSU indicators detected"
+
+            report.aPatchDetected -> "APatch indicators detected"
+
+            report.magiskDetected -> "Magisk native indicators detected"
+
+            report.rootDetected -> "Root indicators detected"
+
+            report.hasDangerFindings -> "${report.dangerFindingCount} runtime root signal(s)"
+
+            report.mountAnchorDriftCount > 0 -> "Isolated mount drift suggests namespace tampering"
+
+            report.mountDriftSignalCount > 0 -> "Isolated-process namespace drift needs review"
+
+            report.ksuManagerPackagePresent && report.ksuManagerTraitHitCount > 0 ->
+                "KernelSU manager weak fingerprint detected"
+
+            report.ksuManagerPackagePresent -> "KernelSU manager package detected"
+
+            report.hasWarningFindings -> "${report.warningFindingCount} native signal(s) need review"
+
+            !report.nativeAvailable -> "Native detector unavailable"
+
+            report.hasReducedCoverage() -> "Native root scan has reduced coverage"
+
+            else -> "No native root indicators"
         }
     }
 
@@ -130,670 +143,676 @@ class NativeRootCardModelMapper {
         }
     }
 
-    private fun buildHeaderFacts(report: NativeRootReport): List<NativeRootHeaderFactModel> {
-        return when (report.stage) {
-            NativeRootStage.LOADING -> placeholderFacts(
-                "Pending",
-                DetectorStatus.info(InfoKind.SUPPORT)
-            )
+    private fun buildHeaderFacts(report: NativeRootReport): List<NativeRootHeaderFactModel> = when (report.stage) {
+        NativeRootStage.LOADING -> placeholderFacts(
+            "Pending",
+            DetectorStatus.info(InfoKind.SUPPORT),
+        )
 
-            NativeRootStage.FAILED -> placeholderFacts("Error", DetectorStatus.info(InfoKind.ERROR))
-            NativeRootStage.READY -> listOf(
-                NativeRootHeaderFactModel(
-                    label = "Flags",
-                    value = familyValue(report),
-                    status = when {
-                        report.detectedFamilies.isEmpty() && report.hasReducedCoverage() -> DetectorStatus.info(
-                            InfoKind.SUPPORT
-                        )
-                        report.detectedFamilies.isEmpty() && report.nativeAvailable -> DetectorStatus.allClear()
-                        report.detectedFamilies.isEmpty() -> DetectorStatus.info(InfoKind.SUPPORT)
-                        else -> DetectorStatus.danger()
-                    },
-                ),
-                NativeRootHeaderFactModel(
-                    label = "Direct",
-                    value = when {
-                        report.directFindings.isNotEmpty() -> report.directFindings.size.toString()
-                        report.ksuSupercallBlocked || !report.ksuSupercallAttempted -> "Limited"
-                        else -> "Clean"
-                    },
-                    status = when {
-                        report.directFindings.any { it.severity == NativeRootFindingSeverity.DANGER } -> DetectorStatus.danger()
-                        report.directFindings.isNotEmpty() -> DetectorStatus.warning()
-                        report.ksuSupercallBlocked || !report.ksuSupercallAttempted -> DetectorStatus.info(
-                            InfoKind.SUPPORT
-                        )
-                        report.nativeAvailable -> DetectorStatus.allClear()
-                        else -> DetectorStatus.info(InfoKind.SUPPORT)
-                    },
-                ),
-                NativeRootHeaderFactModel(
-                    label = "Kernel",
-                    value = when {
-                        report.kernelFindings.isNotEmpty() -> report.kernelFindings.size.toString()
+        NativeRootStage.FAILED -> placeholderFacts("Error", DetectorStatus.info(InfoKind.ERROR))
+
+        NativeRootStage.READY -> listOf(
+            NativeRootHeaderFactModel(
+                label = "Flags",
+                value = familyValue(report),
+                status = when {
+                    report.detectedFamilies.isEmpty() && report.hasReducedCoverage() -> DetectorStatus.info(
+                        InfoKind.SUPPORT,
+                    )
+
+                    report.detectedFamilies.isEmpty() && report.nativeAvailable -> DetectorStatus.allClear()
+
+                    report.detectedFamilies.isEmpty() -> DetectorStatus.info(InfoKind.SUPPORT)
+
+                    else -> DetectorStatus.danger()
+                },
+            ),
+            NativeRootHeaderFactModel(
+                label = "Direct",
+                value = when {
+                    report.directFindings.isNotEmpty() -> report.directFindings.size.toString()
+                    report.ksuSupercallBlocked || !report.ksuSupercallAttempted -> "Limited"
+                    else -> "Clean"
+                },
+                status = when {
+                    report.directFindings.any { it.severity == NativeRootFindingSeverity.DANGER } -> DetectorStatus.danger()
+
+                    report.directFindings.isNotEmpty() -> DetectorStatus.warning()
+
+                    report.ksuSupercallBlocked || !report.ksuSupercallAttempted -> DetectorStatus.info(
+                        InfoKind.SUPPORT,
+                    )
+
+                    report.nativeAvailable -> DetectorStatus.allClear()
+
+                    else -> DetectorStatus.info(InfoKind.SUPPORT)
+                },
+            ),
+            NativeRootHeaderFactModel(
+                label = "Kernel",
+                value = when {
+                    report.kernelFindings.isNotEmpty() -> report.kernelFindings.size.toString()
+                    report.nativeAvailable -> "Clean"
+                    else -> "N/A"
+                },
+                status = when {
+                    report.kernelFindings.isNotEmpty() -> DetectorStatus.warning()
+                    report.nativeAvailable -> DetectorStatus.allClear()
+                    else -> DetectorStatus.info(InfoKind.SUPPORT)
+                },
+            ),
+            NativeRootHeaderFactModel(
+                label = "Runtime",
+                value = if (report.runtimeFindings.isEmpty()) {
+                    when {
+                        !report.nativeAvailable -> "N/A"
+                        report.hasRuntimeReducedCoverage() -> "Limited"
                         report.nativeAvailable -> "Clean"
                         else -> "N/A"
-                    },
-                    status = when {
-                        report.kernelFindings.isNotEmpty() -> DetectorStatus.warning()
-                        report.nativeAvailable -> DetectorStatus.allClear()
-                        else -> DetectorStatus.info(InfoKind.SUPPORT)
-                    },
-                ),
-                NativeRootHeaderFactModel(
-                    label = "Runtime",
-                    value = if (report.runtimeFindings.isEmpty()) {
-                        when {
-                            !report.nativeAvailable -> "N/A"
-                            report.hasRuntimeReducedCoverage() -> "Limited"
-                            report.nativeAvailable -> "Clean"
-                            else -> "N/A"
-                        }
-                    } else {
-                        report.runtimeFindings.size.toString()
-                    },
-                    status = when {
-                        report.runtimeFindings.any { it.severity == NativeRootFindingSeverity.DANGER } -> DetectorStatus.danger()
-                        report.runtimeFindings.isNotEmpty() -> DetectorStatus.warning()
-                        !report.nativeAvailable -> DetectorStatus.info(InfoKind.SUPPORT)
-                        report.hasRuntimeReducedCoverage() -> DetectorStatus.info(InfoKind.SUPPORT)
-                        report.nativeAvailable -> DetectorStatus.allClear()
-                        else -> DetectorStatus.info(InfoKind.SUPPORT)
-                    },
-                ),
-            )
-        }
+                    }
+                } else {
+                    report.runtimeFindings.size.toString()
+                },
+                status = when {
+                    report.runtimeFindings.any { it.severity == NativeRootFindingSeverity.DANGER } -> DetectorStatus.danger()
+                    report.runtimeFindings.isNotEmpty() -> DetectorStatus.warning()
+                    !report.nativeAvailable -> DetectorStatus.info(InfoKind.SUPPORT)
+                    report.hasRuntimeReducedCoverage() -> DetectorStatus.info(InfoKind.SUPPORT)
+                    report.nativeAvailable -> DetectorStatus.allClear()
+                    else -> DetectorStatus.info(InfoKind.SUPPORT)
+                },
+            ),
+        )
     }
 
-    private fun buildNativeRows(report: NativeRootReport): List<NativeRootDetailRowModel> {
-        return when (report.stage) {
-            NativeRootStage.LOADING -> placeholderRows(
-                listOf("KSU supercall", "KernelSU prctl", "SUSFS side-channel"),
-                DetectorStatus.info(InfoKind.SUPPORT),
-                "Pending",
-            )
+    private fun buildNativeRows(report: NativeRootReport): List<NativeRootDetailRowModel> = when (report.stage) {
+        NativeRootStage.LOADING -> placeholderRows(
+            listOf("KSU supercall", "KernelSU prctl", "SUSFS side-channel"),
+            DetectorStatus.info(InfoKind.SUPPORT),
+            "Pending",
+        )
 
-            NativeRootStage.FAILED -> placeholderRows(
-                listOf("KSU supercall", "KernelSU prctl", "SUSFS side-channel"),
-                DetectorStatus.info(InfoKind.ERROR),
-                "Error",
-            )
+        NativeRootStage.FAILED -> placeholderRows(
+            listOf("KSU supercall", "KernelSU prctl", "SUSFS side-channel"),
+            DetectorStatus.info(InfoKind.ERROR),
+            "Error",
+        )
 
-            NativeRootStage.READY -> buildList {
-                addAll(report.directFindings.sortedBy { it.label }.map(::findingRow))
-                if (report.ksuSupercallBlocked) {
-                    add(
-                        NativeRootDetailRowModel(
-                            label = "KSU supercall",
-                            value = "Blocked by seccomp",
-                            status = DetectorStatus.info(InfoKind.SUPPORT),
-                            detail = "The sacrificial reboot() helper died under app seccomp before it could install a temporary [ksu_driver] fd. Other KernelSU checks still ran.",
-                        )
-                    )
-                }
+        NativeRootStage.READY -> buildList {
+            addAll(report.directFindings.sortedBy { it.label }.map(::findingRow))
+            if (report.ksuSupercallBlocked) {
+                add(
+                    NativeRootDetailRowModel(
+                        label = "KSU supercall",
+                        value = "Blocked by seccomp",
+                        status = DetectorStatus.info(InfoKind.SUPPORT),
+                        detail = "The sacrificial reboot() helper died under app seccomp before it could install a temporary [ksu_driver] fd. Other KernelSU checks still ran.",
+                    ),
+                )
             }
         }
     }
 
-    private fun buildRuntimeRows(report: NativeRootReport): List<NativeRootDetailRowModel> {
-        return when (report.stage) {
-            NativeRootStage.LOADING -> placeholderRows(
-                listOf(
-                    "Self process IOC",
-                    "Isolated mount drift",
-                    "Manager fingerprint",
-                    "Runtime paths",
-                    "Root processes",
-                    "Cgroup leakage",
-                ),
-                DetectorStatus.info(InfoKind.SUPPORT),
-                "Pending",
-            )
+    private fun buildRuntimeRows(report: NativeRootReport): List<NativeRootDetailRowModel> = when (report.stage) {
+        NativeRootStage.LOADING -> placeholderRows(
+            listOf(
+                "Self process IOC",
+                "Isolated mount drift",
+                "Manager fingerprint",
+                "Runtime paths",
+                "Root processes",
+                "Cgroup leakage",
+            ),
+            DetectorStatus.info(InfoKind.SUPPORT),
+            "Pending",
+        )
 
-            NativeRootStage.FAILED -> placeholderRows(
-                listOf(
-                    "Self process IOC",
-                    "Isolated mount drift",
-                    "Manager fingerprint",
-                    "Runtime paths",
-                    "Root processes",
-                    "Cgroup leakage",
-                ),
-                DetectorStatus.info(InfoKind.ERROR),
-                "Error",
-            )
+        NativeRootStage.FAILED -> placeholderRows(
+            listOf(
+                "Self process IOC",
+                "Isolated mount drift",
+                "Manager fingerprint",
+                "Runtime paths",
+                "Root processes",
+                "Cgroup leakage",
+            ),
+            DetectorStatus.info(InfoKind.ERROR),
+            "Error",
+        )
 
-            NativeRootStage.READY -> report.runtimeFindings.sortedBy { it.label }.map(::findingRow)
-        }
+        NativeRootStage.READY -> report.runtimeFindings.sortedBy { it.label }.map(::findingRow)
     }
 
-    private fun buildKernelRows(report: NativeRootReport): List<NativeRootDetailRowModel> {
-        return when (report.stage) {
-            NativeRootStage.LOADING -> placeholderRows(
-                listOf("Kernel symbols", "Kernel modules", "Kernel identity"),
-                DetectorStatus.info(InfoKind.SUPPORT),
-                "Pending",
-            )
+    private fun buildKernelRows(report: NativeRootReport): List<NativeRootDetailRowModel> = when (report.stage) {
+        NativeRootStage.LOADING -> placeholderRows(
+            listOf("Kernel symbols", "Kernel modules", "Kernel identity"),
+            DetectorStatus.info(InfoKind.SUPPORT),
+            "Pending",
+        )
 
-            NativeRootStage.FAILED -> placeholderRows(
-                listOf("Kernel symbols", "Kernel modules", "Kernel identity"),
-                DetectorStatus.info(InfoKind.ERROR),
-                "Error",
-            )
+        NativeRootStage.FAILED -> placeholderRows(
+            listOf("Kernel symbols", "Kernel modules", "Kernel identity"),
+            DetectorStatus.info(InfoKind.ERROR),
+            "Error",
+        )
 
-            NativeRootStage.READY -> report.kernelFindings.sortedBy { it.label }.map(::findingRow)
-        }
+        NativeRootStage.READY -> report.kernelFindings.sortedBy { it.label }.map(::findingRow)
     }
 
-    private fun buildPropertyRows(report: NativeRootReport): List<NativeRootDetailRowModel> {
-        return when (report.stage) {
-            NativeRootStage.LOADING -> placeholderRows(
-                listOf("Root-specific properties"),
-                DetectorStatus.info(InfoKind.SUPPORT),
-                "Pending",
-                monospace = true,
-            )
+    private fun buildPropertyRows(report: NativeRootReport): List<NativeRootDetailRowModel> = when (report.stage) {
+        NativeRootStage.LOADING -> placeholderRows(
+            listOf("Root-specific properties"),
+            DetectorStatus.info(InfoKind.SUPPORT),
+            "Pending",
+            monospace = true,
+        )
 
-            NativeRootStage.FAILED -> placeholderRows(
-                listOf("Root-specific properties"),
-                DetectorStatus.info(InfoKind.ERROR),
-                "Error",
-                monospace = true,
-            )
+        NativeRootStage.FAILED -> placeholderRows(
+            listOf("Root-specific properties"),
+            DetectorStatus.info(InfoKind.ERROR),
+            "Error",
+            monospace = true,
+        )
 
-            NativeRootStage.READY -> report.propertyFindings.sortedBy { it.label }.map(::findingRow)
-        }
+        NativeRootStage.READY -> report.propertyFindings.sortedBy { it.label }.map(::findingRow)
     }
 
-    private fun buildImpactItems(report: NativeRootReport): List<NativeRootImpactItemModel> {
-        return when (report.stage) {
-            NativeRootStage.LOADING -> listOf(
+    private fun buildImpactItems(report: NativeRootReport): List<NativeRootImpactItemModel> = when (report.stage) {
+        NativeRootStage.LOADING -> listOf(
+            NativeRootImpactItemModel(
+                text = "Gathering local native root evidence.",
+                status = DetectorStatus.info(InfoKind.SUPPORT),
+            ),
+        )
+
+        NativeRootStage.FAILED -> listOf(
+            NativeRootImpactItemModel(
+                text = report.errorMessage ?: "Native Root scan failed.",
+                status = DetectorStatus.info(InfoKind.ERROR),
+            ),
+        )
+
+        NativeRootStage.READY -> buildList {
+            if (report.hasDangerFindings) {
+                add(
+                    NativeRootImpactItemModel(
+                        text = "Direct native hits are stronger than plain package or property signals because they come from syscall behavior, runtime processes, cgroup visibility mismatches, or corroborated runtime residue paths.",
+                        status = DetectorStatus.danger(),
+                    ),
+                )
+            } else if (report.hasWarningFindings) {
+                add(
+                    NativeRootImpactItemModel(
+                        text = "Isolated-process mount drift, manager manifest fingerprints, kernel strings, property residue, or cgroup leakage can indicate native-root history or selective runtime hiding, but they are weaker than direct syscall-side probes.",
+                        status = DetectorStatus.warning(),
+                    ),
+                )
+            } else if (report.nativeAvailable) {
+                add(
+                    if (report.hasReducedCoverage()) {
+                        NativeRootImpactItemModel(
+                            text = "No native root indicator surfaced from available probes, but one or more support-only evidence paths were unavailable or scoped.",
+                            status = DetectorStatus.info(InfoKind.SUPPORT),
+                        )
+                    } else {
+                        NativeRootImpactItemModel(
+                            text = "No common KernelSU, APatch, Magisk, SUSFS, or cgroup-leak traces surfaced from the current probe set.",
+                            status = DetectorStatus.allClear(),
+                        )
+                    },
+                )
+            }
+            add(
                 NativeRootImpactItemModel(
-                    text = "Gathering local native root evidence.",
+                    text = if (report.nativeAvailable) {
+                        if (report.hasReducedCoverage()) {
+                            "Reduced coverage lowers confidence without implying a positive root detection."
+                        } else {
+                            "A determined root can still hide or remove residue, so absence of native hits is not proof of a stock device."
+                        }
+                    } else {
+                        "Native coverage was unavailable, so this card should not be treated as a strong clean verdict."
+                    },
                     status = DetectorStatus.info(InfoKind.SUPPORT),
                 ),
             )
-
-            NativeRootStage.FAILED -> listOf(
-                NativeRootImpactItemModel(
-                    text = report.errorMessage ?: "Native Root scan failed.",
-                    status = DetectorStatus.info(InfoKind.ERROR),
-                ),
-            )
-
-            NativeRootStage.READY -> buildList {
-                if (report.hasDangerFindings) {
-                    add(
-                        NativeRootImpactItemModel(
-                            text = "Direct native hits are stronger than plain package or property signals because they come from syscall behavior, runtime processes, cgroup visibility mismatches, or corroborated runtime residue paths.",
-                            status = DetectorStatus.danger(),
-                        ),
-                    )
-                } else if (report.hasWarningFindings) {
-                    add(
-                        NativeRootImpactItemModel(
-                            text = "Isolated-process mount drift, manager manifest fingerprints, kernel strings, property residue, or cgroup leakage can indicate native-root history or selective runtime hiding, but they are weaker than direct syscall-side probes.",
-                            status = DetectorStatus.warning(),
-                        ),
-                    )
-                } else if (report.nativeAvailable) {
-                    add(
-                        if (report.hasReducedCoverage()) {
-                            NativeRootImpactItemModel(
-                                text = "No native root indicator surfaced from available probes, but one or more support-only evidence paths were unavailable or scoped.",
-                                status = DetectorStatus.info(InfoKind.SUPPORT),
-                            )
-                        } else {
-                            NativeRootImpactItemModel(
-                                text = "No common KernelSU, APatch, Magisk, SUSFS, or cgroup-leak traces surfaced from the current probe set.",
-                                status = DetectorStatus.allClear(),
-                            )
-                        },
-                    )
-                }
-                add(
-                    NativeRootImpactItemModel(
-                        text = if (report.nativeAvailable) {
-                            if (report.hasReducedCoverage()) {
-                                "Reduced coverage lowers confidence without implying a positive root detection."
-                            } else {
-                                "A determined root can still hide or remove residue, so absence of native hits is not proof of a stock device."
-                            }
-                        } else {
-                            "Native coverage was unavailable, so this card should not be treated as a strong clean verdict."
-                        },
-                        status = DetectorStatus.info(InfoKind.SUPPORT),
-                    ),
-                )
-            }
         }
     }
 
-    private fun buildMethodRows(report: NativeRootReport): List<NativeRootDetailRowModel> {
-        return when (report.stage) {
-            NativeRootStage.LOADING -> placeholderMethodRows(
+    private fun buildMethodRows(report: NativeRootReport): List<NativeRootDetailRowModel> = when (report.stage) {
+        NativeRootStage.LOADING -> placeholderMethodRows(
+            DetectorStatus.info(InfoKind.SUPPORT),
+            "Pending",
+        )
+
+        NativeRootStage.FAILED -> placeholderMethodRows(
+            DetectorStatus.info(InfoKind.ERROR),
+            "Failed",
+        )
+
+        NativeRootStage.READY -> report.methods.map { result ->
+            NativeRootDetailRowModel(
+                label = result.label,
+                value = result.summary,
+                status = methodStatus(result),
+                detail = result.detail,
+                detailMonospace = true,
+            )
+        }
+    }
+
+    private fun buildScanRows(report: NativeRootReport): List<NativeRootDetailRowModel> = when (report.stage) {
+        NativeRootStage.LOADING -> placeholderRows(
+            listOf(
+                "Paths checked",
+                "Path hits",
+                "Proc checked",
+                "Proc denied",
+                "Proc hits",
+                "Self context",
+                "Self driver FDs",
+                "Self wrapper FDs",
+                "Main mnt ns",
+                "Isolated mnt ns",
+                "Mount drift hits",
+                "Mount anchor drifts",
+                "Manager package",
+                "Manager traits",
+                "Cgroup paths",
+                "Cgroup visible",
+                "Cgroup proc",
+                "Cgroup denied",
+                "Cgroup hits",
+                "Kernel sources",
+                "Kernel hits",
+                "Properties checked",
+                "Property hits",
+                "Native library",
+            ),
+            DetectorStatus.info(InfoKind.SUPPORT),
+            "Pending",
+        )
+
+        NativeRootStage.FAILED -> placeholderRows(
+            listOf(
+                "Paths checked",
+                "Path hits",
+                "Proc checked",
+                "Proc denied",
+                "Proc hits",
+                "Self context",
+                "Self driver FDs",
+                "Self wrapper FDs",
+                "Main mnt ns",
+                "Isolated mnt ns",
+                "Mount drift hits",
+                "Mount anchor drifts",
+                "Manager package",
+                "Manager traits",
+                "Cgroup paths",
+                "Cgroup visible",
+                "Cgroup proc",
+                "Cgroup denied",
+                "Cgroup hits",
+                "Kernel sources",
+                "Kernel hits",
+                "Properties checked",
+                "Property hits",
+                "Native library",
+            ),
+            DetectorStatus.info(InfoKind.ERROR),
+            "Error",
+        )
+
+        NativeRootStage.READY -> listOf(
+            NativeRootDetailRowModel(
+                "Paths checked",
+                report.pathCheckCount.toString(),
                 DetectorStatus.info(InfoKind.SUPPORT),
-                "Pending"
-            )
+            ),
+            NativeRootDetailRowModel(
+                "Path hits",
+                report.pathHitCount.toString(),
+                when {
+                    report.findings.any {
+                        it.group == NativeRootGroup.PATH &&
+                            it.severity == NativeRootFindingSeverity.DANGER
+                    } -> DetectorStatus.danger()
 
-            NativeRootStage.FAILED -> placeholderMethodRows(
-                DetectorStatus.info(InfoKind.ERROR),
-                "Failed"
-            )
+                    report.findings.any {
+                        it.group == NativeRootGroup.PATH &&
+                            it.severity == NativeRootFindingSeverity.WARNING
+                    } -> DetectorStatus.warning()
 
-            NativeRootStage.READY -> report.methods.map { result ->
-                NativeRootDetailRowModel(
-                    label = result.label,
-                    value = result.summary,
-                    status = methodStatus(result),
-                    detail = result.detail,
-                    detailMonospace = true,
-                )
-            }
-        }
-    }
+                    report.nativeAvailable -> DetectorStatus.allClear()
 
-    private fun buildScanRows(report: NativeRootReport): List<NativeRootDetailRowModel> {
-        return when (report.stage) {
-            NativeRootStage.LOADING -> placeholderRows(
-                listOf(
-                    "Paths checked",
-                    "Path hits",
-                    "Proc checked",
-                    "Proc denied",
-                    "Proc hits",
-                    "Self context",
-                    "Self driver FDs",
-                    "Self wrapper FDs",
-                    "Main mnt ns",
-                    "Isolated mnt ns",
-                    "Mount drift hits",
-                    "Mount anchor drifts",
-                    "Manager package",
-                    "Manager traits",
-                    "Cgroup paths",
-                    "Cgroup visible",
-                    "Cgroup proc",
-                    "Cgroup denied",
-                    "Cgroup hits",
-                    "Kernel sources",
-                    "Kernel hits",
-                    "Properties checked",
-                    "Property hits",
-                    "Native library",
-                ),
+                    else -> DetectorStatus.info(InfoKind.SUPPORT)
+                },
+            ),
+            NativeRootDetailRowModel(
+                "Proc checked",
+                if (report.nativeAvailable) report.processCheckedCount.toString() else "N/A",
+                if (report.nativeAvailable) {
+                    DetectorStatus.allClear()
+                } else {
+                    DetectorStatus.info(
+                        InfoKind.SUPPORT,
+                    )
+                },
+            ),
+            NativeRootDetailRowModel(
+                "Proc denied",
+                if (report.nativeAvailable) report.processDeniedCount.toString() else "N/A",
                 DetectorStatus.info(InfoKind.SUPPORT),
-                "Pending",
-            )
-
-            NativeRootStage.FAILED -> placeholderRows(
-                listOf(
-                    "Paths checked",
-                    "Path hits",
-                    "Proc checked",
-                    "Proc denied",
-                    "Proc hits",
-                    "Self context",
-                    "Self driver FDs",
-                    "Self wrapper FDs",
-                    "Main mnt ns",
-                    "Isolated mnt ns",
-                    "Mount drift hits",
-                    "Mount anchor drifts",
-                    "Manager package",
-                    "Manager traits",
-                    "Cgroup paths",
-                    "Cgroup visible",
-                    "Cgroup proc",
-                    "Cgroup denied",
-                    "Cgroup hits",
-                    "Kernel sources",
-                    "Kernel hits",
-                    "Properties checked",
-                    "Property hits",
-                    "Native library",
-                ),
-                DetectorStatus.info(InfoKind.ERROR),
-                "Error",
-            )
-
-            NativeRootStage.READY -> listOf(
-                NativeRootDetailRowModel(
-                    "Paths checked",
-                    report.pathCheckCount.toString(),
-                    DetectorStatus.info(InfoKind.SUPPORT)
-                ),
-                NativeRootDetailRowModel(
-                    "Path hits",
-                    report.pathHitCount.toString(),
-                    when {
-                        report.findings.any {
-                            it.group == NativeRootGroup.PATH &&
-                                it.severity == NativeRootFindingSeverity.DANGER
-                        } -> DetectorStatus.danger()
-
-                        report.findings.any {
-                            it.group == NativeRootGroup.PATH &&
-                                it.severity == NativeRootFindingSeverity.WARNING
-                        } -> DetectorStatus.warning()
-
-                        report.nativeAvailable -> DetectorStatus.allClear()
-                        else -> DetectorStatus.info(InfoKind.SUPPORT)
-                    },
-                ),
-                NativeRootDetailRowModel(
-                    "Proc checked",
-                    if (report.nativeAvailable) report.processCheckedCount.toString() else "N/A",
-                    if (report.nativeAvailable) DetectorStatus.allClear() else DetectorStatus.info(
-                        InfoKind.SUPPORT
-                    ),
-                ),
-                NativeRootDetailRowModel(
-                    "Proc denied",
-                    if (report.nativeAvailable) report.processDeniedCount.toString() else "N/A",
-                    DetectorStatus.info(InfoKind.SUPPORT),
-                ),
-                NativeRootDetailRowModel(
-                    "Proc hits",
-                    if (report.nativeAvailable) report.processHitCount.toString() else "N/A",
-                    when {
-                        report.processHitCount > 0 -> DetectorStatus.danger()
-                        report.nativeAvailable -> DetectorStatus.allClear()
-                        else -> DetectorStatus.info(InfoKind.SUPPORT)
-                    },
-                ),
-                NativeRootDetailRowModel(
-                    "Self context",
-                    when {
-                        report.selfContext.isNotBlank() -> report.selfContext
-                        report.nativeAvailable -> "Unavailable"
-                        else -> "N/A"
-                    },
-                    when {
-                        report.selfSuDomain -> DetectorStatus.danger()
-                        report.selfContext.isNotBlank() -> DetectorStatus.allClear()
-                        report.nativeAvailable -> DetectorStatus.info(InfoKind.SUPPORT)
-                        else -> DetectorStatus.info(InfoKind.SUPPORT)
-                    },
-                ),
-                NativeRootDetailRowModel(
-                    "Self driver FDs",
-                    if (report.nativeAvailable) report.selfKsuDriverFdCount.toString() else "N/A",
-                    when {
-                        report.selfKsuDriverFdCount > 0 -> DetectorStatus.danger()
-                        report.nativeAvailable -> DetectorStatus.allClear()
-                        else -> DetectorStatus.info(InfoKind.SUPPORT)
-                    },
-                ),
-                NativeRootDetailRowModel(
-                    "Self wrapper FDs",
-                    if (report.nativeAvailable) report.selfKsuFdwrapperFdCount.toString() else "N/A",
-                    when {
-                        report.selfKsuFdwrapperFdCount > 0 -> DetectorStatus.danger()
-                        report.nativeAvailable -> DetectorStatus.allClear()
-                        else -> DetectorStatus.info(InfoKind.SUPPORT)
-                    },
-                ),
-                NativeRootDetailRowModel(
-                    "Main mnt ns",
-                    report.mainMountNamespaceInode.ifBlank { "Unavailable" },
-                    when {
-                        report.mountDriftSignalCount > 0 -> DetectorStatus.warning()
-                        report.mainMountNamespaceInode.isNotBlank() -> DetectorStatus.allClear()
-                        else -> DetectorStatus.info(InfoKind.SUPPORT)
-                    },
-                ),
-                NativeRootDetailRowModel(
-                    "Isolated mnt ns",
-                    when {
-                        report.isolatedMountNamespaceInode.isNotBlank() -> report.isolatedMountNamespaceInode
-                        report.isolatedMountProbeAvailable -> "Unavailable"
-                        else -> "N/A"
-                    },
-                    when {
-                        report.mountDriftSignalCount > 0 -> DetectorStatus.warning()
-                        report.isolatedMountProbeAvailable -> DetectorStatus.allClear()
-                        else -> DetectorStatus.info(InfoKind.SUPPORT)
-                    },
-                ),
-                NativeRootDetailRowModel(
-                    "Mount drift hits",
-                    if (report.isolatedMountProbeAvailable) report.mountDriftSignalCount.toString() else "N/A",
-                    when {
-                        report.mountDriftSignalCount > 0 -> DetectorStatus.warning()
-                        report.isolatedMountProbeAvailable -> DetectorStatus.allClear()
-                        else -> DetectorStatus.info(InfoKind.SUPPORT)
-                    },
-                ),
-                NativeRootDetailRowModel(
-                    "Mount anchor drifts",
-                    if (report.isolatedMountProbeAvailable) report.mountAnchorDriftCount.toString() else "N/A",
-                    when {
-                        report.mountAnchorDriftCount > 0 -> DetectorStatus.warning()
-                        report.isolatedMountProbeAvailable -> DetectorStatus.allClear()
-                        else -> DetectorStatus.info(InfoKind.SUPPORT)
-                    },
-                ),
-                NativeRootDetailRowModel(
-                    "Manager package",
-                    when {
-                        report.ksuManagerPackagePresent -> "Present"
-                        report.ksuManagerVisibilityRestricted -> "Scoped"
-                        else -> "Clean"
-                    },
-                    when {
-                        report.ksuManagerPackagePresent -> DetectorStatus.warning()
-                        report.ksuManagerVisibilityRestricted -> DetectorStatus.info(InfoKind.SUPPORT)
-                        else -> DetectorStatus.allClear()
-                    },
-                ),
-                NativeRootDetailRowModel(
-                    "Manager traits",
-                    when {
-                        report.ksuManagerPackagePresent -> "${report.ksuManagerTraitHitCount}/3"
-                        report.ksuManagerVisibilityRestricted -> "N/A"
-                        else -> "N/A"
-                    },
-                    when {
-                        report.ksuManagerPackagePresent -> DetectorStatus.warning()
-                        report.ksuManagerVisibilityRestricted -> DetectorStatus.info(InfoKind.SUPPORT)
-                        else -> DetectorStatus.allClear()
-                    },
-                ),
-                NativeRootDetailRowModel(
-                    "Cgroup paths",
-                    if (report.cgroupAvailable) report.cgroupPathCheckCount.toString() else "N/A",
-                    if (report.cgroupAvailable) DetectorStatus.allClear() else DetectorStatus.info(
-                        InfoKind.SUPPORT
-                    ),
-                ),
-                NativeRootDetailRowModel(
-                    "Cgroup visible",
-                    if (report.cgroupAvailable) report.cgroupAccessiblePathCount.toString() else "N/A",
-                    if (report.cgroupAvailable) DetectorStatus.allClear() else DetectorStatus.info(
-                        InfoKind.SUPPORT
-                    ),
-                ),
-                NativeRootDetailRowModel(
-                    "Cgroup proc",
-                    if (report.cgroupAvailable) report.cgroupProcessCheckedCount.toString() else "N/A",
-                    if (report.cgroupAvailable) DetectorStatus.allClear() else DetectorStatus.info(
-                        InfoKind.SUPPORT
-                    ),
-                ),
-                NativeRootDetailRowModel(
-                    "Cgroup denied",
-                    if (report.cgroupAvailable) report.cgroupProcDeniedCount.toString() else "N/A",
-                    DetectorStatus.info(InfoKind.SUPPORT),
-                ),
-                NativeRootDetailRowModel(
-                    "Cgroup hits",
-                    if (report.cgroupAvailable) report.cgroupHitCount.toString() else "N/A",
-                    when {
-                        report.cgroupFindings.any { it.severity == NativeRootFindingSeverity.DANGER } -> DetectorStatus.danger()
-                        report.cgroupHitCount > 0 -> DetectorStatus.warning()
-                        report.cgroupAvailable -> DetectorStatus.allClear()
-                        else -> DetectorStatus.info(InfoKind.SUPPORT)
-                    },
-                ),
-                NativeRootDetailRowModel(
-                    "Kernel sources",
-                    if (report.nativeAvailable) report.kernelSourceCount.toString() else "N/A",
-                    if (report.nativeAvailable) DetectorStatus.allClear() else DetectorStatus.info(
-                        InfoKind.SUPPORT
-                    ),
-                ),
-                NativeRootDetailRowModel(
-                    "Kernel hits",
-                    if (report.nativeAvailable) report.kernelHitCount.toString() else "N/A",
-                    when {
-                        report.kernelHitCount > 0 -> DetectorStatus.warning()
-                        report.nativeAvailable -> DetectorStatus.allClear()
-                        else -> DetectorStatus.info(InfoKind.SUPPORT)
-                    },
-                ),
-                NativeRootDetailRowModel(
-                    "Properties checked",
-                    if (report.nativeAvailable) report.propertyCheckCount.toString() else "N/A",
-                    if (report.nativeAvailable) DetectorStatus.allClear() else DetectorStatus.info(
-                        InfoKind.SUPPORT
-                    ),
-                ),
-                NativeRootDetailRowModel(
-                    "Property hits",
-                    if (report.nativeAvailable) report.propertyHitCount.toString() else "N/A",
-                    when {
-                        report.propertyHitCount > 0 -> DetectorStatus.warning()
-                        report.nativeAvailable -> DetectorStatus.allClear()
-                        else -> DetectorStatus.info(InfoKind.SUPPORT)
-                    },
-                ),
-                NativeRootDetailRowModel(
-                    "Native library",
-                    if (report.nativeAvailable) "Loaded" else "Unavailable",
-                    if (report.nativeAvailable) DetectorStatus.allClear() else DetectorStatus.info(
-                        InfoKind.SUPPORT
-                    ),
-                ),
-            )
-        }
-    }
-
-    private fun findingRow(finding: NativeRootFinding): NativeRootDetailRowModel {
-        return NativeRootDetailRowModel(
-            label = finding.label,
-            value = finding.value,
-            status = findingStatus(finding),
-            detail = finding.detail,
-            detailMonospace = finding.detailMonospace,
+            ),
+            NativeRootDetailRowModel(
+                "Proc hits",
+                if (report.nativeAvailable) report.processHitCount.toString() else "N/A",
+                when {
+                    report.processHitCount > 0 -> DetectorStatus.danger()
+                    report.nativeAvailable -> DetectorStatus.allClear()
+                    else -> DetectorStatus.info(InfoKind.SUPPORT)
+                },
+            ),
+            NativeRootDetailRowModel(
+                "Self context",
+                when {
+                    report.selfContext.isNotBlank() -> report.selfContext
+                    report.nativeAvailable -> "Unavailable"
+                    else -> "N/A"
+                },
+                when {
+                    report.selfSuDomain -> DetectorStatus.danger()
+                    report.selfContext.isNotBlank() -> DetectorStatus.allClear()
+                    report.nativeAvailable -> DetectorStatus.info(InfoKind.SUPPORT)
+                    else -> DetectorStatus.info(InfoKind.SUPPORT)
+                },
+            ),
+            NativeRootDetailRowModel(
+                "Self driver FDs",
+                if (report.nativeAvailable) report.selfKsuDriverFdCount.toString() else "N/A",
+                when {
+                    report.selfKsuDriverFdCount > 0 -> DetectorStatus.danger()
+                    report.nativeAvailable -> DetectorStatus.allClear()
+                    else -> DetectorStatus.info(InfoKind.SUPPORT)
+                },
+            ),
+            NativeRootDetailRowModel(
+                "Self wrapper FDs",
+                if (report.nativeAvailable) report.selfKsuFdwrapperFdCount.toString() else "N/A",
+                when {
+                    report.selfKsuFdwrapperFdCount > 0 -> DetectorStatus.danger()
+                    report.nativeAvailable -> DetectorStatus.allClear()
+                    else -> DetectorStatus.info(InfoKind.SUPPORT)
+                },
+            ),
+            NativeRootDetailRowModel(
+                "Main mnt ns",
+                report.mainMountNamespaceInode.ifBlank { "Unavailable" },
+                when {
+                    report.mountDriftSignalCount > 0 -> DetectorStatus.warning()
+                    report.mainMountNamespaceInode.isNotBlank() -> DetectorStatus.allClear()
+                    else -> DetectorStatus.info(InfoKind.SUPPORT)
+                },
+            ),
+            NativeRootDetailRowModel(
+                "Isolated mnt ns",
+                when {
+                    report.isolatedMountNamespaceInode.isNotBlank() -> report.isolatedMountNamespaceInode
+                    report.isolatedMountProbeAvailable -> "Unavailable"
+                    else -> "N/A"
+                },
+                when {
+                    report.mountDriftSignalCount > 0 -> DetectorStatus.warning()
+                    report.isolatedMountProbeAvailable -> DetectorStatus.allClear()
+                    else -> DetectorStatus.info(InfoKind.SUPPORT)
+                },
+            ),
+            NativeRootDetailRowModel(
+                "Mount drift hits",
+                if (report.isolatedMountProbeAvailable) report.mountDriftSignalCount.toString() else "N/A",
+                when {
+                    report.mountDriftSignalCount > 0 -> DetectorStatus.warning()
+                    report.isolatedMountProbeAvailable -> DetectorStatus.allClear()
+                    else -> DetectorStatus.info(InfoKind.SUPPORT)
+                },
+            ),
+            NativeRootDetailRowModel(
+                "Mount anchor drifts",
+                if (report.isolatedMountProbeAvailable) report.mountAnchorDriftCount.toString() else "N/A",
+                when {
+                    report.mountAnchorDriftCount > 0 -> DetectorStatus.warning()
+                    report.isolatedMountProbeAvailable -> DetectorStatus.allClear()
+                    else -> DetectorStatus.info(InfoKind.SUPPORT)
+                },
+            ),
+            NativeRootDetailRowModel(
+                "Manager package",
+                when {
+                    report.ksuManagerPackagePresent -> "Present"
+                    report.ksuManagerVisibilityRestricted -> "Scoped"
+                    else -> "Clean"
+                },
+                when {
+                    report.ksuManagerPackagePresent -> DetectorStatus.warning()
+                    report.ksuManagerVisibilityRestricted -> DetectorStatus.info(InfoKind.SUPPORT)
+                    else -> DetectorStatus.allClear()
+                },
+            ),
+            NativeRootDetailRowModel(
+                "Manager traits",
+                when {
+                    report.ksuManagerPackagePresent -> "${report.ksuManagerTraitHitCount}/3"
+                    report.ksuManagerVisibilityRestricted -> "N/A"
+                    else -> "N/A"
+                },
+                when {
+                    report.ksuManagerPackagePresent -> DetectorStatus.warning()
+                    report.ksuManagerVisibilityRestricted -> DetectorStatus.info(InfoKind.SUPPORT)
+                    else -> DetectorStatus.allClear()
+                },
+            ),
+            NativeRootDetailRowModel(
+                "Cgroup paths",
+                if (report.cgroupAvailable) report.cgroupPathCheckCount.toString() else "N/A",
+                if (report.cgroupAvailable) {
+                    DetectorStatus.allClear()
+                } else {
+                    DetectorStatus.info(
+                        InfoKind.SUPPORT,
+                    )
+                },
+            ),
+            NativeRootDetailRowModel(
+                "Cgroup visible",
+                if (report.cgroupAvailable) report.cgroupAccessiblePathCount.toString() else "N/A",
+                if (report.cgroupAvailable) {
+                    DetectorStatus.allClear()
+                } else {
+                    DetectorStatus.info(
+                        InfoKind.SUPPORT,
+                    )
+                },
+            ),
+            NativeRootDetailRowModel(
+                "Cgroup proc",
+                if (report.cgroupAvailable) report.cgroupProcessCheckedCount.toString() else "N/A",
+                if (report.cgroupAvailable) {
+                    DetectorStatus.allClear()
+                } else {
+                    DetectorStatus.info(
+                        InfoKind.SUPPORT,
+                    )
+                },
+            ),
+            NativeRootDetailRowModel(
+                "Cgroup denied",
+                if (report.cgroupAvailable) report.cgroupProcDeniedCount.toString() else "N/A",
+                DetectorStatus.info(InfoKind.SUPPORT),
+            ),
+            NativeRootDetailRowModel(
+                "Cgroup hits",
+                if (report.cgroupAvailable) report.cgroupHitCount.toString() else "N/A",
+                when {
+                    report.cgroupFindings.any { it.severity == NativeRootFindingSeverity.DANGER } -> DetectorStatus.danger()
+                    report.cgroupHitCount > 0 -> DetectorStatus.warning()
+                    report.cgroupAvailable -> DetectorStatus.allClear()
+                    else -> DetectorStatus.info(InfoKind.SUPPORT)
+                },
+            ),
+            NativeRootDetailRowModel(
+                "Kernel sources",
+                if (report.nativeAvailable) report.kernelSourceCount.toString() else "N/A",
+                if (report.nativeAvailable) {
+                    DetectorStatus.allClear()
+                } else {
+                    DetectorStatus.info(
+                        InfoKind.SUPPORT,
+                    )
+                },
+            ),
+            NativeRootDetailRowModel(
+                "Kernel hits",
+                if (report.nativeAvailable) report.kernelHitCount.toString() else "N/A",
+                when {
+                    report.kernelHitCount > 0 -> DetectorStatus.warning()
+                    report.nativeAvailable -> DetectorStatus.allClear()
+                    else -> DetectorStatus.info(InfoKind.SUPPORT)
+                },
+            ),
+            NativeRootDetailRowModel(
+                "Properties checked",
+                if (report.nativeAvailable) report.propertyCheckCount.toString() else "N/A",
+                if (report.nativeAvailable) {
+                    DetectorStatus.allClear()
+                } else {
+                    DetectorStatus.info(
+                        InfoKind.SUPPORT,
+                    )
+                },
+            ),
+            NativeRootDetailRowModel(
+                "Property hits",
+                if (report.nativeAvailable) report.propertyHitCount.toString() else "N/A",
+                when {
+                    report.propertyHitCount > 0 -> DetectorStatus.warning()
+                    report.nativeAvailable -> DetectorStatus.allClear()
+                    else -> DetectorStatus.info(InfoKind.SUPPORT)
+                },
+            ),
+            NativeRootDetailRowModel(
+                "Native library",
+                if (report.nativeAvailable) "Loaded" else "Unavailable",
+                if (report.nativeAvailable) {
+                    DetectorStatus.allClear()
+                } else {
+                    DetectorStatus.info(
+                        InfoKind.SUPPORT,
+                    )
+                },
+            ),
         )
     }
+
+    private fun findingRow(finding: NativeRootFinding): NativeRootDetailRowModel = NativeRootDetailRowModel(
+        label = finding.label,
+        value = finding.value,
+        status = findingStatus(finding),
+        detail = finding.detail,
+        detailMonospace = finding.detailMonospace,
+    )
 
     private fun placeholderFacts(
         value: String,
         status: DetectorStatus,
-    ): List<NativeRootHeaderFactModel> {
-        return listOf(
-            NativeRootHeaderFactModel("Flags", value, status),
-            NativeRootHeaderFactModel("Direct", value, status),
-            NativeRootHeaderFactModel("Kernel", value, status),
-            NativeRootHeaderFactModel("Runtime", value, status),
-        )
-    }
+    ): List<NativeRootHeaderFactModel> = listOf(
+        NativeRootHeaderFactModel("Flags", value, status),
+        NativeRootHeaderFactModel("Direct", value, status),
+        NativeRootHeaderFactModel("Kernel", value, status),
+        NativeRootHeaderFactModel("Runtime", value, status),
+    )
 
     private fun placeholderRows(
         labels: List<String>,
         status: DetectorStatus,
         value: String,
         monospace: Boolean = false,
-    ): List<NativeRootDetailRowModel> {
-        return labels.map { label ->
-            NativeRootDetailRowModel(
-                label = label,
-                value = value,
-                status = status,
-                detailMonospace = monospace,
-            )
-        }
+    ): List<NativeRootDetailRowModel> = labels.map { label ->
+        NativeRootDetailRowModel(
+            label = label,
+            value = value,
+            status = status,
+            detailMonospace = monospace,
+        )
     }
 
     private fun placeholderMethodRows(
         status: DetectorStatus,
         value: String,
-    ): List<NativeRootDetailRowModel> {
-        return listOf(
-            "ksuReadonlySupercall",
-            "prctlProbe",
-            "susfsSideChannel",
-            "selfProcessIoc",
-            "isolatedMountDrift",
-            "ksuManagerFingerprint",
-            "runtimeArtifacts",
-            "cgroupLeakage",
-            "kernelTraces",
-            "propertyResidue",
-            "nativeLibrary",
-            "signalSummary",
-        ).map { label ->
-            NativeRootDetailRowModel(
-                label = label,
-                value = value,
-                status = status,
-            )
+    ): List<NativeRootDetailRowModel> = listOf(
+        "ksuReadonlySupercall",
+        "prctlProbe",
+        "susfsSideChannel",
+        "selfProcessIoc",
+        "isolatedMountDrift",
+        "ksuManagerFingerprint",
+        "runtimeArtifacts",
+        "cgroupLeakage",
+        "kernelTraces",
+        "propertyResidue",
+        "nativeLibrary",
+        "signalSummary",
+    ).map { label ->
+        NativeRootDetailRowModel(
+            label = label,
+            value = value,
+            status = status,
+        )
+    }
+
+    private fun familyValue(report: NativeRootReport): String = when {
+        report.detectedFamilies.isEmpty() && report.nativeAvailable -> "None"
+
+        report.detectedFamilies.isEmpty() -> "N/A"
+
+        report.detectedFamilies.size <= 2 -> report.detectedFamilies.joinToString("/")
+
+        else -> report.detectedFamilies.take(2)
+            .joinToString("/") + " +${report.detectedFamilies.size - 2}"
+    }
+
+    private fun findingStatus(finding: NativeRootFinding): DetectorStatus = when (finding.severity) {
+        NativeRootFindingSeverity.DANGER -> DetectorStatus.danger()
+        NativeRootFindingSeverity.WARNING -> DetectorStatus.warning()
+        NativeRootFindingSeverity.INFO -> DetectorStatus.info(InfoKind.SUPPORT)
+    }
+
+    private fun methodStatus(result: NativeRootMethodResult): DetectorStatus = when (result.outcome) {
+        NativeRootMethodOutcome.CLEAN -> DetectorStatus.allClear()
+        NativeRootMethodOutcome.DETECTED -> DetectorStatus.danger()
+        NativeRootMethodOutcome.WARNING -> DetectorStatus.warning()
+        NativeRootMethodOutcome.SUPPORT -> DetectorStatus.info(InfoKind.SUPPORT)
+    }
+
+    private fun NativeRootReport.toDetectorStatus(): DetectorStatus = when (stage) {
+        NativeRootStage.LOADING -> DetectorStatus.info(InfoKind.SUPPORT)
+
+        NativeRootStage.FAILED -> DetectorStatus.info(InfoKind.ERROR)
+
+        NativeRootStage.READY -> when {
+            hasDangerFindings -> DetectorStatus.danger()
+            hasWarningFindings -> DetectorStatus.warning()
+            !nativeAvailable -> DetectorStatus.info(InfoKind.SUPPORT)
+            hasReducedCoverage() -> DetectorStatus.info(InfoKind.SUPPORT)
+            else -> DetectorStatus.allClear()
         }
     }
 
-    private fun familyValue(report: NativeRootReport): String {
-        return when {
-            report.detectedFamilies.isEmpty() && report.nativeAvailable -> "None"
-            report.detectedFamilies.isEmpty() -> "N/A"
-            report.detectedFamilies.size <= 2 -> report.detectedFamilies.joinToString("/")
-            else -> report.detectedFamilies.take(2)
-                .joinToString("/") + " +${report.detectedFamilies.size - 2}"
-        }
-    }
+    private fun NativeRootReport.hasReducedCoverage(): Boolean = ksuSupercallBlocked ||
+        !ksuSupercallAttempted ||
+        hasRuntimeReducedCoverage()
 
-    private fun findingStatus(finding: NativeRootFinding): DetectorStatus {
-        return when (finding.severity) {
-            NativeRootFindingSeverity.DANGER -> DetectorStatus.danger()
-            NativeRootFindingSeverity.WARNING -> DetectorStatus.warning()
-            NativeRootFindingSeverity.INFO -> DetectorStatus.info(InfoKind.SUPPORT)
-        }
-    }
-
-    private fun methodStatus(result: NativeRootMethodResult): DetectorStatus {
-        return when (result.outcome) {
-            NativeRootMethodOutcome.CLEAN -> DetectorStatus.allClear()
-            NativeRootMethodOutcome.DETECTED -> DetectorStatus.danger()
-            NativeRootMethodOutcome.WARNING -> DetectorStatus.warning()
-            NativeRootMethodOutcome.SUPPORT -> DetectorStatus.info(InfoKind.SUPPORT)
-        }
-    }
-
-    private fun NativeRootReport.toDetectorStatus(): DetectorStatus {
-        return when (stage) {
-            NativeRootStage.LOADING -> DetectorStatus.info(InfoKind.SUPPORT)
-            NativeRootStage.FAILED -> DetectorStatus.info(InfoKind.ERROR)
-            NativeRootStage.READY -> when {
-                hasDangerFindings -> DetectorStatus.danger()
-                hasWarningFindings -> DetectorStatus.warning()
-                !nativeAvailable -> DetectorStatus.info(InfoKind.SUPPORT)
-                hasReducedCoverage() -> DetectorStatus.info(InfoKind.SUPPORT)
-                else -> DetectorStatus.allClear()
-            }
-        }
-    }
-
-    private fun NativeRootReport.hasReducedCoverage(): Boolean {
-        return ksuSupercallBlocked ||
-                !ksuSupercallAttempted ||
-                hasRuntimeReducedCoverage()
-    }
-
-    private fun NativeRootReport.hasRuntimeReducedCoverage(): Boolean {
-        return !cgroupAvailable ||
-                !isolatedMountProbeAvailable ||
-                ksuManagerVisibilityRestricted
-    }
+    private fun NativeRootReport.hasRuntimeReducedCoverage(): Boolean = !cgroupAvailable ||
+        !isolatedMountProbeAvailable ||
+        ksuManagerVisibilityRestricted
 }

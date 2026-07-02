@@ -25,7 +25,5 @@ class CustomRomModificationProbe {
     val checkedPropertyCount: Int
         get() = CustomRomCatalog.modificationProperties.size
 
-    fun inspect(nativeSnapshot: CustomRomNativeSnapshot): List<CustomRomModificationFinding> {
-        return nativeSnapshot.modificationFindings.distinct()
-    }
+    fun inspect(nativeSnapshot: CustomRomNativeSnapshot): List<CustomRomModificationFinding> = nativeSnapshot.modificationFindings.distinct()
 }

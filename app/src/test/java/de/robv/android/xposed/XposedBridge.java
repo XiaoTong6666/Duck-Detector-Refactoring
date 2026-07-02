@@ -7,6 +7,5 @@ public final class XposedBridge {
     public static boolean disableHooks = false;
     public static Map<String, String> sHookedMethodCallbacks = new HashMap<>();
 
-    private XposedBridge() {
-    }
+    private XposedBridge() {}
 }

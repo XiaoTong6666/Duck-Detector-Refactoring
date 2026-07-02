@@ -66,71 +66,81 @@ class ZygiskNativeBridge {
     private fun ZygiskNativeSnapshot.applyEntry(
         key: String,
         value: String,
-    ): ZygiskNativeSnapshot {
-        return when (key) {
-            "AVAILABLE" -> copy(available = value.asBool())
-            "HEAP_AVAILABLE" -> copy(heapAvailable = value.asBool())
-            "SECCOMP_SUPPORTED" -> copy(seccompSupported = value.asBool())
-            "TRACER_PID" -> copy(tracerPid = value.toIntOrNull() ?: tracerPid)
-            "STRONG_HITS" -> copy(strongHitCount = value.toIntOrNull() ?: strongHitCount)
-            "HEURISTIC_HITS" -> copy(heuristicHitCount = value.toIntOrNull() ?: heuristicHitCount)
-            "SOLIST_HITS" -> copy(solistHitCount = value.toIntOrNull() ?: solistHitCount)
-            "VMAP_HITS" -> copy(vmapHitCount = value.toIntOrNull() ?: vmapHitCount)
-            "ATEXIT_HITS" -> copy(atexitHitCount = value.toIntOrNull() ?: atexitHitCount)
-            "SMAPS_HITS" -> copy(smapsHitCount = value.toIntOrNull() ?: smapsHitCount)
-            "NAMESPACE_HITS" -> copy(namespaceHitCount = value.toIntOrNull() ?: namespaceHitCount)
-            "LINKER_HOOK_HITS" -> copy(
-                linkerHookHitCount = value.toIntOrNull() ?: linkerHookHitCount
-            )
+    ): ZygiskNativeSnapshot = when (key) {
+        "AVAILABLE" -> copy(available = value.asBool())
 
-            "STACK_LEAK_HITS" -> copy(stackLeakHitCount = value.toIntOrNull() ?: stackLeakHitCount)
-            "SECCOMP_HITS" -> copy(seccompHitCount = value.toIntOrNull() ?: seccompHitCount)
-            "HEAP_HITS" -> copy(heapHitCount = value.toIntOrNull() ?: heapHitCount)
-            "THREAD_HITS" -> copy(threadHitCount = value.toIntOrNull() ?: threadHitCount)
-            "FD_HITS" -> copy(fdHitCount = value.toIntOrNull() ?: fdHitCount)
-            else -> this
-        }
+        "HEAP_AVAILABLE" -> copy(heapAvailable = value.asBool())
+
+        "SECCOMP_SUPPORTED" -> copy(seccompSupported = value.asBool())
+
+        "TRACER_PID" -> copy(tracerPid = value.toIntOrNull() ?: tracerPid)
+
+        "STRONG_HITS" -> copy(strongHitCount = value.toIntOrNull() ?: strongHitCount)
+
+        "HEURISTIC_HITS" -> copy(heuristicHitCount = value.toIntOrNull() ?: heuristicHitCount)
+
+        "SOLIST_HITS" -> copy(solistHitCount = value.toIntOrNull() ?: solistHitCount)
+
+        "VMAP_HITS" -> copy(vmapHitCount = value.toIntOrNull() ?: vmapHitCount)
+
+        "ATEXIT_HITS" -> copy(atexitHitCount = value.toIntOrNull() ?: atexitHitCount)
+
+        "SMAPS_HITS" -> copy(smapsHitCount = value.toIntOrNull() ?: smapsHitCount)
+
+        "NAMESPACE_HITS" -> copy(namespaceHitCount = value.toIntOrNull() ?: namespaceHitCount)
+
+        "LINKER_HOOK_HITS" -> copy(
+            linkerHookHitCount = value.toIntOrNull() ?: linkerHookHitCount,
+        )
+
+        "STACK_LEAK_HITS" -> copy(stackLeakHitCount = value.toIntOrNull() ?: stackLeakHitCount)
+
+        "SECCOMP_HITS" -> copy(seccompHitCount = value.toIntOrNull() ?: seccompHitCount)
+
+        "HEAP_HITS" -> copy(heapHitCount = value.toIntOrNull() ?: heapHitCount)
+
+        "THREAD_HITS" -> copy(threadHitCount = value.toIntOrNull() ?: threadHitCount)
+
+        "FD_HITS" -> copy(fdHitCount = value.toIntOrNull() ?: fdHitCount)
+
+        else -> this
     }
 
-    private fun String.asBool(): Boolean {
-        return this == "1" || equals("true", ignoreCase = true)
-    }
+    private fun String.asBool(): Boolean = this == "1" || equals("true", ignoreCase = true)
 
-    private fun String.decodeValue(): String {
-        return buildString(length) {
-            var index = 0
-            while (index < this@decodeValue.length) {
-                val current = this@decodeValue[index]
-                if (current == '\\' && index + 1 < this@decodeValue.length) {
-                    when (this@decodeValue[index + 1]) {
-                        'n' -> {
-                            append('\n')
-                            index += 2
-                            continue
-                        }
+    private fun String.decodeValue(): String = buildString(length) {
+        var index = 0
+        while (index < this@decodeValue.length) {
+            val current = this@decodeValue[index]
+            if (current == '\\' && index + 1 < this@decodeValue.length) {
+                when (this@decodeValue[index + 1]) {
+                    'n' -> {
+                        append('\n')
+                        index += 2
+                        continue
+                    }
 
-                        'r' -> {
-                            append('\r')
-                            index += 2
-                            continue
-                        }
+                    'r' -> {
+                        append('\r')
+                        index += 2
+                        continue
+                    }
 
-                        't' -> {
-                            append('\t')
-                            index += 2
-                            continue
-                        }
+                    't' -> {
+                        append('\t')
+                        index += 2
+                        continue
+                    }
 
-                        '\\' -> {
-                            append('\\')
-                            index += 2
-                            continue
-                        }
+                    '\\' -> {
+                        append('\\')
+                        index += 2
+                        continue
                     }
                 }
-                append(current)
-                index += 1
             }
+            append(current)
+            index += 1
         }
     }
 

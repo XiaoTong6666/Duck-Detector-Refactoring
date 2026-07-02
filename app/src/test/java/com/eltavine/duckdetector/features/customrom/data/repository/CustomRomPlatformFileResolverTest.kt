@@ -78,7 +78,5 @@ class CustomRomPlatformFileResolverTest {
         assertEquals(listOf(nativeFinding), findings)
     }
 
-    private fun shouldSkip(romName: String, isPixel: Boolean): Boolean {
-        return isPixel && romName == "PixelExperience"
-    }
+    private fun shouldSkip(romName: String, isPixel: Boolean): Boolean = isPixel && romName == "PixelExperience"
 }

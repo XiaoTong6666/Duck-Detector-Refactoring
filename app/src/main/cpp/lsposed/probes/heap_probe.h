@@ -21,7 +21,7 @@
 
 namespace duckdetector::lsposed {
 
-    ProbeResult scan_heap_residuals();
+ProbeResult scan_heap_residuals();
 
 }  // namespace duckdetector::lsposed
 

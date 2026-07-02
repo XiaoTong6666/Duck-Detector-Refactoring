@@ -128,7 +128,8 @@ class KernelSuManagerFingerprintProbe(
             append("\nisolatedProcess services=")
             append(
                 snapshot.isolatedProcessServices.joinToString(separator = ", ")
-                    .ifBlank { "<none>" })
+                    .ifBlank { "<none>" },
+            )
             append("\nuseAppZygote services=")
             append(snapshot.appZygoteServices.joinToString(separator = ", ").ifBlank { "<none>" })
             append("\npackageVisibility=")

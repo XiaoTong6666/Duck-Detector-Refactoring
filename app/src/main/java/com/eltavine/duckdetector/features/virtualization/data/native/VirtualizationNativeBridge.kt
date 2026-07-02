@@ -105,6 +105,7 @@ open class VirtualizationNativeBridge {
                         val value = line.substringAfter('=')
                         snapshot = when (key) {
                             "AVAILABLE" -> snapshot.copy(available = value.asBool())
+
                             "MAP_LINE_COUNT" -> snapshot.copy(
                                 mapLineCount = value.toIntOrNull() ?: snapshot.mapLineCount,
                             )
@@ -133,15 +134,21 @@ open class VirtualizationNativeBridge {
                             )
 
                             "EGL_AVAILABLE" -> snapshot.copy(eglAvailable = value.asBool())
+
                             "EGL_VENDOR" -> snapshot.copy(eglVendor = value.decodeValue())
+
                             "EGL_RENDERER" -> snapshot.copy(eglRenderer = value.decodeValue())
+
                             "EGL_VERSION" -> snapshot.copy(eglVersion = value.decodeValue())
+
                             "MOUNT_NAMESPACE_INODE" -> snapshot.copy(
                                 mountNamespaceInode = value.decodeValue(),
                             )
 
                             "APEX_MOUNT_KEY" -> snapshot.copy(apexMountKey = value.decodeValue())
+
                             "SYSTEM_MOUNT_KEY" -> snapshot.copy(systemMountKey = value.decodeValue())
+
                             "VENDOR_MOUNT_KEY" -> snapshot.copy(vendorMountKey = value.decodeValue())
 
                             else -> snapshot
@@ -284,10 +291,8 @@ open class VirtualizationNativeBridge {
         )
     }
 
-    private fun String.decodeValue(): String {
-        return replace("\\n", "\n")
-            .replace("\\r", "\r")
-    }
+    private fun String.decodeValue(): String = replace("\\n", "\n")
+        .replace("\\r", "\r")
 
     private fun String?.asBool(): Boolean {
         val value = this.orEmpty()

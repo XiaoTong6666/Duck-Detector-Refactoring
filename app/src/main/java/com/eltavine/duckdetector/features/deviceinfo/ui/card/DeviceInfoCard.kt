@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("ktlint:standard:function-naming")
+
 package com.eltavine.duckdetector.features.deviceinfo.ui.card
 
 import androidx.compose.foundation.layout.Arrangement
@@ -21,7 +23,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Android
 import androidx.compose.material.icons.rounded.Badge
@@ -31,7 +32,6 @@ import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.SettingsEthernet
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -203,13 +203,11 @@ private fun DeviceInfoRow(
 
 private fun sectionIcon(
     title: String,
-): ImageVector {
-    return when (title) {
-        "Identity" -> Icons.Rounded.Badge
-        "Build" -> Icons.Rounded.Dns
-        "Android" -> Icons.Rounded.Android
-        "Runtime" -> Icons.Rounded.Memory
-        "Context" -> Icons.Rounded.SettingsEthernet
-        else -> Icons.Rounded.Info
-    }
+): ImageVector = when (title) {
+    "Identity" -> Icons.Rounded.Badge
+    "Build" -> Icons.Rounded.Dns
+    "Android" -> Icons.Rounded.Android
+    "Runtime" -> Icons.Rounded.Memory
+    "Context" -> Icons.Rounded.SettingsEthernet
+    else -> Icons.Rounded.Info
 }

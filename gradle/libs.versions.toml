@@ -15,6 +15,7 @@ material3 = "1.5.0-alpha23"
 datastore = "1.2.1"
 bouncycastle = "1.84"
 hiddenApiBypass = "6.1"
+spotless = "8.8.0"
 soterWrapper = "2.0.7"
 coroutines = "1.11.0"
 composeIcons = "1.1.1"
@@ -83,4 +84,7 @@ test-unit = [
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }

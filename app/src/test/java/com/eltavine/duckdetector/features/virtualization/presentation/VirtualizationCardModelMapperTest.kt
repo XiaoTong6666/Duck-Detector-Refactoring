@@ -78,7 +78,7 @@ class VirtualizationCardModelMapperTest {
                     VirtualizationMethodResult(
                         "Host apps",
                         "1 corroborating app(s)",
-                        VirtualizationMethodOutcome.INFO
+                        VirtualizationMethodOutcome.INFO,
                     ),
                 ),
                 impacts = listOf(

@@ -18,11 +18,9 @@ package com.eltavine.duckdetector.features.lsposed.data.native
 
 class LSPosedNativeBridge {
 
-    fun collectSnapshot(): LSPosedNativeSnapshot {
-        return runCatching {
-            parse(nativeCollectSnapshot())
-        }.getOrDefault(LSPosedNativeSnapshot())
-    }
+    fun collectSnapshot(): LSPosedNativeSnapshot = runCatching {
+        parse(nativeCollectSnapshot())
+    }.getOrDefault(LSPosedNativeSnapshot())
 
     internal fun parse(raw: String): LSPosedNativeSnapshot {
         if (raw.isBlank()) {
@@ -63,57 +61,51 @@ class LSPosedNativeBridge {
     private fun LSPosedNativeSnapshot.applyEntry(
         key: String,
         value: String,
-    ): LSPosedNativeSnapshot {
-        return when (key) {
-            "AVAILABLE" -> copy(available = value.asBool())
-            "HEAP_AVAILABLE" -> copy(heapAvailable = value.asBool())
-            "MAPS_HITS" -> copy(mapsHitCount = value.toIntOrNull() ?: mapsHitCount)
-            "MAPS_SCANNED" -> copy(mapsScannedLines = value.toIntOrNull() ?: mapsScannedLines)
-            "HEAP_HITS" -> copy(heapHitCount = value.toIntOrNull() ?: heapHitCount)
-            "HEAP_SCANNED" -> copy(heapScannedRegions = value.toIntOrNull() ?: heapScannedRegions)
-            else -> this
-        }
+    ): LSPosedNativeSnapshot = when (key) {
+        "AVAILABLE" -> copy(available = value.asBool())
+        "HEAP_AVAILABLE" -> copy(heapAvailable = value.asBool())
+        "MAPS_HITS" -> copy(mapsHitCount = value.toIntOrNull() ?: mapsHitCount)
+        "MAPS_SCANNED" -> copy(mapsScannedLines = value.toIntOrNull() ?: mapsScannedLines)
+        "HEAP_HITS" -> copy(heapHitCount = value.toIntOrNull() ?: heapHitCount)
+        "HEAP_SCANNED" -> copy(heapScannedRegions = value.toIntOrNull() ?: heapScannedRegions)
+        else -> this
     }
 
-    private fun String.asBool(): Boolean {
-        return this == "1" || equals("true", ignoreCase = true)
-    }
+    private fun String.asBool(): Boolean = this == "1" || equals("true", ignoreCase = true)
 
-    private fun String.decodeValue(): String {
-        return buildString(length) {
-            var index = 0
-            while (index < this@decodeValue.length) {
-                val current = this@decodeValue[index]
-                if (current == '\\' && index + 1 < this@decodeValue.length) {
-                    when (this@decodeValue[index + 1]) {
-                        'n' -> {
-                            append('\n')
-                            index += 2
-                            continue
-                        }
+    private fun String.decodeValue(): String = buildString(length) {
+        var index = 0
+        while (index < this@decodeValue.length) {
+            val current = this@decodeValue[index]
+            if (current == '\\' && index + 1 < this@decodeValue.length) {
+                when (this@decodeValue[index + 1]) {
+                    'n' -> {
+                        append('\n')
+                        index += 2
+                        continue
+                    }
 
-                        'r' -> {
-                            append('\r')
-                            index += 2
-                            continue
-                        }
+                    'r' -> {
+                        append('\r')
+                        index += 2
+                        continue
+                    }
 
-                        't' -> {
-                            append('\t')
-                            index += 2
-                            continue
-                        }
+                    't' -> {
+                        append('\t')
+                        index += 2
+                        continue
+                    }
 
-                        '\\' -> {
-                            append('\\')
-                            index += 2
-                            continue
-                        }
+                    '\\' -> {
+                        append('\\')
+                        index += 2
+                        continue
                     }
                 }
-                append(current)
-                index += 1
             }
+            append(current)
+            index += 1
         }
     }
 

@@ -44,8 +44,8 @@ class ChainStructureAnalyzer {
                 .lastOrNull()
         val chainLengthAnomaly = chain.size !in MIN_CHAIN_LENGTH..MAX_CHAIN_LENGTH
         val provisioningConsistencyIssue = provisioningIndex != null &&
-                trustedAttestationIndex != null &&
-                provisioningIndex != trustedAttestationIndex + 1
+            trustedAttestationIndex != null &&
+            provisioningIndex != trustedAttestationIndex + 1
         return ChainStructureResult(
             chainLength = chain.size,
             chainLengthAnomaly = chainLengthAnomaly,

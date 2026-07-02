@@ -32,431 +32,415 @@ import com.eltavine.duckdetector.features.memory.ui.model.MemoryImpactItemModel
 
 class MemoryCardModelMapper {
 
-    fun map(report: MemoryReport): MemoryCardModel {
-        return MemoryCardModel(
-            title = "Memory",
-            subtitle = buildSubtitle(report),
-            status = report.toDetectorStatus(),
-            verdict = buildVerdict(report),
-            summary = buildSummary(report),
-            headerFacts = buildHeaderFacts(report),
-            hookRows = buildSectionRows(report, setOf(MemoryFindingSection.HOOK), "Function hooks"),
-            mappingRows = buildSectionRows(
-                report,
-                setOf(MemoryFindingSection.MAPS, MemoryFindingSection.FD),
-                "Mappings"
+    fun map(report: MemoryReport): MemoryCardModel = MemoryCardModel(
+        title = "Memory",
+        subtitle = buildSubtitle(report),
+        status = report.toDetectorStatus(),
+        verdict = buildVerdict(report),
+        summary = buildSummary(report),
+        headerFacts = buildHeaderFacts(report),
+        hookRows = buildSectionRows(report, setOf(MemoryFindingSection.HOOK), "Function hooks"),
+        mappingRows = buildSectionRows(
+            report,
+            setOf(MemoryFindingSection.MAPS, MemoryFindingSection.FD),
+            "Mappings",
+        ),
+        loaderRows = buildSectionRows(
+            report,
+            setOf(
+                MemoryFindingSection.SIGNAL,
+                MemoryFindingSection.VDSO,
+                MemoryFindingSection.LINKER,
             ),
-            loaderRows = buildSectionRows(
-                report,
-                setOf(
-                    MemoryFindingSection.SIGNAL,
-                    MemoryFindingSection.VDSO,
-                    MemoryFindingSection.LINKER
-                ),
-                "Loader visibility"
-            ),
-            impactItems = buildImpactItems(report),
-            methodRows = buildMethodRows(report),
-            scanRows = buildScanRows(report),
+            "Loader visibility",
+        ),
+        impactItems = buildImpactItems(report),
+        methodRows = buildMethodRows(report),
+        scanRows = buildScanRows(report),
+    )
+
+    private fun buildSubtitle(report: MemoryReport): String = when (report.stage) {
+        MemoryStage.LOADING -> "function entry + maps/smaps + fd + signal + linker"
+        MemoryStage.FAILED -> "local native probe failed"
+        MemoryStage.READY -> "6 native detector families · current-process memory only"
+    }
+
+    private fun buildVerdict(report: MemoryReport): String = when (report.stage) {
+        MemoryStage.LOADING -> "Scanning runtime memory"
+
+        MemoryStage.FAILED -> "Memory scan failed"
+
+        MemoryStage.READY -> when {
+            report.dangerFindingCount > 0 -> "${report.dangerFindingCount} high-risk memory signal(s)"
+            report.reviewFindingCount > 0 -> "Runtime memory needs review"
+            !report.nativeAvailable -> "Memory scan has reduced native coverage"
+            else -> "No hook-like memory signals"
+        }
+    }
+
+    private fun buildSummary(report: MemoryReport): String = when (report.stage) {
+        MemoryStage.LOADING ->
+            "This detector checks symbol resolution, function entry bytes, executable mappings, suspicious memfd or deleted libraries, signal handlers, and loader visibility."
+
+        MemoryStage.FAILED ->
+            report.errorMessage
+                ?: "Memory detection failed before native evidence could be assembled."
+
+        MemoryStage.READY -> when {
+            report.dangerFindingCount > 0 ->
+                "High-risk findings point to hook-like code redirection, suspicious executable mappings, or loader-visible runtime artifacts."
+
+            report.reviewFindingCount > 0 ->
+                "The current process memory stayed mostly clean, but there are still runtime indicators that deserve review."
+
+            !report.nativeAvailable ->
+                "Native memory evidence was unavailable, so this card cannot treat the absence of findings as a clean runtime result."
+
+            else ->
+                "No hook-style prologue changes, suspicious executable memfd paths, or loader visibility mismatches surfaced."
+        }
+    }
+
+    private fun buildHeaderFacts(report: MemoryReport): List<MemoryHeaderFactModel> = when (report.stage) {
+        MemoryStage.LOADING -> placeholderFacts(
+            "Pending",
+            DetectorStatus.info(InfoKind.SUPPORT),
         )
-    }
 
-    private fun buildSubtitle(report: MemoryReport): String {
-        return when (report.stage) {
-            MemoryStage.LOADING -> "function entry + maps/smaps + fd + signal + linker"
-            MemoryStage.FAILED -> "local native probe failed"
-            MemoryStage.READY -> "6 native detector families · current-process memory only"
-        }
-    }
+        MemoryStage.FAILED -> placeholderFacts("Error", DetectorStatus.info(InfoKind.ERROR))
 
-    private fun buildVerdict(report: MemoryReport): String {
-        return when (report.stage) {
-            MemoryStage.LOADING -> "Scanning runtime memory"
-            MemoryStage.FAILED -> "Memory scan failed"
-            MemoryStage.READY -> when {
-                report.dangerFindingCount > 0 -> "${report.dangerFindingCount} high-risk memory signal(s)"
-                report.reviewFindingCount > 0 -> "Runtime memory needs review"
-                !report.nativeAvailable -> "Memory scan has reduced native coverage"
-                else -> "No hook-like memory signals"
-            }
-        }
-    }
+        MemoryStage.READY -> listOf(
+            MemoryHeaderFactModel(
+                label = "Critical",
+                value = when {
+                    report.dangerFindingCount > 0 -> report.dangerFindingCount.toString()
+                    report.nativeAvailable -> "Clean"
+                    else -> "N/A"
+                },
+                status = when {
+                    report.dangerFindingCount > 0 -> DetectorStatus.danger()
+                    report.nativeAvailable -> DetectorStatus.allClear()
+                    else -> DetectorStatus.info(InfoKind.SUPPORT)
+                },
+            ),
+            MemoryHeaderFactModel(
+                label = "Review",
+                value = when {
+                    report.reviewFindingCount > 0 -> report.reviewFindingCount.toString()
+                    report.nativeAvailable -> "Clean"
+                    else -> "N/A"
+                },
+                status = when {
+                    report.reviewFindingCount > 0 -> DetectorStatus.warning()
+                    report.nativeAvailable -> DetectorStatus.allClear()
+                    else -> DetectorStatus.info(InfoKind.SUPPORT)
+                },
+            ),
+            MemoryHeaderFactModel(
+                label = "Hooks",
+                value = when {
+                    report.hookFindingCount > 0 -> report.hookFindingCount.toString()
+                    report.modifiedFunctionCount > 0 -> report.modifiedFunctionCount.toString()
+                    !report.nativeAvailable -> "N/A"
+                    else -> "Clean"
+                },
+                status = when {
+                    report.hookFindingCount > 0 -> DetectorStatus.danger()
+                    report.modifiedFunctionCount > 0 -> DetectorStatus.warning()
+                    !report.nativeAvailable -> DetectorStatus.info(InfoKind.SUPPORT)
+                    else -> DetectorStatus.allClear()
+                },
+            ),
+            MemoryHeaderFactModel(
+                label = "Runtime",
+                value = when {
+                    report.mappingFindingCount + report.loaderFindingCount > 0 ->
+                        (report.mappingFindingCount + report.loaderFindingCount).toString()
 
-    private fun buildSummary(report: MemoryReport): String {
-        return when (report.stage) {
-            MemoryStage.LOADING ->
-                "This detector checks symbol resolution, function entry bytes, executable mappings, suspicious memfd or deleted libraries, signal handlers, and loader visibility."
+                    !report.nativeAvailable -> "N/A"
 
-            MemoryStage.FAILED ->
-                report.errorMessage
-                    ?: "Memory detection failed before native evidence could be assembled."
-
-            MemoryStage.READY -> when {
-                report.dangerFindingCount > 0 ->
-                    "High-risk findings point to hook-like code redirection, suspicious executable mappings, or loader-visible runtime artifacts."
-
-                report.reviewFindingCount > 0 ->
-                    "The current process memory stayed mostly clean, but there are still runtime indicators that deserve review."
-
-                !report.nativeAvailable ->
-                    "Native memory evidence was unavailable, so this card cannot treat the absence of findings as a clean runtime result."
-
-                else ->
-                    "No hook-style prologue changes, suspicious executable memfd paths, or loader visibility mismatches surfaced."
-            }
-        }
-    }
-
-    private fun buildHeaderFacts(report: MemoryReport): List<MemoryHeaderFactModel> {
-        return when (report.stage) {
-            MemoryStage.LOADING -> placeholderFacts(
-                "Pending",
-                DetectorStatus.info(InfoKind.SUPPORT)
-            )
-
-            MemoryStage.FAILED -> placeholderFacts("Error", DetectorStatus.info(InfoKind.ERROR))
-            MemoryStage.READY -> listOf(
-                MemoryHeaderFactModel(
-                    label = "Critical",
-                    value = when {
-                        report.dangerFindingCount > 0 -> report.dangerFindingCount.toString()
-                        report.nativeAvailable -> "Clean"
-                        else -> "N/A"
-                    },
-                    status = when {
-                        report.dangerFindingCount > 0 -> DetectorStatus.danger()
-                        report.nativeAvailable -> DetectorStatus.allClear()
-                        else -> DetectorStatus.info(InfoKind.SUPPORT)
-                    },
-                ),
-                MemoryHeaderFactModel(
-                    label = "Review",
-                    value = when {
-                        report.reviewFindingCount > 0 -> report.reviewFindingCount.toString()
-                        report.nativeAvailable -> "Clean"
-                        else -> "N/A"
-                    },
-                    status = when {
-                        report.reviewFindingCount > 0 -> DetectorStatus.warning()
-                        report.nativeAvailable -> DetectorStatus.allClear()
-                        else -> DetectorStatus.info(InfoKind.SUPPORT)
-                    },
-                ),
-                MemoryHeaderFactModel(
-                    label = "Hooks",
-                    value = when {
-                        report.hookFindingCount > 0 -> report.hookFindingCount.toString()
-                        report.modifiedFunctionCount > 0 -> report.modifiedFunctionCount.toString()
-                        !report.nativeAvailable -> "N/A"
-                        else -> "Clean"
-                    },
-                    status = when {
-                        report.hookFindingCount > 0 -> DetectorStatus.danger()
-                        report.modifiedFunctionCount > 0 -> DetectorStatus.warning()
-                        !report.nativeAvailable -> DetectorStatus.info(InfoKind.SUPPORT)
-                        else -> DetectorStatus.allClear()
-                    },
-                ),
-                MemoryHeaderFactModel(
-                    label = "Runtime",
-                    value = when {
-                        report.mappingFindingCount + report.loaderFindingCount > 0 ->
-                            (report.mappingFindingCount + report.loaderFindingCount).toString()
-
-                        !report.nativeAvailable -> "N/A"
-                        else -> "Clean"
-                    },
-                    status = when {
-                        report.mappingFindingCount + report.loaderFindingCount > 0 -> report.toDetectorStatus()
-                        !report.nativeAvailable -> DetectorStatus.info(InfoKind.SUPPORT)
-                        else -> DetectorStatus.allClear()
-                    },
-                ),
-            )
-        }
+                    else -> "Clean"
+                },
+                status = when {
+                    report.mappingFindingCount + report.loaderFindingCount > 0 -> report.toDetectorStatus()
+                    !report.nativeAvailable -> DetectorStatus.info(InfoKind.SUPPORT)
+                    else -> DetectorStatus.allClear()
+                },
+            ),
+        )
     }
 
     private fun buildSectionRows(
         report: MemoryReport,
         sections: Set<MemoryFindingSection>,
         fallbackLabel: String,
-    ): List<MemoryDetailRowModel> {
-        return when (report.stage) {
-            MemoryStage.LOADING -> placeholderRows(
-                listOf(fallbackLabel),
-                DetectorStatus.info(InfoKind.SUPPORT),
-                "Pending"
-            )
+    ): List<MemoryDetailRowModel> = when (report.stage) {
+        MemoryStage.LOADING -> placeholderRows(
+            listOf(fallbackLabel),
+            DetectorStatus.info(InfoKind.SUPPORT),
+            "Pending",
+        )
 
-            MemoryStage.FAILED -> placeholderRows(
-                listOf(fallbackLabel),
-                DetectorStatus.info(InfoKind.ERROR),
-                "Error"
-            )
+        MemoryStage.FAILED -> placeholderRows(
+            listOf(fallbackLabel),
+            DetectorStatus.info(InfoKind.ERROR),
+            "Error",
+        )
 
-            MemoryStage.READY -> {
-                val rows = report.findings
-                    .filter { it.section in sections }
-                    .map(::findingRow)
-                if (rows.isNotEmpty()) {
-                    rows
-                } else {
-                    listOf(
-                        MemoryDetailRowModel(
-                            label = fallbackLabel,
-                            value = if (report.nativeAvailable) "Clean" else "Unavailable",
-                            status = if (report.nativeAvailable) {
-                                DetectorStatus.allClear()
-                            } else {
-                                DetectorStatus.info(InfoKind.SUPPORT)
-                            },
-                            detail = if (report.nativeAvailable) {
-                                "No suspicious evidence surfaced in this memory slice."
-                            } else {
-                                "Native memory evidence was unavailable, so this slice could not be verified."
-                            },
-                        ),
-                    )
-                }
+        MemoryStage.READY -> {
+            val rows = report.findings
+                .filter { it.section in sections }
+                .map(::findingRow)
+            if (rows.isNotEmpty()) {
+                rows
+            } else {
+                listOf(
+                    MemoryDetailRowModel(
+                        label = fallbackLabel,
+                        value = if (report.nativeAvailable) "Clean" else "Unavailable",
+                        status = if (report.nativeAvailable) {
+                            DetectorStatus.allClear()
+                        } else {
+                            DetectorStatus.info(InfoKind.SUPPORT)
+                        },
+                        detail = if (report.nativeAvailable) {
+                            "No suspicious evidence surfaced in this memory slice."
+                        } else {
+                            "Native memory evidence was unavailable, so this slice could not be verified."
+                        },
+                    ),
+                )
             }
         }
     }
 
-    private fun buildImpactItems(report: MemoryReport): List<MemoryImpactItemModel> {
-        return when (report.stage) {
-            MemoryStage.LOADING -> listOf(
+    private fun buildImpactItems(report: MemoryReport): List<MemoryImpactItemModel> = when (report.stage) {
+        MemoryStage.LOADING -> listOf(
+            MemoryImpactItemModel(
+                text = "Gathering local runtime memory evidence.",
+                status = DetectorStatus.info(InfoKind.SUPPORT),
+            ),
+        )
+
+        MemoryStage.FAILED -> listOf(
+            MemoryImpactItemModel(
+                text = report.errorMessage ?: "Memory scan failed.",
+                status = DetectorStatus.info(InfoKind.ERROR),
+            ),
+        )
+
+        MemoryStage.READY -> when {
+            report.dangerFindingCount > 0 -> listOf(
                 MemoryImpactItemModel(
-                    text = "Gathering local runtime memory evidence.",
+                    text = "Hook-like entry changes, deleted executable loaders, or anonymous signal handlers are stronger runtime tampering signals than filesystem-only artifacts.",
+                    status = DetectorStatus.danger(),
+                ),
+                MemoryImpactItemModel(
+                    text = "This card only sees the current app process, so it should be read together with mount, SU, kernel, and TEE evidence.",
+                    status = DetectorStatus.warning(),
+                ),
+            )
+
+            report.reviewFindingCount > 0 -> listOf(
+                MemoryImpactItemModel(
+                    text = "The findings here are weaker than a direct hook or deleted loader hit, but they still mean the runtime view is not fully boring.",
+                    status = DetectorStatus.warning(),
+                ),
+                MemoryImpactItemModel(
+                    text = "Review findings often come from mapping hygiene, loader visibility, or vDSO consistency rather than a direct redirection primitive.",
                     status = DetectorStatus.info(InfoKind.SUPPORT),
                 ),
             )
 
-            MemoryStage.FAILED -> listOf(
+            else -> listOf(
+                if (report.nativeAvailable) {
+                    MemoryImpactItemModel(
+                        text = "The current process did not expose branch-heavy function entries, suspicious executable memfd paths, or loader visibility mismatches.",
+                        status = DetectorStatus.allClear(),
+                    )
+                } else {
+                    MemoryImpactItemModel(
+                        text = "Native memory evidence was unavailable, so this support-only result should not be treated as clean.",
+                        status = DetectorStatus.info(InfoKind.SUPPORT),
+                    )
+                },
                 MemoryImpactItemModel(
-                    text = report.errorMessage ?: "Memory scan failed.",
-                    status = DetectorStatus.info(InfoKind.ERROR),
-                ),
-            )
-
-            MemoryStage.READY -> when {
-                report.dangerFindingCount > 0 -> listOf(
-                    MemoryImpactItemModel(
-                        text = "Hook-like entry changes, deleted executable loaders, or anonymous signal handlers are stronger runtime tampering signals than filesystem-only artifacts.",
-                        status = DetectorStatus.danger(),
-                    ),
-                    MemoryImpactItemModel(
-                        text = "This card only sees the current app process, so it should be read together with mount, SU, kernel, and TEE evidence.",
-                        status = DetectorStatus.warning(),
-                    ),
-                )
-
-                report.reviewFindingCount > 0 -> listOf(
-                    MemoryImpactItemModel(
-                        text = "The findings here are weaker than a direct hook or deleted loader hit, but they still mean the runtime view is not fully boring.",
-                        status = DetectorStatus.warning(),
-                    ),
-                    MemoryImpactItemModel(
-                        text = "Review findings often come from mapping hygiene, loader visibility, or vDSO consistency rather than a direct redirection primitive.",
-                        status = DetectorStatus.info(InfoKind.SUPPORT),
-                    ),
-                )
-
-                else -> listOf(
-                    if (report.nativeAvailable) {
-                        MemoryImpactItemModel(
-                            text = "The current process did not expose branch-heavy function entries, suspicious executable memfd paths, or loader visibility mismatches.",
-                            status = DetectorStatus.allClear(),
-                        )
-                    } else {
-                        MemoryImpactItemModel(
-                            text = "Native memory evidence was unavailable, so this support-only result should not be treated as clean.",
-                            status = DetectorStatus.info(InfoKind.SUPPORT),
-                        )
-                    },
-                    MemoryImpactItemModel(
-                        text = "A clean memory slice reduces confidence in in-process runtime hooking only when the native probe ran successfully.",
-                        status = DetectorStatus.info(InfoKind.SUPPORT),
-                    ),
-                )
-            }
-        }
-    }
-
-    private fun buildMethodRows(report: MemoryReport): List<MemoryDetailRowModel> {
-        return when (report.stage) {
-            MemoryStage.LOADING -> placeholderRows(
-                listOf(
-                    "GOT/PLT resolution",
-                    "Entry prologue",
-                    "maps + smaps",
-                    "FD-backed code",
-                    "Signal handlers",
-                    "Loader visibility"
-                ),
-                DetectorStatus.info(InfoKind.SUPPORT),
-                "Pending",
-            )
-
-            MemoryStage.FAILED -> placeholderRows(
-                listOf(
-                    "GOT/PLT resolution",
-                    "Entry prologue",
-                    "maps + smaps",
-                    "FD-backed code",
-                    "Signal handlers",
-                    "Loader visibility"
-                ),
-                DetectorStatus.info(InfoKind.ERROR),
-                "Error",
-            )
-
-            MemoryStage.READY -> report.methods.map { method ->
-                MemoryDetailRowModel(
-                    label = method.label,
-                    value = method.summary,
-                    status = methodStatus(method),
-                    detail = method.detail,
-                )
-            }
-        }
-    }
-
-    private fun buildScanRows(report: MemoryReport): List<MemoryDetailRowModel> {
-        return when (report.stage) {
-            MemoryStage.LOADING -> placeholderRows(
-                listOf(
-                    "Danger findings",
-                    "Review findings",
-                    "Modified functions",
-                    "Native library"
-                ),
-                DetectorStatus.info(InfoKind.SUPPORT),
-                "Pending",
-            )
-
-            MemoryStage.FAILED -> placeholderRows(
-                listOf(
-                    "Danger findings",
-                    "Review findings",
-                    "Modified functions",
-                    "Native library"
-                ),
-                DetectorStatus.info(InfoKind.ERROR),
-                "Error",
-            )
-
-            MemoryStage.READY -> listOf(
-                MemoryDetailRowModel(
-                    label = "Danger findings",
-                    value = if (report.nativeAvailable || report.dangerFindingCount > 0) {
-                        report.dangerFindingCount.toString()
-                    } else {
-                        "N/A"
-                    },
-                    status = when {
-                        report.dangerFindingCount > 0 -> DetectorStatus.danger()
-                        report.nativeAvailable -> DetectorStatus.allClear()
-                        else -> DetectorStatus.info(InfoKind.SUPPORT)
-                    },
-                ),
-                MemoryDetailRowModel(
-                    label = "Review findings",
-                    value = if (report.nativeAvailable || report.reviewFindingCount > 0) {
-                        report.reviewFindingCount.toString()
-                    } else {
-                        "N/A"
-                    },
-                    status = when {
-                        report.reviewFindingCount > 0 -> DetectorStatus.warning()
-                        report.nativeAvailable -> DetectorStatus.allClear()
-                        else -> DetectorStatus.info(InfoKind.SUPPORT)
-                    },
-                ),
-                MemoryDetailRowModel(
-                    label = "Modified functions",
-                    value = if (report.nativeAvailable || report.modifiedFunctionCount > 0) {
-                        report.modifiedFunctionCount.toString()
-                    } else {
-                        "N/A"
-                    },
-                    status = when {
-                        report.modifiedFunctionCount > 0 -> DetectorStatus.warning()
-                        report.nativeAvailable -> DetectorStatus.allClear()
-                        else -> DetectorStatus.info(InfoKind.SUPPORT)
-                    },
-                ),
-                MemoryDetailRowModel(
-                    label = "Native library",
-                    value = if (report.nativeAvailable) "Loaded" else "Unavailable",
-                    status = if (report.nativeAvailable) DetectorStatus.allClear() else DetectorStatus.info(
-                        InfoKind.ERROR
-                    ),
+                    text = "A clean memory slice reduces confidence in in-process runtime hooking only when the native probe ran successfully.",
+                    status = DetectorStatus.info(InfoKind.SUPPORT),
                 ),
             )
         }
     }
 
-    private fun findingRow(finding: MemoryFinding): MemoryDetailRowModel {
-        return MemoryDetailRowModel(
-            label = finding.label,
-            value = finding.severity.label,
-            status = when (finding.severity) {
-                MemoryFindingSeverity.CRITICAL,
-                MemoryFindingSeverity.HIGH -> DetectorStatus.danger()
+    private fun buildMethodRows(report: MemoryReport): List<MemoryDetailRowModel> = when (report.stage) {
+        MemoryStage.LOADING -> placeholderRows(
+            listOf(
+                "GOT/PLT resolution",
+                "Entry prologue",
+                "maps + smaps",
+                "FD-backed code",
+                "Signal handlers",
+                "Loader visibility",
+            ),
+            DetectorStatus.info(InfoKind.SUPPORT),
+            "Pending",
+        )
 
-                MemoryFindingSeverity.MEDIUM -> DetectorStatus.warning()
-                MemoryFindingSeverity.LOW -> DetectorStatus.info(InfoKind.SUPPORT)
-            },
-            detail = finding.detail,
-            detailMonospace = finding.detailMonospace,
+        MemoryStage.FAILED -> placeholderRows(
+            listOf(
+                "GOT/PLT resolution",
+                "Entry prologue",
+                "maps + smaps",
+                "FD-backed code",
+                "Signal handlers",
+                "Loader visibility",
+            ),
+            DetectorStatus.info(InfoKind.ERROR),
+            "Error",
+        )
+
+        MemoryStage.READY -> report.methods.map { method ->
+            MemoryDetailRowModel(
+                label = method.label,
+                value = method.summary,
+                status = methodStatus(method),
+                detail = method.detail,
+            )
+        }
+    }
+
+    private fun buildScanRows(report: MemoryReport): List<MemoryDetailRowModel> = when (report.stage) {
+        MemoryStage.LOADING -> placeholderRows(
+            listOf(
+                "Danger findings",
+                "Review findings",
+                "Modified functions",
+                "Native library",
+            ),
+            DetectorStatus.info(InfoKind.SUPPORT),
+            "Pending",
+        )
+
+        MemoryStage.FAILED -> placeholderRows(
+            listOf(
+                "Danger findings",
+                "Review findings",
+                "Modified functions",
+                "Native library",
+            ),
+            DetectorStatus.info(InfoKind.ERROR),
+            "Error",
+        )
+
+        MemoryStage.READY -> listOf(
+            MemoryDetailRowModel(
+                label = "Danger findings",
+                value = if (report.nativeAvailable || report.dangerFindingCount > 0) {
+                    report.dangerFindingCount.toString()
+                } else {
+                    "N/A"
+                },
+                status = when {
+                    report.dangerFindingCount > 0 -> DetectorStatus.danger()
+                    report.nativeAvailable -> DetectorStatus.allClear()
+                    else -> DetectorStatus.info(InfoKind.SUPPORT)
+                },
+            ),
+            MemoryDetailRowModel(
+                label = "Review findings",
+                value = if (report.nativeAvailable || report.reviewFindingCount > 0) {
+                    report.reviewFindingCount.toString()
+                } else {
+                    "N/A"
+                },
+                status = when {
+                    report.reviewFindingCount > 0 -> DetectorStatus.warning()
+                    report.nativeAvailable -> DetectorStatus.allClear()
+                    else -> DetectorStatus.info(InfoKind.SUPPORT)
+                },
+            ),
+            MemoryDetailRowModel(
+                label = "Modified functions",
+                value = if (report.nativeAvailable || report.modifiedFunctionCount > 0) {
+                    report.modifiedFunctionCount.toString()
+                } else {
+                    "N/A"
+                },
+                status = when {
+                    report.modifiedFunctionCount > 0 -> DetectorStatus.warning()
+                    report.nativeAvailable -> DetectorStatus.allClear()
+                    else -> DetectorStatus.info(InfoKind.SUPPORT)
+                },
+            ),
+            MemoryDetailRowModel(
+                label = "Native library",
+                value = if (report.nativeAvailable) "Loaded" else "Unavailable",
+                status = if (report.nativeAvailable) {
+                    DetectorStatus.allClear()
+                } else {
+                    DetectorStatus.info(
+                        InfoKind.ERROR,
+                    )
+                },
+            ),
         )
     }
+
+    private fun findingRow(finding: MemoryFinding): MemoryDetailRowModel = MemoryDetailRowModel(
+        label = finding.label,
+        value = finding.severity.label,
+        status = when (finding.severity) {
+            MemoryFindingSeverity.CRITICAL,
+            MemoryFindingSeverity.HIGH,
+            -> DetectorStatus.danger()
+
+            MemoryFindingSeverity.MEDIUM -> DetectorStatus.warning()
+
+            MemoryFindingSeverity.LOW -> DetectorStatus.info(InfoKind.SUPPORT)
+        },
+        detail = finding.detail,
+        detailMonospace = finding.detailMonospace,
+    )
 
     private fun placeholderFacts(
         value: String,
         status: DetectorStatus,
-    ): List<MemoryHeaderFactModel> {
-        return listOf(
-            MemoryHeaderFactModel("Critical", value, status),
-            MemoryHeaderFactModel("Review", value, status),
-            MemoryHeaderFactModel("Hooks", value, status),
-            MemoryHeaderFactModel("Runtime", value, status),
-        )
-    }
+    ): List<MemoryHeaderFactModel> = listOf(
+        MemoryHeaderFactModel("Critical", value, status),
+        MemoryHeaderFactModel("Review", value, status),
+        MemoryHeaderFactModel("Hooks", value, status),
+        MemoryHeaderFactModel("Runtime", value, status),
+    )
 
     private fun placeholderRows(
         labels: List<String>,
         status: DetectorStatus,
         value: String,
-    ): List<MemoryDetailRowModel> {
-        return labels.map { label ->
-            MemoryDetailRowModel(
-                label = label,
-                value = value,
-                status = status,
-            )
-        }
+    ): List<MemoryDetailRowModel> = labels.map { label ->
+        MemoryDetailRowModel(
+            label = label,
+            value = value,
+            status = status,
+        )
     }
 
-    private fun methodStatus(method: MemoryMethodResult): DetectorStatus {
-        return when (method.outcome) {
-            MemoryMethodOutcome.CLEAN -> DetectorStatus.allClear()
-            MemoryMethodOutcome.REVIEW -> DetectorStatus.warning()
-            MemoryMethodOutcome.DETECTED -> DetectorStatus.danger()
-            MemoryMethodOutcome.SUPPORT -> DetectorStatus.info(InfoKind.SUPPORT)
-        }
+    private fun methodStatus(method: MemoryMethodResult): DetectorStatus = when (method.outcome) {
+        MemoryMethodOutcome.CLEAN -> DetectorStatus.allClear()
+        MemoryMethodOutcome.REVIEW -> DetectorStatus.warning()
+        MemoryMethodOutcome.DETECTED -> DetectorStatus.danger()
+        MemoryMethodOutcome.SUPPORT -> DetectorStatus.info(InfoKind.SUPPORT)
     }
 
-    private fun MemoryReport.toDetectorStatus(): DetectorStatus {
-        return when (stage) {
-            MemoryStage.LOADING -> DetectorStatus.info(InfoKind.SUPPORT)
-            MemoryStage.FAILED -> DetectorStatus.info(InfoKind.ERROR)
-            MemoryStage.READY -> when {
-                dangerFindingCount > 0 -> DetectorStatus.danger()
-                reviewFindingCount > 0 -> DetectorStatus.warning()
-                !nativeAvailable -> DetectorStatus.info(InfoKind.SUPPORT)
-                else -> DetectorStatus.allClear()
-            }
+    private fun MemoryReport.toDetectorStatus(): DetectorStatus = when (stage) {
+        MemoryStage.LOADING -> DetectorStatus.info(InfoKind.SUPPORT)
+
+        MemoryStage.FAILED -> DetectorStatus.info(InfoKind.ERROR)
+
+        MemoryStage.READY -> when {
+            dangerFindingCount > 0 -> DetectorStatus.danger()
+            reviewFindingCount > 0 -> DetectorStatus.warning()
+            !nativeAvailable -> DetectorStatus.info(InfoKind.SUPPORT)
+            else -> DetectorStatus.allClear()
         }
     }
 }

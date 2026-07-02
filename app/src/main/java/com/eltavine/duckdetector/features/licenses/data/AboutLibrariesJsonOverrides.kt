@@ -133,11 +133,9 @@ object AboutLibrariesJsonOverrides {
         return mutated
     }
 
-    private fun JSONArray.toList(): List<String> {
-        return buildList(length()) {
-            for (index in 0 until length()) {
-                add(optString(index))
-            }
+    private fun JSONArray.toList(): List<String> = buildList(length()) {
+        for (index in 0 until length()) {
+            add(optString(index))
         }
     }
 

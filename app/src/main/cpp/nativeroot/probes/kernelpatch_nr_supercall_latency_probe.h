@@ -21,7 +21,7 @@
 
 namespace duckdetector::nativeroot {
 
-    ProbeResult run_kernelpatch_supercall_latency_check();
+ProbeResult run_kernelpatch_supercall_latency_check();
 
 }  // namespace duckdetector::nativeroot
 

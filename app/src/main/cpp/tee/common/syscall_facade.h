@@ -23,84 +23,63 @@
 
 namespace ducktee::common {
 
-    enum class SyscallBackend {
-        Libc,
-        Syscall,
-        Asm,
-    };
+enum class SyscallBackend {
+    Libc,
+    Syscall,
+    Asm,
+};
 
-    struct SyscallCallResult {
-        long value = -1;
-        int error_number = 0;
-        bool available = false;
-    };
+struct SyscallCallResult {
+    long value = -1;
+    int error_number = 0;
+    bool available = false;
+};
 
-    enum class LocalTimerKind {
-        Monotonic,
-        Arm64Cntvct,
-    };
+enum class LocalTimerKind {
+    Monotonic,
+    Arm64Cntvct,
+};
 
-    struct LocalTimerSelection {
-        LocalTimerKind kind = LocalTimerKind::Monotonic;
-        std::string source_label = "clock_monotonic";
-        std::string fallback_reason;
-        std::string affinity_status = "not_requested";
-    };
+struct LocalTimerSelection {
+    LocalTimerKind kind = LocalTimerKind::Monotonic;
+    std::string source_label = "clock_monotonic";
+    std::string fallback_reason;
+    std::string affinity_status = "not_requested";
+};
 
-    const char *backend_label(SyscallBackend backend);
+const char* backend_label(SyscallBackend backend);
 
-    bool backend_available(SyscallBackend backend);
+bool backend_available(SyscallBackend backend);
 
-    SyscallCallResult invoke_syscall3(
-            SyscallBackend backend,
-            long number,
-            long arg0,
-            long arg1,
-            long arg2
-    );
+SyscallCallResult invoke_syscall3(SyscallBackend backend, long number, long arg0, long arg1,
+                                  long arg2);
 
-    SyscallCallResult invoke_syscall6(
-            SyscallBackend backend,
-            long number,
-            long arg0,
-            long arg1,
-            long arg2,
-            long arg3,
-            long arg4,
-            long arg5
-    );
+SyscallCallResult invoke_syscall6(SyscallBackend backend, long number, long arg0, long arg1,
+                                  long arg2, long arg3, long arg4, long arg5);
 
-    SyscallCallResult invoke_open_readonly(SyscallBackend backend, const char *path);
+SyscallCallResult invoke_open_readonly(SyscallBackend backend, const char* path);
 
-    SyscallCallResult invoke_ioctl(
-            SyscallBackend backend,
-            int fd,
-            unsigned long request,
-            void *arg
-    );
+SyscallCallResult invoke_ioctl(SyscallBackend backend, int fd, unsigned long request, void* arg);
 
-    SyscallCallResult invoke_getpid(SyscallBackend backend);
+SyscallCallResult invoke_getpid(SyscallBackend backend);
 
-    bool monotonic_time_ns(SyscallBackend backend, std::uint64_t *out_ns);
+bool monotonic_time_ns(SyscallBackend backend, std::uint64_t* out_ns);
 
-    bool register_timer_time_ns(std::uint64_t *out_ns);
+bool register_timer_time_ns(std::uint64_t* out_ns);
 
-    bool bind_current_thread_to_cpu0();
+bool bind_current_thread_to_cpu0();
 
-    bool select_preferred_local_timer(
-            bool request_cpu0_affinity,
-            LocalTimerSelection *out
-    );
+bool select_preferred_local_timer(bool request_cpu0_affinity, LocalTimerSelection* out);
 
-    bool local_timer_now_ns(const LocalTimerSelection &timer, std::uint64_t *out_ns);
+bool local_timer_now_ns(const LocalTimerSelection& timer, std::uint64_t* out_ns);
 
-    long raw_syscall3(long number, long arg0, long arg1, long arg2);
+long raw_syscall3(long number, long arg0, long arg1, long arg2);
 
-    int raw_open_readonly(const char *path);
+int raw_open_readonly(const char* path);
 
-    long raw_ioctl(int fd, unsigned long request, void *arg);
+long raw_ioctl(int fd, unsigned long request, void* arg);
 
-    bool bytes_equal(const void *lhs, const void *rhs, std::size_t length);
+bool bytes_equal(const void* lhs, const void* rhs, std::size_t length);
 
 }  // namespace ducktee::common
 

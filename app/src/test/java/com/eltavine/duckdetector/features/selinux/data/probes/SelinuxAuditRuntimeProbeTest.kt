@@ -118,7 +118,7 @@ class SelinuxAuditRuntimeProbeTest {
                 SelinuxAuditLogcatReadResult(
                     checked = true,
                     output =
-                        """03-19 12:00:00.000  1234  1234 W auditd  : type=1400 audit(0.0:123): avc: denied { open } for comm="su" path="/proc/1/mem" scontext=u:r:untrusted_app:s0:c1,c2 tcontext=u:r:init:s0 tclass=file permissive=0""",
+                    """03-19 12:00:00.000  1234  1234 W auditd  : type=1400 audit(0.0:123): avc: denied { open } for comm="su" path="/proc/1/mem" scontext=u:r:untrusted_app:s0:c1,c2 tcontext=u:r:init:s0 tclass=file permissive=0""",
                     failureReason = null,
                 ),
             ),

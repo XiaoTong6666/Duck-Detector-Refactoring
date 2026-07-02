@@ -17,18 +17,18 @@
 package com.eltavine.duckdetector.features.kernelcheck.data.repository
 
 import com.eltavine.duckdetector.features.kernelcheck.data.native.KernelCheckNativeBridge
-import com.eltavine.duckdetector.features.kernelcheck.domain.KernelCheckFinding
 import com.eltavine.duckdetector.features.kernelcheck.domain.KernelCheckCvePatchState
+import com.eltavine.duckdetector.features.kernelcheck.domain.KernelCheckFinding
 import com.eltavine.duckdetector.features.kernelcheck.domain.KernelCheckFindingSeverity
 import com.eltavine.duckdetector.features.kernelcheck.domain.KernelCheckMethodOutcome
 import com.eltavine.duckdetector.features.kernelcheck.domain.KernelCheckMethodResult
 import com.eltavine.duckdetector.features.kernelcheck.domain.KernelCheckReport
 import com.eltavine.duckdetector.features.kernelcheck.domain.KernelCheckStage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.LinkedHashSet
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 class KernelCheckRepository(
     private val nativeBridge: KernelCheckNativeBridge = KernelCheckNativeBridge(),
@@ -48,7 +48,7 @@ class KernelCheckRepository(
         val procCmdline = nativeSnapshot.procCmdline.ifBlank {
             readFileText("/proc/cmdline").replace(
                 '\u0000',
-                ' '
+                ' ',
             )
         }
         val identitySources = listOf(unameOutput, procVersion)
@@ -229,13 +229,13 @@ class KernelCheckRepository(
                 "cmdlineCheck",
                 dangerById["suspicious_cmdline"],
                 nativeAvailable,
-                "Normal"
+                "Normal",
             ),
             buildCveMethod("cvePatchCheck", cveAssessment),
             buildInfoMethod(
                 "kptrRestrict",
                 infoById["kptr_exposed"],
-                unavailable = !nativeAvailable
+                unavailable = !nativeAvailable,
             ),
             KernelCheckMethodResult(
                 label = "nativeLibrary",
@@ -248,90 +248,84 @@ class KernelCheckRepository(
     private fun buildNamingMethod(
         label: String,
         finding: KernelCheckFinding?,
-    ): KernelCheckMethodResult {
-        return KernelCheckMethodResult(
-            label = label,
-            summary = finding?.value ?: "Clean",
-            outcome = if (finding != null) {
-                KernelCheckMethodOutcome.DETECTED
-            } else {
-                KernelCheckMethodOutcome.CLEAN
-            },
-            detail = finding?.detail,
-        )
-    }
+    ): KernelCheckMethodResult = KernelCheckMethodResult(
+        label = label,
+        summary = finding?.value ?: "Clean",
+        outcome = if (finding != null) {
+            KernelCheckMethodOutcome.DETECTED
+        } else {
+            KernelCheckMethodOutcome.CLEAN
+        },
+        detail = finding?.detail,
+    )
 
     private fun buildNativeMethod(
         label: String,
         finding: KernelCheckFinding?,
         nativeAvailable: Boolean,
         cleanSummary: String,
-    ): KernelCheckMethodResult {
-        return when {
-            finding != null -> KernelCheckMethodResult(
-                label = label,
-                summary = finding.value,
-                outcome = KernelCheckMethodOutcome.DETECTED,
-                detail = finding.detail,
-            )
+    ): KernelCheckMethodResult = when {
+        finding != null -> KernelCheckMethodResult(
+            label = label,
+            summary = finding.value,
+            outcome = KernelCheckMethodOutcome.DETECTED,
+            detail = finding.detail,
+        )
 
-            nativeAvailable -> KernelCheckMethodResult(
-                label = label,
-                summary = cleanSummary,
-                outcome = KernelCheckMethodOutcome.CLEAN,
-            )
+        nativeAvailable -> KernelCheckMethodResult(
+            label = label,
+            summary = cleanSummary,
+            outcome = KernelCheckMethodOutcome.CLEAN,
+        )
 
-            else -> KernelCheckMethodResult(
-                label = label,
-                summary = "Unavailable",
-                outcome = KernelCheckMethodOutcome.SUPPORT,
-            )
-        }
+        else -> KernelCheckMethodResult(
+            label = label,
+            summary = "Unavailable",
+            outcome = KernelCheckMethodOutcome.SUPPORT,
+        )
     }
 
     private fun buildCveMethod(
         label: String,
         assessment: CvePatchAssessment,
-    ): KernelCheckMethodResult {
-        return KernelCheckMethodResult(
-            label = label,
-            summary = assessment.state.label,
-            outcome = when (assessment.state) {
-                KernelCheckCvePatchState.UNPATCHED,
-                KernelCheckCvePatchState.PARTIALLY_PATCHED -> KernelCheckMethodOutcome.INFO
+    ): KernelCheckMethodResult = KernelCheckMethodResult(
+        label = label,
+        summary = assessment.state.label,
+        outcome = when (assessment.state) {
+            KernelCheckCvePatchState.UNPATCHED,
+            KernelCheckCvePatchState.PARTIALLY_PATCHED,
+            -> KernelCheckMethodOutcome.INFO
 
-                KernelCheckCvePatchState.PATCHED -> KernelCheckMethodOutcome.CLEAN
-                KernelCheckCvePatchState.INCONCLUSIVE -> KernelCheckMethodOutcome.SUPPORT
-            },
-            detail = assessment.detail,
-        )
-    }
+            KernelCheckCvePatchState.PATCHED -> KernelCheckMethodOutcome.CLEAN
+
+            KernelCheckCvePatchState.INCONCLUSIVE -> KernelCheckMethodOutcome.SUPPORT
+        },
+        detail = assessment.detail,
+    )
 
     private fun buildInfoMethod(
         label: String,
         finding: KernelCheckFinding?,
         unavailable: Boolean = false,
-    ): KernelCheckMethodResult {
-        return when {
-            finding != null -> KernelCheckMethodResult(
-                label = label,
-                summary = finding.value,
-                outcome = KernelCheckMethodOutcome.INFO,
-                detail = finding.detail,
-            )
+    ): KernelCheckMethodResult = when {
+        finding != null -> KernelCheckMethodResult(
+            label = label,
+            summary = finding.value,
+            outcome = KernelCheckMethodOutcome.INFO,
+            detail = finding.detail,
+        )
 
-            unavailable -> KernelCheckMethodResult(
-                label = label,
-                summary = "Unavailable",
-                outcome = KernelCheckMethodOutcome.SUPPORT,
-            )
+        unavailable -> KernelCheckMethodResult(
+            label = label,
+            summary = "Unavailable",
+            outcome = KernelCheckMethodOutcome.SUPPORT,
+        )
 
-            else -> KernelCheckMethodResult(
-                label = label,
-                summary = "OK",
-                outcome = KernelCheckMethodOutcome.CLEAN,
-            )
-        }
+        else -> KernelCheckMethodResult(
+            label = label,
+            summary = "OK",
+            outcome = KernelCheckMethodOutcome.CLEAN,
+        )
     }
 
     private fun detectCustomKernelKeywords(
@@ -361,18 +355,17 @@ class KernelCheckRepository(
             return emptyList()
         }
         return CMDLINE_CHECKS.filter {
-            it.isCritical && procCmdline.contains(
-                it.pattern,
-                ignoreCase = true
-            )
+            it.isCritical &&
+                procCmdline.contains(
+                    it.pattern,
+                    ignoreCase = true,
+                )
         }
             .map { it.description }
     }
 
-    private fun getUnameOutput(): String {
-        return executeCommand("uname", "-a")
-            .ifBlank { readFileText("/proc/version") }
-    }
+    private fun getUnameOutput(): String = executeCommand("uname", "-a")
+        .ifBlank { readFileText("/proc/version") }
 
     private fun executeCommand(
         vararg command: String,
@@ -398,17 +391,15 @@ class KernelCheckRepository(
 
     private fun readFileText(
         path: String,
-    ): String {
-        return try {
-            val file = File(path)
-            if (!file.exists() || !file.canRead()) {
-                ""
-            } else {
-                file.readText().trim().replace('\u0000', ' ')
-            }
-        } catch (_: Exception) {
+    ): String = try {
+        val file = File(path)
+        if (!file.exists() || !file.canRead()) {
             ""
+        } else {
+            file.readText().trim().replace('\u0000', ' ')
         }
+    } catch (_: Exception) {
+        ""
     }
 
     private fun findEmojis(
@@ -428,20 +419,19 @@ class KernelCheckRepository(
 
     private fun isEmoji(
         codePoint: Int,
-    ): Boolean {
-        return when (codePoint) {
-            in 0x1F600..0x1F64F,
-            in 0x1F300..0x1F5FF,
-            in 0x1F680..0x1F6FF,
-            in 0x1F900..0x1F9FF,
-            in 0x1FA00..0x1FA6F,
-            in 0x1FA70..0x1FAFF,
-            in 0x2700..0x27BF,
-            in 0x2600..0x26FF,
-            in 0x1F1E0..0x1F1FF -> true
+    ): Boolean = when (codePoint) {
+        in 0x1F600..0x1F64F,
+        in 0x1F300..0x1F5FF,
+        in 0x1F680..0x1F6FF,
+        in 0x1F900..0x1F9FF,
+        in 0x1FA00..0x1FA6F,
+        in 0x1FA70..0x1FAFF,
+        in 0x2700..0x27BF,
+        in 0x2600..0x26FF,
+        in 0x1F1E0..0x1F1FF,
+        -> true
 
-            else -> false
-        }
+        else -> false
     }
 
     private fun findChineseCharacters(
@@ -461,19 +451,18 @@ class KernelCheckRepository(
 
     private fun isChineseCharacter(
         codePoint: Int,
-    ): Boolean {
-        return when (codePoint) {
-            in 0x4E00..0x9FFF,
-            in 0x3400..0x4DBF,
-            in 0x20000..0x2A6DF,
-            in 0x2A700..0x2B73F,
-            in 0x2B740..0x2B81F,
-            in 0x2B820..0x2CEAF,
-            in 0xF900..0xFAFF,
-            in 0x2F800..0x2FA1F -> true
+    ): Boolean = when (codePoint) {
+        in 0x4E00..0x9FFF,
+        in 0x3400..0x4DBF,
+        in 0x20000..0x2A6DF,
+        in 0x2A700..0x2B73F,
+        in 0x2B740..0x2B81F,
+        in 0x2B820..0x2CEAF,
+        in 0xF900..0xFAFF,
+        in 0x2F800..0x2FA1F,
+        -> true
 
-            else -> false
-        }
+        else -> false
     }
 
     private fun findNonLatinScriptCharacters(
@@ -508,7 +497,8 @@ class KernelCheckRepository(
             Character.UnicodeScript.LATIN,
             Character.UnicodeScript.COMMON,
             Character.UnicodeScript.INHERITED,
-            Character.UnicodeScript.HAN -> false
+            Character.UnicodeScript.HAN,
+            -> false
 
             else -> true
         }
@@ -516,38 +506,60 @@ class KernelCheckRepository(
 
     private fun unicodeScriptLabel(
         script: Character.UnicodeScript,
-    ): String {
-        return when (script) {
-            Character.UnicodeScript.ARABIC -> "Arabic"
-            Character.UnicodeScript.ARMENIAN -> "Armenian"
-            Character.UnicodeScript.BENGALI -> "Bengali"
-            Character.UnicodeScript.CYRILLIC -> "Cyrillic"
-            Character.UnicodeScript.DEVANAGARI -> "Devanagari"
-            Character.UnicodeScript.ETHIOPIC -> "Ethiopic"
-            Character.UnicodeScript.GEORGIAN -> "Georgian"
-            Character.UnicodeScript.GREEK -> "Greek"
-            Character.UnicodeScript.GUJARATI -> "Gujarati"
-            Character.UnicodeScript.GURMUKHI -> "Gurmukhi"
-            Character.UnicodeScript.HANGUL -> "Hangul"
-            Character.UnicodeScript.HEBREW -> "Hebrew"
-            Character.UnicodeScript.HIRAGANA -> "Hiragana"
-            Character.UnicodeScript.KANNADA -> "Kannada"
-            Character.UnicodeScript.KATAKANA -> "Katakana"
-            Character.UnicodeScript.KHMER -> "Khmer"
-            Character.UnicodeScript.LAO -> "Lao"
-            Character.UnicodeScript.MALAYALAM -> "Malayalam"
-            Character.UnicodeScript.MYANMAR -> "Myanmar"
-            Character.UnicodeScript.ORIYA -> "Oriya"
-            Character.UnicodeScript.SINHALA -> "Sinhala"
-            Character.UnicodeScript.TAMIL -> "Tamil"
-            Character.UnicodeScript.TELUGU -> "Telugu"
-            Character.UnicodeScript.THAI -> "Thai"
-            else -> script.name.lowercase()
-                .split('_')
-                .joinToString(" ") { part ->
-                    part.replaceFirstChar { char -> char.uppercase() }
-                }
-        }
+    ): String = when (script) {
+        Character.UnicodeScript.ARABIC -> "Arabic"
+
+        Character.UnicodeScript.ARMENIAN -> "Armenian"
+
+        Character.UnicodeScript.BENGALI -> "Bengali"
+
+        Character.UnicodeScript.CYRILLIC -> "Cyrillic"
+
+        Character.UnicodeScript.DEVANAGARI -> "Devanagari"
+
+        Character.UnicodeScript.ETHIOPIC -> "Ethiopic"
+
+        Character.UnicodeScript.GEORGIAN -> "Georgian"
+
+        Character.UnicodeScript.GREEK -> "Greek"
+
+        Character.UnicodeScript.GUJARATI -> "Gujarati"
+
+        Character.UnicodeScript.GURMUKHI -> "Gurmukhi"
+
+        Character.UnicodeScript.HANGUL -> "Hangul"
+
+        Character.UnicodeScript.HEBREW -> "Hebrew"
+
+        Character.UnicodeScript.HIRAGANA -> "Hiragana"
+
+        Character.UnicodeScript.KANNADA -> "Kannada"
+
+        Character.UnicodeScript.KATAKANA -> "Katakana"
+
+        Character.UnicodeScript.KHMER -> "Khmer"
+
+        Character.UnicodeScript.LAO -> "Lao"
+
+        Character.UnicodeScript.MALAYALAM -> "Malayalam"
+
+        Character.UnicodeScript.MYANMAR -> "Myanmar"
+
+        Character.UnicodeScript.ORIYA -> "Oriya"
+
+        Character.UnicodeScript.SINHALA -> "Sinhala"
+
+        Character.UnicodeScript.TAMIL -> "Tamil"
+
+        Character.UnicodeScript.TELUGU -> "Telugu"
+
+        Character.UnicodeScript.THAI -> "Thai"
+
+        else -> script.name.lowercase()
+            .split('_')
+            .joinToString(" ") { part ->
+                part.replaceFirstChar { char -> char.uppercase() }
+            }
     }
 
     private fun detectCvePatchState(): CvePatchAssessment {
@@ -611,7 +623,7 @@ class KernelCheckRepository(
             }
 
             zwcProbe.state == UnicodeBypassState.BLOCKED &&
-                    otherProbes.all { (_, probe) -> probe.state == UnicodeBypassState.BLOCKED } -> {
+                otherProbes.all { (_, probe) -> probe.state == UnicodeBypassState.BLOCKED } -> {
                 CvePatchAssessment(
                     state = KernelCheckCvePatchState.PATCHED,
                     detail = "ZWC and ${otherProbes.size} tested ignorable codepoints were blocked.",
@@ -619,7 +631,7 @@ class KernelCheckRepository(
             }
 
             zwcProbe.state == UnicodeBypassState.BYPASSED &&
-                    otherProbes.all { (_, probe) -> probe.state == UnicodeBypassState.BLOCKED } -> {
+                otherProbes.all { (_, probe) -> probe.state == UnicodeBypassState.BLOCKED } -> {
                 CvePatchAssessment(
                     state = KernelCheckCvePatchState.INCONCLUSIVE,
                     detail = "ZWC bypassed, but the other tested ignorable codepoints did not. The result does not fit a stable patched or unpatched pattern.",
@@ -733,17 +745,13 @@ class KernelCheckRepository(
 
     private fun List<String>.firstDetail(
         prefix: String,
-    ): String? {
-        return firstOrNull { it.startsWith(prefix) }?.substringAfter(prefix)
-            ?.takeIf { it.isNotBlank() }
-    }
+    ): String? = firstOrNull { it.startsWith(prefix) }?.substringAfter(prefix)
+        ?.takeIf { it.isNotBlank() }
 
     private fun List<String>.details(
         prefix: String,
-    ): List<String> {
-        return filter { it.startsWith(prefix) }
-            .mapNotNull { it.substringAfter(prefix).takeIf { detail -> detail.isNotBlank() } }
-    }
+    ): List<String> = filter { it.startsWith(prefix) }
+        .mapNotNull { it.substringAfter(prefix).takeIf { detail -> detail.isNotBlank() } }
 
     companion object {
         private const val PROCESS_TIMEOUT_SECONDS = 2L
@@ -779,7 +787,7 @@ class KernelCheckRepository(
             CmdlineCheck(
                 "androidboot.verifiedbootstate=orange",
                 "Bootloader unlocked (orange)",
-                true
+                true,
             ),
             CmdlineCheck("androidboot.verifiedbootstate=yellow", "Self-signed boot (yellow)", true),
             CmdlineCheck("androidboot.enable_dm_verity=0", "dm-verity disabled", true),

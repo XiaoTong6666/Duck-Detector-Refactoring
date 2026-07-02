@@ -21,7 +21,7 @@
 
 namespace duckdetector::nativeroot {
 
-    ProbeResult run_ksu_supercall_probe();
+ProbeResult run_ksu_supercall_probe();
 
 }  // namespace duckdetector::nativeroot
 

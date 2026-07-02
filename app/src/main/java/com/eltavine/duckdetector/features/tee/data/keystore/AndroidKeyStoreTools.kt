@@ -128,19 +128,13 @@ object AndroidKeyStoreTools {
         }.getOrDefault(false)
     }
 
-    fun readCertificateChain(keyStore: KeyStore, alias: String): List<X509Certificate> {
-        return keyStore.getCertificateChain(alias)
-            ?.filterIsInstance<X509Certificate>()
-            .orEmpty()
-    }
+    fun readCertificateChain(keyStore: KeyStore, alias: String): List<X509Certificate> = keyStore.getCertificateChain(alias)
+        ?.filterIsInstance<X509Certificate>()
+        .orEmpty()
 
-    fun readLeafCertificate(keyStore: KeyStore, alias: String): X509Certificate? {
-        return keyStore.getCertificate(alias) as? X509Certificate
-    }
+    fun readLeafCertificate(keyStore: KeyStore, alias: String): X509Certificate? = keyStore.getCertificate(alias) as? X509Certificate
 
-    fun readPrivateKey(keyStore: KeyStore, alias: String): PrivateKey? {
-        return keyStore.getKey(alias, null) as? PrivateKey
-    }
+    fun readPrivateKey(keyStore: KeyStore, alias: String): PrivateKey? = keyStore.getKey(alias, null) as? PrivateKey
 
     fun signData(privateKey: PrivateKey, payload: ByteArray): ByteArray {
         val signature = Signature.getInstance("SHA256withECDSA")

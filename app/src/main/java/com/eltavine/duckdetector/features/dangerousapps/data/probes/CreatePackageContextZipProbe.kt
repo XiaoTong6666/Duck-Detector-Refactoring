@@ -35,38 +35,32 @@ class CreatePackageContextZipProbe(
 
     fun run(
         targetPackages: Set<String>,
-    ): CreatePackageContextZipProbeResult {
-        return evaluate(
-            packageApkPathsByPackage = targetPackages.associateWith(::resolvePackageApkPaths),
-            targetPackages = targetPackages,
-        )
-    }
+    ): CreatePackageContextZipProbeResult = evaluate(
+        packageApkPathsByPackage = targetPackages.associateWith(::resolvePackageApkPaths),
+        targetPackages = targetPackages,
+    )
 
-    private fun resolvePackageApkPaths(packageName: String): List<String>? {
-        return try {
-            // Keep this metadata-only: never pass CONTEXT_INCLUDE_CODE for untrusted target packages.
-            val packageContext = context.createPackageContext(packageName, 0)
-            val applicationInfo = packageContext.applicationInfo
-            if (!matchesPackageName(packageName, packageContext.packageName, applicationInfo.packageName)) {
-                null
-            } else {
-                collectApplicationInfoApkPaths(applicationInfo)
-            }
-        } catch (_: Exception) {
+    private fun resolvePackageApkPaths(packageName: String): List<String>? = try {
+        // Keep this metadata-only: never pass CONTEXT_INCLUDE_CODE for untrusted target packages.
+        val packageContext = context.createPackageContext(packageName, 0)
+        val applicationInfo = packageContext.applicationInfo
+        if (!matchesPackageName(packageName, packageContext.packageName, applicationInfo.packageName)) {
             null
+        } else {
+            collectApplicationInfoApkPaths(applicationInfo)
         }
+    } catch (_: Exception) {
+        null
     }
 
     private fun collectApplicationInfoApkPaths(
         applicationInfo: ApplicationInfo,
-    ): List<String> {
-        return collectApkPaths(
-            sourceDir = applicationInfo.sourceDir,
-            publicSourceDir = applicationInfo.publicSourceDir,
-            splitSourceDirs = applicationInfo.splitSourceDirs?.toList(),
-            splitPublicSourceDirs = applicationInfo.splitPublicSourceDirs?.toList(),
-        )
-    }
+    ): List<String> = collectApkPaths(
+        sourceDir = applicationInfo.sourceDir,
+        publicSourceDir = applicationInfo.publicSourceDir,
+        splitSourceDirs = applicationInfo.splitSourceDirs?.toList(),
+        splitPublicSourceDirs = applicationInfo.splitPublicSourceDirs?.toList(),
+    )
 
     internal companion object {
 
@@ -109,51 +103,41 @@ class CreatePackageContextZipProbe(
             publicSourceDir: String?,
             splitSourceDirs: List<String>?,
             splitPublicSourceDirs: List<String>?,
-        ): List<String> {
-            return buildList {
-                add(sourceDir)
-                add(publicSourceDir)
-                addAll(splitSourceDirs.orEmpty())
-                addAll(splitPublicSourceDirs.orEmpty())
-            }
-                .asSequence()
-                .map(::normalizeApkPath)
-                .filter { it.isNotBlank() }
-                .filter(::looksLikeApkPath)
-                .distinct()
-                .toList()
+        ): List<String> = buildList {
+            add(sourceDir)
+            add(publicSourceDir)
+            addAll(splitSourceDirs.orEmpty())
+            addAll(splitPublicSourceDirs.orEmpty())
         }
+            .asSequence()
+            .map(::normalizeApkPath)
+            .filter { it.isNotBlank() }
+            .filter(::looksLikeApkPath)
+            .distinct()
+            .toList()
 
-        fun isReadableApkZip(path: String): Boolean {
-            return try {
-                ZipFile(File(path), ZipFile.OPEN_READ).use { zip ->
-                    zip.size() > 0 && zip.getEntry(APK_MANIFEST_ENTRY) != null
-                }
-            } catch (_: Exception) {
-                false
+        fun isReadableApkZip(path: String): Boolean = try {
+            ZipFile(File(path), ZipFile.OPEN_READ).use { zip ->
+                zip.size() > 0 && zip.getEntry(APK_MANIFEST_ENTRY) != null
             }
+        } catch (_: Exception) {
+            false
         }
 
         fun matchesPackageName(
             expectedPackageName: String,
             contextPackageName: String?,
             applicationInfoPackageName: String?,
-        ): Boolean {
-            return expectedPackageName.isNotBlank() &&
-                    expectedPackageName == contextPackageName &&
-                    expectedPackageName == applicationInfoPackageName
-        }
+        ): Boolean = expectedPackageName.isNotBlank() &&
+            expectedPackageName == contextPackageName &&
+            expectedPackageName == applicationInfoPackageName
 
-        private fun normalizeApkPath(path: String?): String {
-            return path
-                ?.trim()
-                ?.replace('\\', '/')
-                .orEmpty()
-        }
+        private fun normalizeApkPath(path: String?): String = path
+            ?.trim()
+            ?.replace('\\', '/')
+            .orEmpty()
 
-        private fun looksLikeApkPath(path: String): Boolean {
-            return path.lowercase().endsWith(".apk")
-        }
+        private fun looksLikeApkPath(path: String): Boolean = path.lowercase().endsWith(".apk")
 
         private const val APK_MANIFEST_ENTRY = "AndroidManifest.xml"
     }

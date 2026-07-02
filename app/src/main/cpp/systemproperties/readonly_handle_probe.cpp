@@ -24,42 +24,41 @@
 #include <vector>
 
 namespace systemproperties {
-    namespace {
+namespace {
 
-        constexpr std::string_view kReadOnlyPrefix = "ro.";
-        constexpr std::string_view kAppCompatOverridePrefix = "ro.appcompat_override.";
+constexpr std::string_view kReadOnlyPrefix = "ro.";
+constexpr std::string_view kAppCompatOverridePrefix = "ro.appcompat_override.";
 
-        bool is_readonly_property(const std::string &property) {
-            return property.starts_with(kReadOnlyPrefix) &&
-                   !property.starts_with(kAppCompatOverridePrefix);
+bool is_readonly_property(const std::string& property) {
+    return property.starts_with(kReadOnlyPrefix) && !property.starts_with(kAppCompatOverridePrefix);
+}
+
+}  // namespace
+
+ReadOnlyPropertyHandleSnapshot scan_readonly_property_handles(
+    const std::vector<std::string>& properties) {
+    ReadOnlyPropertyHandleSnapshot snapshot;
+
+    std::set<std::string> candidates;
+    for (const std::string& property : properties) {
+        if (is_readonly_property(property)) {
+            candidates.insert(property);
         }
-
-    }  // namespace
-
-    ReadOnlyPropertyHandleSnapshot
-    scan_readonly_property_handles(const std::vector<std::string> &properties) {
-        ReadOnlyPropertyHandleSnapshot snapshot;
-
-        std::set<std::string> candidates;
-        for (const std::string &property: properties) {
-            if (is_readonly_property(property)) {
-                candidates.insert(property);
-            }
-        }
-
-        for (const std::string &property: candidates) {
-            const prop_info *info = __system_property_find(property.c_str());
-            if (info == nullptr) {
-                continue;
-            }
-
-            snapshot.available = true;
-            ++snapshot.checked_count;
-        }
-
-        // Only confirm that native libc can resolve tracked ro.* handles.
-        // Do not inspect bionic prop serial bits; the public serial is opaque.
-        return snapshot;
     }
+
+    for (const std::string& property : candidates) {
+        const prop_info* info = __system_property_find(property.c_str());
+        if (info == nullptr) {
+            continue;
+        }
+
+        snapshot.available = true;
+        ++snapshot.checked_count;
+    }
+
+    // Only confirm that native libc can resolve tracked ro.* handles.
+    // Do not inspect bionic prop serial bits; the public serial is opaque.
+    return snapshot;
+}
 
 }  // namespace systemproperties

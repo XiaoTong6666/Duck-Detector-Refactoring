@@ -34,42 +34,40 @@ class ZygiskFdTrapDetectorService : Service() {
             data: Parcel,
             reply: Parcel?,
             flags: Int,
-        ): Boolean {
-            return when (code) {
-                INTERFACE_TRANSACTION -> {
-                    reply?.writeString(DESCRIPTOR)
-                    true
-                }
-
-                TRANSACTION_PERFORM_DETECTION -> {
-                    data.enforceInterface(DESCRIPTOR)
-                    val pfd = if (data.readInt() != 0) {
-                        ParcelFileDescriptor.CREATOR.createFromParcel(data)
-                    } else {
-                        null
-                    }
-                    val result = performDetection(pfd)
-                    reply?.writeNoException()
-                    reply?.writeInt(result)
-                    true
-                }
-
-                TRANSACTION_GET_DETAILS -> {
-                    data.enforceInterface(DESCRIPTOR)
-                    reply?.writeNoException()
-                    reply?.writeString(lastDetectionDetails)
-                    true
-                }
-
-                TRANSACTION_IS_NATIVE_AVAILABLE -> {
-                    data.enforceInterface(DESCRIPTOR)
-                    reply?.writeNoException()
-                    reply?.writeInt(if (nativeBridge.isNativeAvailable()) 1 else 0)
-                    true
-                }
-
-                else -> super.onTransact(code, data, reply, flags)
+        ): Boolean = when (code) {
+            INTERFACE_TRANSACTION -> {
+                reply?.writeString(DESCRIPTOR)
+                true
             }
+
+            TRANSACTION_PERFORM_DETECTION -> {
+                data.enforceInterface(DESCRIPTOR)
+                val pfd = if (data.readInt() != 0) {
+                    ParcelFileDescriptor.CREATOR.createFromParcel(data)
+                } else {
+                    null
+                }
+                val result = performDetection(pfd)
+                reply?.writeNoException()
+                reply?.writeInt(result)
+                true
+            }
+
+            TRANSACTION_GET_DETAILS -> {
+                data.enforceInterface(DESCRIPTOR)
+                reply?.writeNoException()
+                reply?.writeString(lastDetectionDetails)
+                true
+            }
+
+            TRANSACTION_IS_NATIVE_AVAILABLE -> {
+                data.enforceInterface(DESCRIPTOR)
+                reply?.writeNoException()
+                reply?.writeInt(if (nativeBridge.isNativeAvailable()) 1 else 0)
+                true
+            }
+
+            else -> super.onTransact(code, data, reply, flags)
         }
     }
 

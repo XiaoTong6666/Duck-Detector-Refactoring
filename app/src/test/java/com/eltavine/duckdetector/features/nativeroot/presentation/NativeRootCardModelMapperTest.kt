@@ -139,7 +139,7 @@ class NativeRootCardModelMapperTest {
         assertTrue(
             model.nativeRows.any {
                 it.label == "KSU supercall" && it.value == "Blocked by seccomp"
-            }
+            },
         )
         assertTrue(model.methodRows.any { it.label == "ksuReadonlySupercall" && it.value == "Blocked" })
     }

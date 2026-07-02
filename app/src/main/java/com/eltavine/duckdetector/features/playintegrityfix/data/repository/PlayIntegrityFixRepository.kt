@@ -41,7 +41,7 @@ class PlayIntegrityFixRepository(
         runCatching { scanInternal() }
             .getOrElse { throwable ->
                 PlayIntegrityFixReport.failed(
-                    throwable.message ?: "Play Integrity Fix scan failed."
+                    throwable.message ?: "Play Integrity Fix scan failed.",
                 )
             }
     }
@@ -158,73 +158,83 @@ class PlayIntegrityFixRepository(
         nativeHitCount: Int,
         nativeTraceCount: Int,
         nativeAvailable: Boolean,
-    ): List<PlayIntegrityFixMethodResult> {
-        return listOf(
-            PlayIntegrityFixMethodResult(
-                label = "Reflection API",
-                summary = if (reflectionHitCount > 0) "$reflectionHitCount hit(s)" else "Unavailable",
-                outcome = if (reflectionHitCount > 0) PlayIntegrityFixMethodOutcome.CLEAN else PlayIntegrityFixMethodOutcome.SUPPORT,
-                detail = "android.os.SystemProperties reflection reads for PIF residue properties.",
-            ),
-            PlayIntegrityFixMethodResult(
-                label = "getprop snapshot",
-                summary = if (getpropHitCount > 0) "$getpropHitCount hit(s)" else "Unavailable",
-                outcome = if (getpropHitCount > 0) PlayIntegrityFixMethodOutcome.CLEAN else PlayIntegrityFixMethodOutcome.SUPPORT,
-                detail = "Single getprop dump reused for all PIF property checks.",
-            ),
-            PlayIntegrityFixMethodResult(
-                label = "JVM fallback",
-                summary = if (jvmHitCount > 0) "$jvmHitCount fallback(s)" else "Not needed",
-                outcome = if (jvmHitCount > 0) PlayIntegrityFixMethodOutcome.SUPPORT else PlayIntegrityFixMethodOutcome.CLEAN,
-                detail = "System.getProperty fallback, mainly useful as a weak consistency source.",
-            ),
-            PlayIntegrityFixMethodResult(
-                label = "Native libc props",
-                summary = if (nativeHitCount > 0) "$nativeHitCount hit(s)" else if (nativeAvailable) "Clean" else "Unavailable",
-                outcome = when {
-                    nativeHitCount > 0 -> PlayIntegrityFixMethodOutcome.DETECTED
-                    nativeAvailable -> PlayIntegrityFixMethodOutcome.CLEAN
-                    else -> PlayIntegrityFixMethodOutcome.SUPPORT
-                },
-                detail = "__system_property_get checks for PIF-specific persist.sys residue.",
-            ),
-            PlayIntegrityFixMethodResult(
-                label = "Native maps",
-                summary = if (nativeTraceCount > 0) "$nativeTraceCount trace(s)" else if (nativeAvailable) "Clean" else "Unavailable",
-                outcome = when {
-                    nativeSignals.any { it.severity == PlayIntegrityFixSignalSeverity.DANGER } -> PlayIntegrityFixMethodOutcome.DETECTED
-                    nativeSignals.isNotEmpty() -> PlayIntegrityFixMethodOutcome.WARNING
-                    nativeAvailable -> PlayIntegrityFixMethodOutcome.CLEAN
-                    else -> PlayIntegrityFixMethodOutcome.SUPPORT
-                },
-                detail = "Scans current-process memory maps for playintegrity/pihooks/pixelprops/keystore-related runtime traces.",
-            ),
-            PlayIntegrityFixMethodResult(
-                label = "Property catalog",
-                summary = if (propertySignals.isNotEmpty()) "${propertySignals.size} hit(s)" else "Clean",
-                outcome = when {
-                    propertySignals.any { it.severity == PlayIntegrityFixSignalSeverity.DANGER } -> PlayIntegrityFixMethodOutcome.DETECTED
-                    propertySignals.isNotEmpty() -> PlayIntegrityFixMethodOutcome.WARNING
-                    else -> PlayIntegrityFixMethodOutcome.CLEAN
-                },
-                detail = "Checks PIF control, Pixel props, spoofed device identity, and security patch residue properties.",
-            ),
-            PlayIntegrityFixMethodResult(
-                label = "Source consistency",
-                summary = when {
-                    consistencySignals.isNotEmpty() -> "${consistencySignals.size} mismatch(es)"
-                    nativeAvailable -> "Aligned"
-                    else -> "Partial"
-                },
-                outcome = when {
-                    consistencySignals.isNotEmpty() -> PlayIntegrityFixMethodOutcome.WARNING
-                    nativeAvailable -> PlayIntegrityFixMethodOutcome.CLEAN
-                    else -> PlayIntegrityFixMethodOutcome.SUPPORT
-                },
-                detail = "Flags cases where reflection, getprop, JVM, and native libc disagree for the same PIF residue property.",
-            ),
-        )
-    }
+    ): List<PlayIntegrityFixMethodResult> = listOf(
+        PlayIntegrityFixMethodResult(
+            label = "Reflection API",
+            summary = if (reflectionHitCount > 0) "$reflectionHitCount hit(s)" else "Unavailable",
+            outcome = if (reflectionHitCount > 0) PlayIntegrityFixMethodOutcome.CLEAN else PlayIntegrityFixMethodOutcome.SUPPORT,
+            detail = "android.os.SystemProperties reflection reads for PIF residue properties.",
+        ),
+        PlayIntegrityFixMethodResult(
+            label = "getprop snapshot",
+            summary = if (getpropHitCount > 0) "$getpropHitCount hit(s)" else "Unavailable",
+            outcome = if (getpropHitCount > 0) PlayIntegrityFixMethodOutcome.CLEAN else PlayIntegrityFixMethodOutcome.SUPPORT,
+            detail = "Single getprop dump reused for all PIF property checks.",
+        ),
+        PlayIntegrityFixMethodResult(
+            label = "JVM fallback",
+            summary = if (jvmHitCount > 0) "$jvmHitCount fallback(s)" else "Not needed",
+            outcome = if (jvmHitCount > 0) PlayIntegrityFixMethodOutcome.SUPPORT else PlayIntegrityFixMethodOutcome.CLEAN,
+            detail = "System.getProperty fallback, mainly useful as a weak consistency source.",
+        ),
+        PlayIntegrityFixMethodResult(
+            label = "Native libc props",
+            summary = if (nativeHitCount > 0) {
+                "$nativeHitCount hit(s)"
+            } else if (nativeAvailable) {
+                "Clean"
+            } else {
+                "Unavailable"
+            },
+            outcome = when {
+                nativeHitCount > 0 -> PlayIntegrityFixMethodOutcome.DETECTED
+                nativeAvailable -> PlayIntegrityFixMethodOutcome.CLEAN
+                else -> PlayIntegrityFixMethodOutcome.SUPPORT
+            },
+            detail = "__system_property_get checks for PIF-specific persist.sys residue.",
+        ),
+        PlayIntegrityFixMethodResult(
+            label = "Native maps",
+            summary = if (nativeTraceCount > 0) {
+                "$nativeTraceCount trace(s)"
+            } else if (nativeAvailable) {
+                "Clean"
+            } else {
+                "Unavailable"
+            },
+            outcome = when {
+                nativeSignals.any { it.severity == PlayIntegrityFixSignalSeverity.DANGER } -> PlayIntegrityFixMethodOutcome.DETECTED
+                nativeSignals.isNotEmpty() -> PlayIntegrityFixMethodOutcome.WARNING
+                nativeAvailable -> PlayIntegrityFixMethodOutcome.CLEAN
+                else -> PlayIntegrityFixMethodOutcome.SUPPORT
+            },
+            detail = "Scans current-process memory maps for playintegrity/pihooks/pixelprops/keystore-related runtime traces.",
+        ),
+        PlayIntegrityFixMethodResult(
+            label = "Property catalog",
+            summary = if (propertySignals.isNotEmpty()) "${propertySignals.size} hit(s)" else "Clean",
+            outcome = when {
+                propertySignals.any { it.severity == PlayIntegrityFixSignalSeverity.DANGER } -> PlayIntegrityFixMethodOutcome.DETECTED
+                propertySignals.isNotEmpty() -> PlayIntegrityFixMethodOutcome.WARNING
+                else -> PlayIntegrityFixMethodOutcome.CLEAN
+            },
+            detail = "Checks PIF control, Pixel props, spoofed device identity, and security patch residue properties.",
+        ),
+        PlayIntegrityFixMethodResult(
+            label = "Source consistency",
+            summary = when {
+                consistencySignals.isNotEmpty() -> "${consistencySignals.size} mismatch(es)"
+                nativeAvailable -> "Aligned"
+                else -> "Partial"
+            },
+            outcome = when {
+                consistencySignals.isNotEmpty() -> PlayIntegrityFixMethodOutcome.WARNING
+                nativeAvailable -> PlayIntegrityFixMethodOutcome.CLEAN
+                else -> PlayIntegrityFixMethodOutcome.SUPPORT
+            },
+            detail = "Flags cases where reflection, getprop, JVM, and native libc disagree for the same PIF residue property.",
+        ),
+    )
 
     private fun badgeValue(value: String): String {
         val trimmed = value.trim()

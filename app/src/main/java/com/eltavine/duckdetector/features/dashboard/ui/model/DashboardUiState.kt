@@ -21,8 +21,8 @@ import com.eltavine.duckdetector.core.ui.model.DetectorStatus
 import com.eltavine.duckdetector.core.ui.model.InfoKind
 import com.eltavine.duckdetector.features.bootloader.ui.model.BootloaderCardModel
 import com.eltavine.duckdetector.features.customrom.ui.model.CustomRomCardModel
-import com.eltavine.duckdetector.features.deviceinfo.ui.model.DeviceInfoCardModel
 import com.eltavine.duckdetector.features.dangerousapps.ui.model.DangerousAppsCardModel
+import com.eltavine.duckdetector.features.deviceinfo.ui.model.DeviceInfoCardModel
 import com.eltavine.duckdetector.features.kernelcheck.ui.model.KernelCheckCardModel
 import com.eltavine.duckdetector.features.lsposed.ui.model.LSPosedCardModel
 import com.eltavine.duckdetector.features.memory.ui.model.MemoryCardModel
@@ -260,9 +260,13 @@ fun buildDashboardOverview(
             DashboardOverviewMetricModel(
                 label = "Ready",
                 value = readyCount.toString(),
-                status = if (readyCount > 0) DetectorStatus.allClear() else DetectorStatus.info(
-                    InfoKind.SUPPORT
-                ),
+                status = if (readyCount > 0) {
+                    DetectorStatus.allClear()
+                } else {
+                    DetectorStatus.info(
+                        InfoKind.SUPPORT,
+                    )
+                },
             ),
             DashboardOverviewMetricModel(
                 label = "Pending",
@@ -283,12 +287,10 @@ private fun formatDetectedTimeLocal(epochMillis: Long): String {
 
 private fun formatScanDuration(
     durationMillis: Long,
-): String {
-    return when {
-        durationMillis < 1_000L -> "${durationMillis}ms"
-        durationMillis < 10_000L -> String.format(Locale.US, "%.1fs", durationMillis / 1_000f)
-        else -> "${(durationMillis + 500L) / 1_000L}s"
-    }
+): String = when {
+    durationMillis < 1_000L -> "${durationMillis}ms"
+    durationMillis < 10_000L -> String.format(Locale.US, "%.1fs", durationMillis / 1_000f)
+    else -> "${(durationMillis + 500L) / 1_000L}s"
 }
 
 fun buildDashboardFindings(
@@ -298,9 +300,11 @@ fun buildDashboardFindings(
     val attentionFindings = prioritized.filter { contribution ->
         when (contribution.status.severity) {
             DetectionSeverity.DANGER,
-            DetectionSeverity.WARNING -> true
+            DetectionSeverity.WARNING,
+            -> true
 
             DetectionSeverity.INFO -> contribution.status.infoKind == InfoKind.ERROR
+
             DetectionSeverity.ALL_CLEAR -> false
         }
     }
@@ -338,50 +342,44 @@ fun buildDashboardFindings(
 
 private fun prioritizedContributions(
     contributions: List<DashboardDetectorContribution>,
-): List<DashboardDetectorContribution> {
-    return contributions.sortedWith(
-        compareBy<DashboardDetectorContribution> { contribution ->
-            detectorPriority(contribution.status)
-        }.thenBy { if (it.ready) 0 else 1 }
-            .thenBy { it.title },
-    )
-}
+): List<DashboardDetectorContribution> = contributions.sortedWith(
+    compareBy<DashboardDetectorContribution> { contribution ->
+        detectorPriority(contribution.status)
+    }.thenBy { if (it.ready) 0 else 1 }
+        .thenBy { it.title },
+)
 
 fun sortDashboardDetectorCards(
     entries: List<DashboardDetectorCardEntry>,
-): List<DashboardDetectorCardEntry> {
-    return entries.sortedWith(
-        compareBy<DashboardDetectorCardEntry> { entry ->
-            detectorPriority(entry.status)
-        }.thenBy { entry ->
-            when (entry) {
-                is DashboardDetectorCardEntry.Bootloader -> entry.model.title
-                is DashboardDetectorCardEntry.CustomRom -> entry.model.title
-                is DashboardDetectorCardEntry.DangerousApps -> entry.model.title
-                is DashboardDetectorCardEntry.KernelCheck -> entry.model.title
-                is DashboardDetectorCardEntry.LSPosed -> entry.model.title
-                is DashboardDetectorCardEntry.Memory -> entry.model.title
-                is DashboardDetectorCardEntry.Mount -> entry.model.title
-                is DashboardDetectorCardEntry.NativeRoot -> entry.model.title
-                is DashboardDetectorCardEntry.PlayIntegrityFix -> entry.model.title
-                is DashboardDetectorCardEntry.Selinux -> entry.model.title
-                is DashboardDetectorCardEntry.Su -> entry.model.title
-                is DashboardDetectorCardEntry.SystemProperties -> entry.model.title
-                is DashboardDetectorCardEntry.Tee -> entry.model.title
-                is DashboardDetectorCardEntry.Virtualization -> entry.model.title
-                is DashboardDetectorCardEntry.Zygisk -> entry.model.title
-            }
-        },
-    )
-}
+): List<DashboardDetectorCardEntry> = entries.sortedWith(
+    compareBy<DashboardDetectorCardEntry> { entry ->
+        detectorPriority(entry.status)
+    }.thenBy { entry ->
+        when (entry) {
+            is DashboardDetectorCardEntry.Bootloader -> entry.model.title
+            is DashboardDetectorCardEntry.CustomRom -> entry.model.title
+            is DashboardDetectorCardEntry.DangerousApps -> entry.model.title
+            is DashboardDetectorCardEntry.KernelCheck -> entry.model.title
+            is DashboardDetectorCardEntry.LSPosed -> entry.model.title
+            is DashboardDetectorCardEntry.Memory -> entry.model.title
+            is DashboardDetectorCardEntry.Mount -> entry.model.title
+            is DashboardDetectorCardEntry.NativeRoot -> entry.model.title
+            is DashboardDetectorCardEntry.PlayIntegrityFix -> entry.model.title
+            is DashboardDetectorCardEntry.Selinux -> entry.model.title
+            is DashboardDetectorCardEntry.Su -> entry.model.title
+            is DashboardDetectorCardEntry.SystemProperties -> entry.model.title
+            is DashboardDetectorCardEntry.Tee -> entry.model.title
+            is DashboardDetectorCardEntry.Virtualization -> entry.model.title
+            is DashboardDetectorCardEntry.Zygisk -> entry.model.title
+        }
+    },
+)
 
 private fun detectorPriority(
     status: DetectorStatus,
-): Int {
-    return when (status.severity) {
-        DetectionSeverity.DANGER -> 0
-        DetectionSeverity.WARNING -> 1
-        DetectionSeverity.INFO -> if (status.infoKind == InfoKind.ERROR) 2 else 3
-        DetectionSeverity.ALL_CLEAR -> 4
-    }
+): Int = when (status.severity) {
+    DetectionSeverity.DANGER -> 0
+    DetectionSeverity.WARNING -> 1
+    DetectionSeverity.INFO -> if (status.infoKind == InfoKind.ERROR) 2 else 3
+    DetectionSeverity.ALL_CLEAR -> 4
 }

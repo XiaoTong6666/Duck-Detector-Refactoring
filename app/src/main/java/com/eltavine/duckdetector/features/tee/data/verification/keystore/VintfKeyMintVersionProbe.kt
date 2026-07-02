@@ -17,11 +17,11 @@
 package com.eltavine.duckdetector.features.tee.data.verification.keystore
 
 import com.eltavine.duckdetector.features.tee.data.attestation.AttestationSnapshot
+import org.w3c.dom.Element
+import org.xml.sax.InputSource
 import java.io.File
 import java.io.StringReader
 import javax.xml.parsers.DocumentBuilderFactory
-import org.w3c.dom.Element
-import org.xml.sax.InputSource
 
 class VintfKeyMintVersionProbe(
     private val manifestDirs: List<String> = VINTF_MANIFEST_DIRS,
@@ -140,23 +140,19 @@ class VintfKeyMintVersionProbe(
         return declarations
     }
 
-    private fun directChildElements(parent: Element, tagName: String): List<Element> {
-        return buildList {
-            val children = parent.childNodes
-            for (index in 0 until children.length) {
-                val child = children.item(index)
-                if (child is Element && child.tagName == tagName) {
-                    add(child)
-                }
+    private fun directChildElements(parent: Element, tagName: String): List<Element> = buildList {
+        val children = parent.childNodes
+        for (index in 0 until children.length) {
+            val child = children.item(index)
+            if (child is Element && child.tagName == tagName) {
+                add(child)
             }
         }
     }
 
-    private fun directChildTexts(parent: Element, tagName: String): List<String> {
-        return directChildElements(parent, tagName)
-            .map { it.textContent.trim() }
-            .filter { it.isNotEmpty() }
-    }
+    private fun directChildTexts(parent: Element, tagName: String): List<String> = directChildElements(parent, tagName)
+        .map { it.textContent.trim() }
+        .filter { it.isNotEmpty() }
 
     private fun detailFor(
         anomalyKind: VintfKeyMintVersionAnomalyKind,
@@ -181,9 +177,7 @@ class VintfKeyMintVersionProbe(
         }
     }
 
-    private fun describe(throwable: Throwable): String {
-        return "${throwable.javaClass.simpleName}: ${throwable.message ?: "no message"}"
-    }
+    private fun describe(throwable: Throwable): String = "${throwable.javaClass.simpleName}: ${throwable.message ?: "no message"}"
 
     private data class ManifestReadResult(
         val declarations: List<VintfKeyMintVersionDeclaration>,
@@ -198,12 +192,10 @@ class VintfKeyMintVersionProbe(
         val interfaces: MutableMap<String, MutableSet<String>> = mutableMapOf(),
         val fqnames: MutableList<String> = mutableListOf(),
     ) {
-        fun toDeclarations(): List<VintfKeyMintVersionDeclaration> {
-            return when (halName) {
-                KEYMINT_HAL_NAME -> keyMintDeclarations()
-                KEYMASTER_HAL_NAME -> keymasterDeclarations()
-                else -> emptyList()
-            }
+        fun toDeclarations(): List<VintfKeyMintVersionDeclaration> = when (halName) {
+            KEYMINT_HAL_NAME -> keyMintDeclarations()
+            KEYMASTER_HAL_NAME -> keymasterDeclarations()
+            else -> emptyList()
         }
 
         private fun keyMintDeclarations(): List<VintfKeyMintVersionDeclaration> {
@@ -249,16 +241,13 @@ class VintfKeyMintVersionProbe(
                 }
         }
 
-        private fun hasInstance(interfaceName: String, instance: String): Boolean {
-            return fqnames.any { fqname ->
-                fqname.substringAfter("::", fqname).substringBefore("/") == interfaceName &&
-                    fqname.substringAfter("/", "") == instance
-            } || (interfaces[interfaceName]?.contains(instance) == true)
-        }
+        private fun hasInstance(interfaceName: String, instance: String): Boolean = fqnames.any { fqname ->
+            fqname.substringAfter("::", fqname).substringBefore("/") == interfaceName &&
+                fqname.substringAfter("/", "") == instance
+        } ||
+            (interfaces[interfaceName]?.contains(instance) == true)
 
-        private fun versionFromFqname(fqname: String): String? {
-            return FQNAME_VERSION_REGEX.find(fqname)?.groupValues?.getOrNull(1)
-        }
+        private fun versionFromFqname(fqname: String): String? = FQNAME_VERSION_REGEX.find(fqname)?.groupValues?.getOrNull(1)
     }
 
     companion object {
@@ -283,13 +272,11 @@ class VintfKeyMintVersionProbe(
         private const val DEFAULT_INSTANCE = "default"
         private val FQNAME_VERSION_REGEX = Regex("^@([0-9]+(?:\\.[0-9]+)?)::")
 
-        private fun expectedLegacyVersions(version: String): Pair<Int, Int>? {
-            return when (version) {
-                "3.0" -> 3 to 2
-                "4.0" -> 4 to 3
-                "4.1" -> 41 to 4
-                else -> null
-            }
+        private fun expectedLegacyVersions(version: String): Pair<Int, Int>? = when (version) {
+            "3.0" -> 3 to 2
+            "4.0" -> 4 to 3
+            "4.1" -> 41 to 4
+            else -> null
         }
 
         private fun expandHidlVersions(version: String): List<String> {
@@ -332,10 +319,8 @@ data class VintfKeyMintVersionDeclaration(
         get() = "$halName/$interfaceName/$instance@$vintfVersion -> " +
             "keymaster=$expectedKeymasterVersion,attestation=$expectedAttestationVersion"
 
-    fun matches(keymasterVersion: Int?, attestationVersion: Int?): Boolean {
-        return (keymasterVersion == null || keymasterVersion == expectedKeymasterVersion) &&
-            (attestationVersion == null || attestationVersion == expectedAttestationVersion)
-    }
+    fun matches(keymasterVersion: Int?, attestationVersion: Int?): Boolean = (keymasterVersion == null || keymasterVersion == expectedKeymasterVersion) &&
+        (attestationVersion == null || attestationVersion == expectedAttestationVersion)
 }
 
 data class VintfKeyMintVersionResult(

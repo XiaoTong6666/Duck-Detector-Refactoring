@@ -59,31 +59,28 @@ class CertificateTrustAnalyzer(
         )
     }
 
-    private fun verifyChainSignatures(chain: List<X509Certificate>): Boolean {
-        return runCatching {
-            chain.zipWithNext().forEach { (cert, issuer) ->
-                cert.verify(issuer.publicKey)
-            }
-            chain.last().verify(chain.last().publicKey)
-        }.isSuccess
-    }
+    private fun verifyChainSignatures(chain: List<X509Certificate>): Boolean = runCatching {
+        chain.zipWithNext().forEach { (cert, issuer) ->
+            cert.verify(issuer.publicKey)
+        }
+        chain.last().verify(chain.last().publicKey)
+    }.isSuccess
 
     private fun looksLikeAospAttestationCert(cert: X509Certificate): Boolean {
         val subject = cert.subjectX500Principal.name
         val issuer = cert.issuerX500Principal.name
         return AOSP_PATTERNS.any { pattern ->
-            subject.contains(pattern, ignoreCase = true) || issuer.contains(
-                pattern,
-                ignoreCase = true
-            )
+            subject.contains(pattern, ignoreCase = true) ||
+                issuer.contains(
+                    pattern,
+                    ignoreCase = true,
+                )
         }
     }
 
-    private fun ByteArray.sha256(): String {
-        return java.security.MessageDigest.getInstance("SHA-256")
-            .digest(this)
-            .joinToString(separator = "") { byte -> "%02x".format(byte) }
-    }
+    private fun ByteArray.sha256(): String = java.security.MessageDigest.getInstance("SHA-256")
+        .digest(this)
+        .joinToString(separator = "") { byte -> "%02x".format(byte) }
 
     companion object {
         private val AOSP_PATTERNS = listOf(

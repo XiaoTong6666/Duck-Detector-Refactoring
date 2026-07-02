@@ -18,14 +18,12 @@ package com.eltavine.duckdetector.features.selinux.data.probes
 
 object SelinuxProcAttrCurrentPayloadCodec {
 
-    fun encode(result: SelinuxProcAttrCurrentResult): String {
-        return listOf(
-            result.label,
-            result.targetContext,
-            result.outcomeClass,
-            result.rawMessage,
-        ).joinToString(FIELD_SEPARATOR)
-    }
+    fun encode(result: SelinuxProcAttrCurrentResult): String = listOf(
+        result.label,
+        result.targetContext,
+        result.outcomeClass,
+        result.rawMessage,
+    ).joinToString(FIELD_SEPARATOR)
 
     fun decode(payload: String): SelinuxProcAttrCurrentResult? {
         val parts = payload.split(FIELD_SEPARATOR, limit = 4)

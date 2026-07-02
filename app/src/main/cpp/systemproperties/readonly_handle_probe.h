@@ -21,12 +21,12 @@
 
 namespace systemproperties {
 
-    struct ReadOnlyPropertyHandleSnapshot {
-        bool available = false;
-        int checked_count = 0;
-    };
+struct ReadOnlyPropertyHandleSnapshot {
+    bool available = false;
+    int checked_count = 0;
+};
 
-    ReadOnlyPropertyHandleSnapshot
-    scan_readonly_property_handles(const std::vector<std::string> &properties);
+ReadOnlyPropertyHandleSnapshot scan_readonly_property_handles(
+    const std::vector<std::string>& properties);
 
 }  // namespace systemproperties

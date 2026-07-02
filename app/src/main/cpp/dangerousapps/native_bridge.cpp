@@ -25,36 +25,32 @@
 
 namespace {
 
-    bool stat_exists(const std::string &path) {
-        struct stat st{};
+bool stat_exists(const std::string& path) {
+    struct stat st{};
 #if defined(__aarch64__) || defined(__x86_64__)
-        const int result = static_cast<int>(syscall(__NR_newfstatat, AT_FDCWD, path.c_str(), &st, 0));
+    const int result = static_cast<int>(syscall(__NR_newfstatat, AT_FDCWD, path.c_str(), &st, 0));
 #else
-        const int result = static_cast<int>(syscall(__NR_fstatat64, AT_FDCWD, path.c_str(), &st,
-                                                    0));
+    const int result = static_cast<int>(syscall(__NR_fstatat64, AT_FDCWD, path.c_str(), &st, 0));
 #endif
-        if (result == 0) {
-            return true;
-        }
-        return errno != ENOENT;
+    if (result == 0) {
+        return true;
     }
+    return errno != ENOENT;
+}
 
-    bool package_exists(const std::string &package_name) {
-        return stat_exists("/data/data/" + package_name) ||
-               stat_exists("/data/user/0/" + package_name);
-    }
+bool package_exists(const std::string& package_name) {
+    return stat_exists("/data/data/" + package_name) || stat_exists("/data/user/0/" + package_name);
+}
 
-    jstring to_jstring(JNIEnv *env, const std::string &value) {
-        return env->NewStringUTF(value.c_str());
-    }
+jstring to_jstring(JNIEnv* env, const std::string& value) {
+    return env->NewStringUTF(value.c_str());
+}
 
 }  // namespace
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_eltavine_duckdetector_features_dangerousapps_data_native_DangerousAppsNativeBridge_nativeStatPackages(
-        JNIEnv *env,
-        jobject,
-        jobjectArray package_names) {
+    JNIEnv* env, jobject, jobjectArray package_names) {
     if (package_names == nullptr) {
         return to_jstring(env, "");
     }
@@ -63,12 +59,12 @@ Java_com_eltavine_duckdetector_features_dangerousapps_data_native_DangerousAppsN
     std::string output;
 
     for (jsize index = 0; index < count; ++index) {
-        auto *java_package = static_cast<jstring>(env->GetObjectArrayElement(package_names, index));
+        auto* java_package = static_cast<jstring>(env->GetObjectArrayElement(package_names, index));
         if (java_package == nullptr) {
             continue;
         }
 
-        const char *chars = env->GetStringUTFChars(java_package, nullptr);
+        const char* chars = env->GetStringUTFChars(java_package, nullptr);
         if (chars != nullptr) {
             const std::string package_name(chars);
             env->ReleaseStringUTFChars(java_package, chars);

@@ -24,15 +24,16 @@ import org.gradle.process.ExecOperations
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.time.Instant
-import java.time.ZonedDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 private const val UNKNOWN = "unknown"
 private val BUILD_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
     .withZone(ZoneOffset.UTC)
+
 // Use the Singapore calendar date as the stable versionName prefix.
 private val VERSION_NAME_FORMATTER = DateTimeFormatter.ofPattern("yyyy.MM.dd")
 
@@ -93,10 +94,8 @@ abstract class GitCommitCountValueSource @Inject constructor(
 }
 
 abstract class CurrentDateVersionNameValueSource : ValueSource<String, VersionNameDateParameters> {
-    override fun obtain(): String {
-        return ZonedDateTime.now(ZoneId.of(parameters.zoneId.get()))
-            .format(VERSION_NAME_FORMATTER)
-    }
+    override fun obtain(): String = ZonedDateTime.now(ZoneId.of(parameters.zoneId.get()))
+        .format(VERSION_NAME_FORMATTER)
 }
 
 private fun runGitCommand(

@@ -21,8 +21,8 @@ import com.eltavine.duckdetector.features.selinux.data.native.SelinuxContextVali
 import com.eltavine.duckdetector.features.selinux.data.native.SelinuxContextValiditySnapshot
 import com.eltavine.duckdetector.features.selinux.data.probes.SelinuxPolicyloadSeqnoState
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -108,20 +108,18 @@ class SelinuxContextValidityCarrierServiceTest {
         ksuResultsStable: Boolean = true,
         dyntransitionCheckPassed: Boolean? = true,
         failureReason: String? = null,
-    ): SelinuxContextValiditySnapshot {
-        return SelinuxContextValiditySnapshot(
-            available = true,
-            probeAttempted = probeAttempted,
-            carrierContext = "u:r:app_zygote:s0:c1,c2",
-            carrierMatchesExpected = true,
-            selinuxEnabled = true,
-            selinuxEnforced = true,
-            pidContextMatchesCurrent = true,
-            procSelfContextMatchesCurrent = true,
-            dyntransitionCheckPassed = dyntransitionCheckPassed,
-            oracleControlsPassed = oracleControlsPassed,
-            ksuResultsStable = ksuResultsStable,
-            failureReason = failureReason,
-        )
-    }
+    ): SelinuxContextValiditySnapshot = SelinuxContextValiditySnapshot(
+        available = true,
+        probeAttempted = probeAttempted,
+        carrierContext = "u:r:app_zygote:s0:c1,c2",
+        carrierMatchesExpected = true,
+        selinuxEnabled = true,
+        selinuxEnforced = true,
+        pidContextMatchesCurrent = true,
+        procSelfContextMatchesCurrent = true,
+        dyntransitionCheckPassed = dyntransitionCheckPassed,
+        oracleControlsPassed = oracleControlsPassed,
+        ksuResultsStable = ksuResultsStable,
+        failureReason = failureReason,
+    )
 }

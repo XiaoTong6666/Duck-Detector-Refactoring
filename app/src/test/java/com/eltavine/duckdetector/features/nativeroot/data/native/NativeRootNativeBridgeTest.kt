@@ -111,13 +111,13 @@ class NativeRootNativeBridgeTest {
             bridge.shouldSkipKsuSupercall(
                 manufacturer = "Xiaomi",
                 brand = "Redmi",
-            )
+            ),
         )
         assertTrue(
             bridge.shouldSkipKsuSupercall(
                 manufacturer = "POCO",
                 brand = "poco",
-            )
+            ),
         )
     }
 
@@ -127,7 +127,7 @@ class NativeRootNativeBridgeTest {
             bridge.shouldSkipKsuSupercall(
                 manufacturer = "Google",
                 brand = "google",
-            )
+            ),
         )
     }
 }

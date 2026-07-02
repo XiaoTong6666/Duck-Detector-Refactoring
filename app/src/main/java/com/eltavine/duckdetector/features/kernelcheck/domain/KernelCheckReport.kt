@@ -101,7 +101,7 @@ data class KernelCheckReport(
 
     val hasInformationalCveState: Boolean
         get() = cvePatchState == KernelCheckCvePatchState.UNPATCHED ||
-                cvePatchState == KernelCheckCvePatchState.PARTIALLY_PATCHED
+            cvePatchState == KernelCheckCvePatchState.PARTIALLY_PATCHED
 
     companion object {
         private val NAMING_FINDING_IDS = setOf(
@@ -117,43 +117,39 @@ data class KernelCheckReport(
             "suspicious_cmdline",
         )
 
-        fun loading(): KernelCheckReport {
-            return KernelCheckReport(
-                stage = KernelCheckStage.LOADING,
-                unameOutput = "",
-                procVersion = "",
-                procCmdline = "",
-                dangerFindings = emptyList(),
-                infoFindings = emptyList(),
-                suspiciousCmdline = false,
-                kptrExposed = false,
-                cvePatchState = KernelCheckCvePatchState.INCONCLUSIVE,
-                cvePatchDetail = null,
-                nativeAvailable = true,
-                checkedKeywordCount = 0,
-                checkedCmdlineRuleCount = 0,
-                methods = emptyList(),
-            )
-        }
+        fun loading(): KernelCheckReport = KernelCheckReport(
+            stage = KernelCheckStage.LOADING,
+            unameOutput = "",
+            procVersion = "",
+            procCmdline = "",
+            dangerFindings = emptyList(),
+            infoFindings = emptyList(),
+            suspiciousCmdline = false,
+            kptrExposed = false,
+            cvePatchState = KernelCheckCvePatchState.INCONCLUSIVE,
+            cvePatchDetail = null,
+            nativeAvailable = true,
+            checkedKeywordCount = 0,
+            checkedCmdlineRuleCount = 0,
+            methods = emptyList(),
+        )
 
-        fun failed(message: String): KernelCheckReport {
-            return KernelCheckReport(
-                stage = KernelCheckStage.FAILED,
-                unameOutput = "",
-                procVersion = "",
-                procCmdline = "",
-                dangerFindings = emptyList(),
-                infoFindings = emptyList(),
-                suspiciousCmdline = false,
-                kptrExposed = false,
-                cvePatchState = KernelCheckCvePatchState.INCONCLUSIVE,
-                cvePatchDetail = null,
-                nativeAvailable = false,
-                checkedKeywordCount = 0,
-                checkedCmdlineRuleCount = 0,
-                methods = emptyList(),
-                errorMessage = message,
-            )
-        }
+        fun failed(message: String): KernelCheckReport = KernelCheckReport(
+            stage = KernelCheckStage.FAILED,
+            unameOutput = "",
+            procVersion = "",
+            procCmdline = "",
+            dangerFindings = emptyList(),
+            infoFindings = emptyList(),
+            suspiciousCmdline = false,
+            kptrExposed = false,
+            cvePatchState = KernelCheckCvePatchState.INCONCLUSIVE,
+            cvePatchDetail = null,
+            nativeAvailable = false,
+            checkedKeywordCount = 0,
+            checkedCmdlineRuleCount = 0,
+            methods = emptyList(),
+            errorMessage = message,
+        )
     }
 }

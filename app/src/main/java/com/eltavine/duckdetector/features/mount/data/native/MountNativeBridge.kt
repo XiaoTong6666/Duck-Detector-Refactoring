@@ -18,11 +18,9 @@ package com.eltavine.duckdetector.features.mount.data.native
 
 open class MountNativeBridge {
 
-    open fun collectSnapshot(): MountNativeSnapshot {
-        return runCatching {
-            parse(nativeCollectSnapshot())
-        }.getOrDefault(MountNativeSnapshot())
-    }
+    open fun collectSnapshot(): MountNativeSnapshot = runCatching {
+        parse(nativeCollectSnapshot())
+    }.getOrDefault(MountNativeSnapshot())
 
     internal fun parse(raw: String): MountNativeSnapshot {
         if (raw.isBlank()) {
@@ -64,61 +62,95 @@ open class MountNativeBridge {
     private fun MountNativeSnapshot.applyEntry(
         key: String,
         value: String,
-    ): MountNativeSnapshot {
-        return when (key) {
-            "AVAILABLE" -> copy(available = value.asBool())
-            "MOUNTS_READABLE" -> copy(mountsReadable = value.asBool())
-            "MOUNTINFO_READABLE" -> copy(mountInfoReadable = value.asBool())
-            "MAPS_READABLE" -> copy(mapsReadable = value.asBool())
-            "FILESYSTEMS_READABLE" -> copy(filesystemsReadable = value.asBool())
-            "INIT_NAMESPACE_READABLE" -> copy(initNamespaceReadable = value.asBool())
-            "STATX_SUPPORTED" -> copy(statxSupported = value.asBool())
-            "PERMISSION_TOTAL" -> copy(permissionTotal = value.toIntOrNull() ?: permissionTotal)
-            "PERMISSION_DENIED" -> copy(permissionDenied = value.toIntOrNull() ?: permissionDenied)
-            "PERMISSION_ACCESSIBLE" -> copy(
-                permissionAccessible = value.toIntOrNull() ?: permissionAccessible
-            )
+    ): MountNativeSnapshot = when (key) {
+        "AVAILABLE" -> copy(available = value.asBool())
 
-            "MOUNT_ENTRY_COUNT" -> copy(mountEntryCount = value.toIntOrNull() ?: mountEntryCount)
-            "MOUNTINFO_ENTRY_COUNT" -> copy(
-                mountInfoEntryCount = value.toIntOrNull() ?: mountInfoEntryCount
-            )
+        "MOUNTS_READABLE" -> copy(mountsReadable = value.asBool())
 
-            "MAP_LINE_COUNT" -> copy(mapLineCount = value.toIntOrNull() ?: mapLineCount)
-            "BUSYBOX" -> copy(busyboxDetected = value.asBool())
-            "MAGISK_MOUNT" -> copy(magiskMountDetected = value.asBool())
-            "ZYGISK_CACHE" -> copy(zygiskCacheDetected = value.asBool())
-            "SYSTEM_RW" -> copy(systemRwDetected = value.asBool())
-            "OVERLAY_MOUNT" -> copy(overlayMountDetected = value.asBool())
-            "NAMESPACE_ANOMALY" -> copy(namespaceAnomalyDetected = value.asBool())
-            "DATA_ADB" -> copy(dataAdbDetected = value.asBool())
-            "DEBUG_RAMDISK" -> copy(debugRamdiskDetected = value.asBool())
-            "HYBRID_MOUNT" -> copy(hybridMountDetected = value.asBool())
-            "META_HYBRID_MOUNT" -> copy(metaHybridMountDetected = value.asBool())
-            "SUSPICIOUS_TMPFS" -> copy(suspiciousTmpfsDetected = value.asBool())
-            "KSU_OVERLAY" -> copy(ksuOverlayDetected = value.asBool())
-            "LOOP_DEVICE" -> copy(loopDeviceDetected = value.asBool())
-            "DM_VERITY_BYPASS" -> copy(dmVerityBypassDetected = value.asBool())
-            "MOUNT_PROPAGATION" -> copy(mountPropagationAnomaly = value.asBool())
-            "INCONSISTENT_MOUNT" -> copy(inconsistentMountDetected = value.asBool())
-            "MOUNT_ID_LOOPHOLE" -> copy(mountIdLoopholeDetected = value.asBool())
-            "PEER_GROUP_LOOPHOLE" -> copy(peerGroupLoopholeDetected = value.asBool())
-            "MINOR_DEV_LOOPHOLE" -> copy(minorDevLoopholeDetected = value.asBool())
-            "FUTILE_HIDE" -> copy(futileHideDetected = value.asBool())
-            "STATX_MNT_ID_MISMATCH" -> copy(statxMntIdMismatch = value.asBool())
-            "BIND_MOUNT_DETECTED" -> copy(bindMountDetected = value.asBool())
-            "MOUNT_OPTIONS_ANOMALY" -> copy(mountOptionsAnomaly = value.asBool())
-            "STATX_MOUNT_ROOT_ANOMALY" -> copy(statxMountRootAnomaly = value.asBool())
-            "OVERLAYFS_KERNEL_SUPPORT" -> copy(overlayfsKernelSupport = value.asBool())
-            "SYSTEM_FS_TYPE_ANOMALY" -> copy(systemFsTypeAnomaly = value.asBool())
-            "TMPFS_SIZE_ANOMALY" -> copy(tmpfsSizeAnomaly = value.asBool())
-            else -> this
-        }
+        "MOUNTINFO_READABLE" -> copy(mountInfoReadable = value.asBool())
+
+        "MAPS_READABLE" -> copy(mapsReadable = value.asBool())
+
+        "FILESYSTEMS_READABLE" -> copy(filesystemsReadable = value.asBool())
+
+        "INIT_NAMESPACE_READABLE" -> copy(initNamespaceReadable = value.asBool())
+
+        "STATX_SUPPORTED" -> copy(statxSupported = value.asBool())
+
+        "PERMISSION_TOTAL" -> copy(permissionTotal = value.toIntOrNull() ?: permissionTotal)
+
+        "PERMISSION_DENIED" -> copy(permissionDenied = value.toIntOrNull() ?: permissionDenied)
+
+        "PERMISSION_ACCESSIBLE" -> copy(
+            permissionAccessible = value.toIntOrNull() ?: permissionAccessible,
+        )
+
+        "MOUNT_ENTRY_COUNT" -> copy(mountEntryCount = value.toIntOrNull() ?: mountEntryCount)
+
+        "MOUNTINFO_ENTRY_COUNT" -> copy(
+            mountInfoEntryCount = value.toIntOrNull() ?: mountInfoEntryCount,
+        )
+
+        "MAP_LINE_COUNT" -> copy(mapLineCount = value.toIntOrNull() ?: mapLineCount)
+
+        "BUSYBOX" -> copy(busyboxDetected = value.asBool())
+
+        "MAGISK_MOUNT" -> copy(magiskMountDetected = value.asBool())
+
+        "ZYGISK_CACHE" -> copy(zygiskCacheDetected = value.asBool())
+
+        "SYSTEM_RW" -> copy(systemRwDetected = value.asBool())
+
+        "OVERLAY_MOUNT" -> copy(overlayMountDetected = value.asBool())
+
+        "NAMESPACE_ANOMALY" -> copy(namespaceAnomalyDetected = value.asBool())
+
+        "DATA_ADB" -> copy(dataAdbDetected = value.asBool())
+
+        "DEBUG_RAMDISK" -> copy(debugRamdiskDetected = value.asBool())
+
+        "HYBRID_MOUNT" -> copy(hybridMountDetected = value.asBool())
+
+        "META_HYBRID_MOUNT" -> copy(metaHybridMountDetected = value.asBool())
+
+        "SUSPICIOUS_TMPFS" -> copy(suspiciousTmpfsDetected = value.asBool())
+
+        "KSU_OVERLAY" -> copy(ksuOverlayDetected = value.asBool())
+
+        "LOOP_DEVICE" -> copy(loopDeviceDetected = value.asBool())
+
+        "DM_VERITY_BYPASS" -> copy(dmVerityBypassDetected = value.asBool())
+
+        "MOUNT_PROPAGATION" -> copy(mountPropagationAnomaly = value.asBool())
+
+        "INCONSISTENT_MOUNT" -> copy(inconsistentMountDetected = value.asBool())
+
+        "MOUNT_ID_LOOPHOLE" -> copy(mountIdLoopholeDetected = value.asBool())
+
+        "PEER_GROUP_LOOPHOLE" -> copy(peerGroupLoopholeDetected = value.asBool())
+
+        "MINOR_DEV_LOOPHOLE" -> copy(minorDevLoopholeDetected = value.asBool())
+
+        "FUTILE_HIDE" -> copy(futileHideDetected = value.asBool())
+
+        "STATX_MNT_ID_MISMATCH" -> copy(statxMntIdMismatch = value.asBool())
+
+        "BIND_MOUNT_DETECTED" -> copy(bindMountDetected = value.asBool())
+
+        "MOUNT_OPTIONS_ANOMALY" -> copy(mountOptionsAnomaly = value.asBool())
+
+        "STATX_MOUNT_ROOT_ANOMALY" -> copy(statxMountRootAnomaly = value.asBool())
+
+        "OVERLAYFS_KERNEL_SUPPORT" -> copy(overlayfsKernelSupport = value.asBool())
+
+        "SYSTEM_FS_TYPE_ANOMALY" -> copy(systemFsTypeAnomaly = value.asBool())
+
+        "TMPFS_SIZE_ANOMALY" -> copy(tmpfsSizeAnomaly = value.asBool())
+
+        else -> this
     }
 
-    private fun String.asBool(): Boolean {
-        return this == "1" || equals("true", ignoreCase = true)
-    }
+    private fun String.asBool(): Boolean = this == "1" || equals("true", ignoreCase = true)
 
     private external fun nativeCollectSnapshot(): String
 

@@ -33,12 +33,10 @@ object EarlyMountPreloadStore {
         }
     }
 
-    fun currentResult(): EarlyMountPreloadResult {
-        return selectPreferred(
-            nativeResult = bridge.getStoredResult(),
-            intentOnlyResult = intentResult,
-        )
-    }
+    fun currentResult(): EarlyMountPreloadResult = selectPreferred(
+        nativeResult = bridge.getStoredResult(),
+        intentOnlyResult = intentResult,
+    )
 
     internal fun capture(values: Map<String, Any?>) {
         val captured = EarlyMountPreloadResult.fromCapturedValues(values)
@@ -50,12 +48,10 @@ object EarlyMountPreloadStore {
     internal fun selectPreferred(
         nativeResult: EarlyMountPreloadResult,
         intentOnlyResult: EarlyMountPreloadResult,
-    ): EarlyMountPreloadResult {
-        return when {
-            nativeResult.hasRun -> nativeResult
-            intentOnlyResult.hasRun -> intentOnlyResult
-            else -> EarlyMountPreloadResult.empty()
-        }
+    ): EarlyMountPreloadResult = when {
+        nativeResult.hasRun -> nativeResult
+        intentOnlyResult.hasRun -> intentOnlyResult
+        else -> EarlyMountPreloadResult.empty()
     }
 
     internal fun replaceBridgeForTesting(testBridge: EarlyMountPreloadBridge) {

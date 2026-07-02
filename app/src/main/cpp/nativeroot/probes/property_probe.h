@@ -21,7 +21,7 @@
 
 namespace duckdetector::nativeroot {
 
-    ProbeResult run_property_probe();
+ProbeResult run_property_probe();
 
 }  // namespace duckdetector::nativeroot
 

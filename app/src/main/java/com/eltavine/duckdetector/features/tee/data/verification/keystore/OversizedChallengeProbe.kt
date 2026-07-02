@@ -52,13 +52,13 @@ class OversizedChallengeProbe {
             detail = if (acceptedSizes.isNotEmpty()) {
                 "Attestation accepted oversized challenge sizes: ${
                     acceptedSizes.joinToString(
-                        separator = ", "
+                        separator = ", ",
                     ) { "${it}B" }
                 }."
             } else {
                 "Attestation rejected oversized challenge sizes: ${
                     CHALLENGE_SIZES.joinToString(
-                        separator = ", "
+                        separator = ", ",
                     ) { "${it}B" }
                 }."
             },
@@ -79,11 +79,7 @@ data class OversizedChallengeResult(
     val acceptedLargestSize: Int?
         get() = acceptedSizes.maxOrNull()
 
-    fun acceptedSizesLabel(): String {
-        return acceptedSizes.joinToString(separator = " • ") { "${it}B" }
-    }
+    fun acceptedSizesLabel(): String = acceptedSizes.joinToString(separator = " • ") { "${it}B" }
 
-    fun attemptedSizesLabel(): String {
-        return attemptedSizes.joinToString(separator = " • ") { "${it}B" }
-    }
+    fun attemptedSizesLabel(): String = attemptedSizes.joinToString(separator = " • ") { "${it}B" }
 }

@@ -26,8 +26,8 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
-import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
@@ -67,9 +67,9 @@ class DuckDetectorApkArtifactsConventionPlugin : Plugin<Project> {
                             .orElse(
                                 providers.of(GitShortHashValueSource::class.java) {
                                     parameters.repositoryRoot.set(rootDir.absolutePath)
-                                }.map { it.take(8) }
+                                }.map { it.take(8) },
                             )
-                            .orElse("unknown")
+                            .orElse("unknown"),
                     )
                 }
             }
@@ -114,7 +114,8 @@ abstract class RenameApkTask : DefaultTask() {
             }
 
             VariantOutputConfiguration.OutputType.SINGLE,
-            VariantOutputConfiguration.OutputType.UNIVERSAL -> {
+            VariantOutputConfiguration.OutputType.UNIVERSAL,
+            -> {
                 "Duck Detector-$versionedName.apk"
             }
         }

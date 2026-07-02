@@ -20,6 +20,6 @@
 
 namespace duckdetector::zygisk {
 
-    ProbeResult collect_linker_hook_probe();
+ProbeResult collect_linker_hook_probe();
 
 }  // namespace duckdetector::zygisk

@@ -48,9 +48,9 @@ internal data class LocalMountNamespaceSnapshot(
 ) {
     val available: Boolean
         get() = namespaceInode.isNotBlank() ||
-                apexMountKey.isNotBlank() ||
-                systemMountKey.isNotBlank() ||
-                vendorMountKey.isNotBlank()
+            apexMountKey.isNotBlank() ||
+            systemMountKey.isNotBlank() ||
+            vendorMountKey.isNotBlank()
 }
 
 internal data class ParsedMountAnchor(
@@ -73,9 +73,7 @@ internal data class ParsedMountAnchor(
             normalizePath(source),
         ).joinToString("|")
 
-    fun semanticSummary(): String {
-        return "dev=$majorMinor root=$root point=$mountPoint fs=$fsType source=$source"
-    }
+    fun semanticSummary(): String = "dev=$majorMinor root=$root point=$mountPoint fs=$fsType source=$source"
 
     companion object {
         fun parse(raw: String): ParsedMountAnchor? {
@@ -96,9 +94,7 @@ internal data class ParsedMountAnchor(
             )
         }
 
-        private fun normalizeField(value: String): String {
-            return value.trim().lowercase()
-        }
+        private fun normalizeField(value: String): String = value.trim().lowercase()
 
         private fun normalizePath(value: String): String {
             val normalized = value.trim()
@@ -162,7 +158,7 @@ class MountNamespaceDriftProbe(
             compareSingleMountAnchor(
                 "/apex",
                 localSnapshot.apexMountKey,
-                isolatedSnapshot.apexMountKey
+                isolatedSnapshot.apexMountKey,
             )
                 ?.let(::add)
             compareSingleMountAnchor(
@@ -182,8 +178,8 @@ class MountNamespaceDriftProbe(
             localSnapshot.vendorMountKey to isolatedSnapshot.vendorMountKey,
         ).count { (mainRaw, otherRaw) -> hasComparableMountAnchors(mainRaw, otherRaw) }
         val namespaceDrift = localSnapshot.namespaceInode.isNotBlank() &&
-                isolatedSnapshot.mountNamespaceInode.isNotBlank() &&
-                localSnapshot.namespaceInode != isolatedSnapshot.mountNamespaceInode
+            isolatedSnapshot.mountNamespaceInode.isNotBlank() &&
+            localSnapshot.namespaceInode != isolatedSnapshot.mountNamespaceInode
 
         val findings = buildList {
             if (driftLines.isNotEmpty()) {
@@ -319,9 +315,7 @@ class MountNamespaceDriftProbe(
     private fun hasComparableMountAnchors(
         mainRaw: String,
         otherRaw: String,
-    ): Boolean {
-        return ParsedMountAnchor.parse(mainRaw) != null && ParsedMountAnchor.parse(otherRaw) != null
-    }
+    ): Boolean = ParsedMountAnchor.parse(mainRaw) != null && ParsedMountAnchor.parse(otherRaw) != null
 
     private companion object {
         private const val MOUNTINFO_PATH = "/proc/self/mountinfo"

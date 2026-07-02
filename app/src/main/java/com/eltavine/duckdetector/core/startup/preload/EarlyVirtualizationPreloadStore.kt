@@ -34,12 +34,10 @@ object EarlyVirtualizationPreloadStore {
         }
     }
 
-    fun currentResult(): EarlyVirtualizationPreloadResult {
-        return selectPreferred(
-            nativeResult = bridge.getStoredResult(),
-            intentOnlyResult = intentResult,
-        )
-    }
+    fun currentResult(): EarlyVirtualizationPreloadResult = selectPreferred(
+        nativeResult = bridge.getStoredResult(),
+        intentOnlyResult = intentResult,
+    )
 
     internal fun capture(values: Map<String, Any?>) {
         val captured = EarlyVirtualizationPreloadResult.fromCapturedValues(values)
@@ -51,12 +49,10 @@ object EarlyVirtualizationPreloadStore {
     internal fun selectPreferred(
         nativeResult: EarlyVirtualizationPreloadResult,
         intentOnlyResult: EarlyVirtualizationPreloadResult,
-    ): EarlyVirtualizationPreloadResult {
-        return when {
-            nativeResult.hasRun -> nativeResult
-            intentOnlyResult.hasRun -> intentOnlyResult
-            else -> EarlyVirtualizationPreloadResult.empty()
-        }
+    ): EarlyVirtualizationPreloadResult = when {
+        nativeResult.hasRun -> nativeResult
+        intentOnlyResult.hasRun -> intentOnlyResult
+        else -> EarlyVirtualizationPreloadResult.empty()
     }
 
     internal fun replaceBridgeForTesting(testBridge: EarlyVirtualizationPreloadBridge) {

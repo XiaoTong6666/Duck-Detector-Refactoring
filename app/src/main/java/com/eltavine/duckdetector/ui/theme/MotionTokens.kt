@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("ktlint:standard:property-naming")
+
 package com.eltavine.duckdetector.ui.theme
 
 import androidx.compose.animation.core.FastOutSlowInEasing

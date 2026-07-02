@@ -25,16 +25,14 @@ internal object GenerateKeyParcelDiagnosticFormatter {
         rawReply: ByteArray?,
         parseResult: GenerateKeyReplyParcelParseResult?,
         captureDetail: String,
-    ): String {
-        return buildString {
-            appendLine("=== [GENERATEKEY transaction atomic structure dump] ===")
-            appendLine("captureDetail=$captureDetail")
-            appendLine()
-            appendRequest(rawRequest)
-            appendLine()
-            appendReply(rawReply, parseResult)
-        }.trimEnd()
-    }
+    ): String = buildString {
+        appendLine("=== [GENERATEKEY transaction atomic structure dump] ===")
+        appendLine("captureDetail=$captureDetail")
+        appendLine()
+        appendRequest(rawRequest)
+        appendLine()
+        appendReply(rawReply, parseResult)
+    }.trimEnd()
 
     private fun StringBuilder.appendRequest(rawRequest: ByteArray?) {
         appendLine("--- [Request Data Parse] ---")
@@ -48,7 +46,7 @@ internal object GenerateKeyParcelDiagnosticFormatter {
             appendLine("  Offset: 0x0000-0x0004 | interface header: $header")
             val token = rawRequest.readParcelString(4)
             appendLine(
-                "  Offset: ${token.range()} | interface descriptor: ${token.value ?: "null"}"
+                "  Offset: ${token.range()} | interface descriptor: ${token.value ?: "null"}",
             )
         }.getOrElse { throwable ->
             appendLine("  [!] Request parse interrupted: ${throwable.message ?: throwable.javaClass.simpleName}")
@@ -75,7 +73,7 @@ internal object GenerateKeyParcelDiagnosticFormatter {
         } else {
             appendLine(
                 "  Offset: 0x0000-0x0004 | exception header: ${parsed.exceptionCode} " +
-                    "(${if (parsed.exceptionCode == 0) "SUCCESS" else "ERROR"})"
+                    "(${if (parsed.exceptionCode == 0) "SUCCESS" else "ERROR"})",
             )
             if (parsed.exceptionCode == 0) {
                 appendLine("  [KeyMetadata return value parse]:")
@@ -84,7 +82,7 @@ internal object GenerateKeyParcelDiagnosticFormatter {
                 appendLine("        Offset: 0x0004-0x0028 | Descriptor block: 40 bytes")
                 appendLine(
                     "      Offset: 0x0028-0x002C | keySecurityLevel: " +
-                        "${rawReply.readUnsignedIntLe(KEY_SECURITY_LEVEL_OFFSET)}"
+                        "${rawReply.readUnsignedIntLe(KEY_SECURITY_LEVEL_OFFSET)}",
                 )
                 appendLine("      Offset: 0x002C | authorizations (Authorization[]):")
                 appendLine("        Count: ${parsed.authorizations.size}")
@@ -111,7 +109,7 @@ internal object GenerateKeyParcelDiagnosticFormatter {
         appendLine("            SecLevel: ${authorization.secLevel}")
         appendLine(
             "            Tag: 0x${authorization.tag.toHexWord()} " +
-                "(ID=${authorization.tag and KEYMASTER_TAG_ID_MASK}, Type=${authorization.tag ushr KEYMASTER_TAG_TYPE_SHIFT})"
+                "(ID=${authorization.tag and KEYMASTER_TAG_ID_MASK}, Type=${authorization.tag ushr KEYMASTER_TAG_TYPE_SHIFT})",
         )
         appendLine("              UnionTag (member index): ${authorization.unionTag}")
         authorization.valueLine?.let {
@@ -166,7 +164,7 @@ internal object GenerateKeyParcelDiagnosticFormatter {
                             unknownUnionTag = unionTag !in KNOWN_UNION_TAGS,
                             startOffset = startOffset,
                             endOffset = offset,
-                        )
+                        ),
                     )
                 }
             }
@@ -190,51 +188,53 @@ internal object GenerateKeyParcelDiagnosticFormatter {
         bytes: ByteArray,
         offset: Int,
         unionTag: Long,
-    ): DiagnosticUnionValue {
-        return when (unionTag) {
-            in INT_LIKE_UNION_TAGS -> {
-                val intValue = bytes.readIntLe(offset)
-                DiagnosticUnionValue(
-                    payloadSize = INT_SIZE_BYTES,
-                    valueLine = "Value (Int/Enum): $intValue",
-                )
-            }
-            BOOL_UNION_TAG -> {
-                val boolValue = bytes.readIntLe(offset) != 0
-                DiagnosticUnionValue(
-                    payloadSize = INT_SIZE_BYTES,
-                    valueLine = "Value (Boolean): $boolValue",
-                )
-            }
-            in LONG_LIKE_UNION_TAGS -> {
-                val longValue = bytes.readLongLe(offset)
-                DiagnosticUnionValue(
-                    payloadSize = Long.SIZE_BYTES,
-                    valueLine = "Value (Long/Date): $longValue",
-                )
-            }
-            BLOB_UNION_TAG -> {
-                val length = bytes.readIntLe(offset)
-                require(length >= 0) { "blob_length_negative=$length" }
-                val dataOffset = offset + INT_SIZE_BYTES
-                val endOffset = dataOffset + length
-                require(endOffset <= bytes.size) { "blob_truncated" }
-                val blob = bytes.copyOfRange(dataOffset, endOffset)
-                DiagnosticUnionValue(
-                    payloadSize = alignToParcelWord(endOffset) - offset,
-                    valueLine = buildString {
-                        append("Value (Blob): ")
-                        append(length)
-                        append(" bytes")
-                        if (blob.isNotEmpty() && blob.size <= INLINE_BLOB_HEX_BYTES) {
-                            append(" | Hex: ")
-                            append(blob.toHexCompact())
-                        }
-                    },
-                )
-            }
-            else -> DiagnosticUnionValue(payloadSize = 0, valueLine = null)
+    ): DiagnosticUnionValue = when (unionTag) {
+        in INT_LIKE_UNION_TAGS -> {
+            val intValue = bytes.readIntLe(offset)
+            DiagnosticUnionValue(
+                payloadSize = INT_SIZE_BYTES,
+                valueLine = "Value (Int/Enum): $intValue",
+            )
         }
+
+        BOOL_UNION_TAG -> {
+            val boolValue = bytes.readIntLe(offset) != 0
+            DiagnosticUnionValue(
+                payloadSize = INT_SIZE_BYTES,
+                valueLine = "Value (Boolean): $boolValue",
+            )
+        }
+
+        in LONG_LIKE_UNION_TAGS -> {
+            val longValue = bytes.readLongLe(offset)
+            DiagnosticUnionValue(
+                payloadSize = Long.SIZE_BYTES,
+                valueLine = "Value (Long/Date): $longValue",
+            )
+        }
+
+        BLOB_UNION_TAG -> {
+            val length = bytes.readIntLe(offset)
+            require(length >= 0) { "blob_length_negative=$length" }
+            val dataOffset = offset + INT_SIZE_BYTES
+            val endOffset = dataOffset + length
+            require(endOffset <= bytes.size) { "blob_truncated" }
+            val blob = bytes.copyOfRange(dataOffset, endOffset)
+            DiagnosticUnionValue(
+                payloadSize = alignToParcelWord(endOffset) - offset,
+                valueLine = buildString {
+                    append("Value (Blob): ")
+                    append(length)
+                    append(" bytes")
+                    if (blob.isNotEmpty() && blob.size <= INLINE_BLOB_HEX_BYTES) {
+                        append(" | Hex: ")
+                        append(blob.toHexCompact())
+                    }
+                },
+            )
+        }
+
+        else -> DiagnosticUnionValue(payloadSize = 0, valueLine = null)
     }
 
     private fun ByteArray.readNullableByteArray(offset: Int, label: String): DiagnosticByteArray {
@@ -304,21 +304,15 @@ internal object GenerateKeyParcelDiagnosticFormatter {
             }
     }
 
-    private fun ByteArray.toHexCompact(): String {
-        return joinToString(separator = "") { "%02X".format(Locale.US, it.toInt() and 0xFF) }
-    }
+    private fun ByteArray.toHexCompact(): String = joinToString(separator = "") { "%02X".format(Locale.US, it.toInt() and 0xFF) }
 
     private fun Long.toHexWord(): String = "%08X".format(Locale.US, this and 0xFFFFFFFFL)
 
     private fun ParcelString.range(): String = formatOffsetRange(startOffset, endOffset)
 
-    private fun formatOffsetRange(startOffset: Int, endOffset: Int): String {
-        return "0x%04X-0x%04X".format(Locale.US, startOffset, endOffset)
-    }
+    private fun formatOffsetRange(startOffset: Int, endOffset: Int): String = "0x%04X-0x%04X".format(Locale.US, startOffset, endOffset)
 
-    private fun alignToParcelWord(offset: Int): Int {
-        return (offset + PARCEL_WORD_MASK) and PARCEL_WORD_MASK.inv()
-    }
+    private fun alignToParcelWord(offset: Int): Int = (offset + PARCEL_WORD_MASK) and PARCEL_WORD_MASK.inv()
 
     private data class ParcelString(
         val value: String?,

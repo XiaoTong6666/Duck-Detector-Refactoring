@@ -16,9 +16,9 @@
 
 package com.eltavine.duckdetector.features.tee.data.verification.rkp
 
+import com.eltavine.duckdetector.features.tee.data.verification.certificate.ChainStructureResult
 import com.eltavine.duckdetector.features.tee.domain.TeeRkpState
 import com.eltavine.duckdetector.features.tee.domain.TeeSignalLevel
-import com.eltavine.duckdetector.features.tee.data.verification.certificate.ChainStructureResult
 import java.security.cert.X509Certificate
 
 class RkpExtensionAnalyzer {
@@ -79,12 +79,10 @@ class RkpExtensionAnalyzer {
     }
 }
 
-private fun ChainStructureResult.consistencyIssueOrNull(): String? {
-    return if (provisioningConsistencyIssue) {
-        "Provisioning info was not adjacent to the trusted attestation certificate."
-    } else {
-        null
-    }
+private fun ChainStructureResult.consistencyIssueOrNull(): String? = if (provisioningConsistencyIssue) {
+    "Provisioning info was not adjacent to the trusted attestation certificate."
+} else {
+    null
 }
 
 internal object DerWrapper {
@@ -123,6 +121,7 @@ internal class TinyCborReader(private val bytes: ByteArray) {
         val initial = nextByte()
         return when (initial shr 5) {
             0 -> readLength(initial).toLong()
+
             3 -> {
                 val length = readLength(initial)
                 String(bytes, offset, length, Charsets.UTF_8).also { offset += length }

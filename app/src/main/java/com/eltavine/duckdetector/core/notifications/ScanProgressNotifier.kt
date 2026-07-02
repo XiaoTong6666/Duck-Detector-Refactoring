@@ -16,15 +16,15 @@
 
 package com.eltavine.duckdetector.core.notifications
 
-import android.annotation.SuppressLint
 import android.Manifest
+import android.annotation.SuppressLint
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.app.Notification
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -138,17 +138,15 @@ class ScanProgressNotifier(
 
     private fun baseBuilder(
         formatted: ScanProgressNotificationModel,
-    ): NotificationCompat.Builder {
-        return NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_notification_small)
-            .setContentTitle(formatted.title)
-            .setContentText(formatted.text)
-            .setSubText(formatted.subText)
-            .setContentIntent(contentIntent())
-            .setOnlyAlertOnce(true)
-            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
-            .setLocalOnly(true)
-    }
+    ): NotificationCompat.Builder = NotificationCompat.Builder(context, CHANNEL_ID)
+        .setSmallIcon(R.drawable.ic_notification_small)
+        .setContentTitle(formatted.title)
+        .setContentText(formatted.text)
+        .setSubText(formatted.subText)
+        .setContentIntent(contentIntent())
+        .setOnlyAlertOnce(true)
+        .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+        .setLocalOnly(true)
 
     private fun createChannelIfNeeded() {
         val manager = context.getSystemService(NotificationManager::class.java) ?: return

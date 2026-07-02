@@ -85,36 +85,32 @@ data class DangerousAppsReport(
         get() = hiddenFromPackageManager.size
 
     companion object {
-        fun loading(targets: List<DangerousAppTarget>): DangerousAppsReport {
-            return DangerousAppsReport(
-                stage = DangerousAppsStage.LOADING,
-                packageVisibility = DangerousPackageVisibility.UNKNOWN,
-                packageManagerVisibleCount = 0,
-                suspiciousLowPmInventory = false,
-                suspiciousSharedStorageDenied = false,
-                targets = targets,
-                findings = emptyList(),
-                hiddenFromPackageManager = emptyList(),
-                probesRan = emptyList(),
-            )
-        }
+        fun loading(targets: List<DangerousAppTarget>): DangerousAppsReport = DangerousAppsReport(
+            stage = DangerousAppsStage.LOADING,
+            packageVisibility = DangerousPackageVisibility.UNKNOWN,
+            packageManagerVisibleCount = 0,
+            suspiciousLowPmInventory = false,
+            suspiciousSharedStorageDenied = false,
+            targets = targets,
+            findings = emptyList(),
+            hiddenFromPackageManager = emptyList(),
+            probesRan = emptyList(),
+        )
 
         fun failed(
             targets: List<DangerousAppTarget>,
             message: String,
-        ): DangerousAppsReport {
-            return DangerousAppsReport(
-                stage = DangerousAppsStage.FAILED,
-                packageVisibility = DangerousPackageVisibility.UNKNOWN,
-                packageManagerVisibleCount = 0,
-                suspiciousLowPmInventory = false,
-                suspiciousSharedStorageDenied = false,
-                targets = targets,
-                findings = emptyList(),
-                hiddenFromPackageManager = emptyList(),
-                probesRan = emptyList(),
-                issues = listOf(message),
-            )
-        }
+        ): DangerousAppsReport = DangerousAppsReport(
+            stage = DangerousAppsStage.FAILED,
+            packageVisibility = DangerousPackageVisibility.UNKNOWN,
+            packageManagerVisibleCount = 0,
+            suspiciousLowPmInventory = false,
+            suspiciousSharedStorageDenied = false,
+            targets = targets,
+            findings = emptyList(),
+            hiddenFromPackageManager = emptyList(),
+            probesRan = emptyList(),
+            issues = listOf(message),
+        )
     }
 }

@@ -16,9 +16,9 @@
 
 package com.eltavine.duckdetector.features.lsposed.data.probes
 
+import com.eltavine.duckdetector.features.lsposed.domain.LSPosedSignalSeverity
 import com.eltavine.duckdetector.testhelpers.clean.NeutralLoader
 import com.eltavine.duckdetector.testhelpers.suspicious.LsposedRuntimeClassLoader
-import com.eltavine.duckdetector.features.lsposed.domain.LSPosedSignalSeverity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

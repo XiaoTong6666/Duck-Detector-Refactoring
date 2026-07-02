@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("ktlint:standard:function-naming")
+
 package com.eltavine.duckdetector.features.tee.ui.card
 
 import android.content.ClipData
@@ -60,7 +62,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.eltavine.duckdetector.R
 import com.eltavine.duckdetector.core.ui.components.DetectorCardFrame
@@ -462,7 +463,7 @@ private fun TeeFooterButton(
     action: TeeFooterActionModel,
     onClick: (TeeFooterActionId) -> Unit,
 ) {
-    val label = action.counter?.let { "${action.label} (${it})" } ?: action.label
+    val label = action.counter?.let { "${action.label} ($it)" } ?: action.label
     if (action.id == TeeFooterActionId.RESCAN) {
         FilledTonalButton(
             onClick = { onClick(action.id) },
@@ -502,23 +503,21 @@ private fun TeeFooterButton(
     }
 }
 
-private fun iconFor(icon: TeeFactIcon): ImageVector {
-    return when (icon) {
-        TeeFactIcon.TRUST -> Icons.Rounded.Security
-        TeeFactIcon.CERTIFICATE -> Icons.Rounded.VerifiedUser
-        TeeFactIcon.NETWORK -> Icons.Rounded.NetworkCheck
-        TeeFactIcon.RKP -> Icons.Rounded.Hub
-        TeeFactIcon.KEY -> Icons.Rounded.Key
-        TeeFactIcon.BOOT -> Icons.Rounded.Lock
-        TeeFactIcon.PATCH -> Icons.Rounded.Policy
-        TeeFactIcon.DEVICE -> Icons.Rounded.Fingerprint
-        TeeFactIcon.APP -> Icons.Rounded.Shield
-        TeeFactIcon.AUTH -> Icons.Rounded.VpnKey
-        TeeFactIcon.KEYSTORE -> Icons.Rounded.Cable
-        TeeFactIcon.TIMING -> Icons.Rounded.Speed
-        TeeFactIcon.STRONGBOX -> Icons.Rounded.Security
-        TeeFactIcon.NATIVE -> Icons.Rounded.Memory
-        TeeFactIcon.SOTER -> Icons.Rounded.VerifiedUser
-        TeeFactIcon.WARNING -> Icons.Rounded.CrisisAlert
-    }
+private fun iconFor(icon: TeeFactIcon): ImageVector = when (icon) {
+    TeeFactIcon.TRUST -> Icons.Rounded.Security
+    TeeFactIcon.CERTIFICATE -> Icons.Rounded.VerifiedUser
+    TeeFactIcon.NETWORK -> Icons.Rounded.NetworkCheck
+    TeeFactIcon.RKP -> Icons.Rounded.Hub
+    TeeFactIcon.KEY -> Icons.Rounded.Key
+    TeeFactIcon.BOOT -> Icons.Rounded.Lock
+    TeeFactIcon.PATCH -> Icons.Rounded.Policy
+    TeeFactIcon.DEVICE -> Icons.Rounded.Fingerprint
+    TeeFactIcon.APP -> Icons.Rounded.Shield
+    TeeFactIcon.AUTH -> Icons.Rounded.VpnKey
+    TeeFactIcon.KEYSTORE -> Icons.Rounded.Cable
+    TeeFactIcon.TIMING -> Icons.Rounded.Speed
+    TeeFactIcon.STRONGBOX -> Icons.Rounded.Security
+    TeeFactIcon.NATIVE -> Icons.Rounded.Memory
+    TeeFactIcon.SOTER -> Icons.Rounded.VerifiedUser
+    TeeFactIcon.WARNING -> Icons.Rounded.CrisisAlert
 }

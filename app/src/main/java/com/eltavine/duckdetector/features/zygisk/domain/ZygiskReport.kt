@@ -93,50 +93,44 @@ data class ZygiskReport(
 
     val supportOnly: Boolean
         get() = stage == ZygiskStage.READY &&
-                !fdTrapDetected &&
-                nativeStrongHitCount == 0 &&
-                heuristicHitCount == 0 &&
-                (!fdTrapAvailable || !nativeAvailable)
+            !fdTrapDetected &&
+            nativeStrongHitCount == 0 &&
+            heuristicHitCount == 0 &&
+            (!fdTrapAvailable || !nativeAvailable)
 
     val fullyClean: Boolean
         get() = stage == ZygiskStage.READY &&
-                !fdTrapDetected &&
-                nativeStrongHitCount == 0 &&
-                heuristicHitCount == 0 &&
-                fdTrapAvailable &&
-                nativeAvailable
+            !fdTrapDetected &&
+            nativeStrongHitCount == 0 &&
+            heuristicHitCount == 0 &&
+            fdTrapAvailable &&
+            nativeAvailable
 
     companion object {
-        fun loading(): ZygiskReport {
-            return ZygiskReport(
-                stage = ZygiskStage.LOADING,
-                fdTrapAvailable = false,
-                fdTrapDetected = false,
-                nativeAvailable = false,
-                heapAvailable = false,
-                seccompSupported = false,
-                nativeStrongHitCount = 0,
-                heuristicHitCount = 0,
-                tracerPid = 0,
-                signals = emptyList(),
-                methods = emptyList(),
-                references = defaultReferences(),
-            )
-        }
+        fun loading(): ZygiskReport = ZygiskReport(
+            stage = ZygiskStage.LOADING,
+            fdTrapAvailable = false,
+            fdTrapDetected = false,
+            nativeAvailable = false,
+            heapAvailable = false,
+            seccompSupported = false,
+            nativeStrongHitCount = 0,
+            heuristicHitCount = 0,
+            tracerPid = 0,
+            signals = emptyList(),
+            methods = emptyList(),
+            references = defaultReferences(),
+        )
 
-        fun failed(message: String): ZygiskReport {
-            return loading().copy(
-                stage = ZygiskStage.FAILED,
-                errorMessage = message,
-            )
-        }
+        fun failed(message: String): ZygiskReport = loading().copy(
+            stage = ZygiskStage.FAILED,
+            errorMessage = message,
+        )
 
-        fun defaultReferences(): List<String> {
-            return listOf(
-                "Cross-process FD trap looks for deleted-path descriptors that should survive clean specialization but may be silently closed by Zygisk-style FD sanitization.",
-                "Native runtime probes correlate NeoZygisk TMP_PATH leakage, linker ownership, restricted-path loading, /proc maps and smaps drift, suspicious thread or fd residue, seccomp trap behavior, and heap entropy.",
-                "Read this card together with Mount and Memory because those cards can still show corroborating Zygisk-facing traces even when this process keeps only partial residue.",
-            )
-        }
+        fun defaultReferences(): List<String> = listOf(
+            "Cross-process FD trap looks for deleted-path descriptors that should survive clean specialization but may be silently closed by Zygisk-style FD sanitization.",
+            "Native runtime probes correlate NeoZygisk TMP_PATH leakage, linker ownership, restricted-path loading, /proc maps and smaps drift, suspicious thread or fd residue, seccomp trap behavior, and heap entropy.",
+            "Read this card together with Mount and Memory because those cards can still show corroborating Zygisk-facing traces even when this process keeps only partial residue.",
+        )
     }
 }

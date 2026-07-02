@@ -16,11 +16,11 @@
 
 package com.eltavine.duckdetector.features.selinux.data.service
 
+import com.eltavine.duckdetector.features.selinux.data.native.SelinuxContextValidityBridge
 import com.eltavine.duckdetector.features.selinux.data.native.SelinuxContextValiditySnapshot
 import com.eltavine.duckdetector.features.selinux.data.probes.SelinuxPolicyloadSeqnoResult
 import com.eltavine.duckdetector.features.selinux.data.probes.SelinuxPolicyloadSeqnoState
 import com.eltavine.duckdetector.features.selinux.data.probes.SelinuxProcAttrCurrentResult
-import com.eltavine.duckdetector.features.selinux.data.native.SelinuxContextValidityBridge
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -102,26 +102,40 @@ class AppZygotePreloadTest {
             },
             checkAccess = { source, target, targetClass, permission ->
                 when {
-                    source == "u:r:app_zygote:s0" && target == "u:r:isolated_app:s0" &&
-                        targetClass == "process" && permission == "dyntransition" -> true
+                    source == "u:r:app_zygote:s0" &&
+                        target == "u:r:isolated_app:s0" &&
+                        targetClass == "process" &&
+                        permission == "dyntransition" -> true
 
-                    source == "u:r:untrusted_app:s0" && target == "u:r:duckdetector_dirty_policy_sentinel:s0" &&
-                        targetClass == "binder" && permission == "call" -> false
+                    source == "u:r:untrusted_app:s0" &&
+                        target == "u:r:duckdetector_dirty_policy_sentinel:s0" &&
+                        targetClass == "binder" &&
+                        permission == "call" -> false
 
-                    source == "u:r:system_server:s0" && target == "u:r:system_server:s0" &&
-                        targetClass == "process" && permission == "execmem" -> true
+                    source == "u:r:system_server:s0" &&
+                        target == "u:r:system_server:s0" &&
+                        targetClass == "process" &&
+                        permission == "execmem" -> true
 
-                    source == "u:r:untrusted_app:s0" && target == "u:object_r:lsposed_file:s0" &&
-                        targetClass == "file" && permission == "read" -> true
+                    source == "u:r:untrusted_app:s0" &&
+                        target == "u:object_r:lsposed_file:s0" &&
+                        targetClass == "file" &&
+                        permission == "read" -> true
 
-                    source == "u:r:magisk:s0" && target == "u:r:droidspacesd:s0" &&
-                        targetClass == "process" && permission == "dyntransition" -> true
+                    source == "u:r:magisk:s0" &&
+                        target == "u:r:droidspacesd:s0" &&
+                        targetClass == "process" &&
+                        permission == "dyntransition" -> true
 
-                    source == "u:r:su:s0" && target == "u:r:droidspacesd:s0" &&
-                        targetClass == "process" && permission == "dyntransition" -> true
+                    source == "u:r:su:s0" &&
+                        target == "u:r:droidspacesd:s0" &&
+                        targetClass == "process" &&
+                        permission == "dyntransition" -> true
 
-                    source == "u:r:system_server:s0" && target == "u:r:droidspacesd:s0" &&
-                        targetClass == "binder" && permission == "call" -> true
+                    source == "u:r:system_server:s0" &&
+                        target == "u:r:droidspacesd:s0" &&
+                        targetClass == "binder" &&
+                        permission == "call" -> true
 
                     else -> false
                 }

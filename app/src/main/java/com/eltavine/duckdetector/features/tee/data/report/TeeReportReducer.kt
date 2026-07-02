@@ -19,6 +19,18 @@ package com.eltavine.duckdetector.features.tee.data.report
 import android.os.Build
 import com.eltavine.duckdetector.features.tee.data.attestation.AttestationSnapshot
 import com.eltavine.duckdetector.features.tee.data.verification.crl.RevokedCertificateEvidenceKind
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.AesGcmRoundTripResult
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.GrantDomainAnomalyKind
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.GrantSelfDomainAnomalyKind
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.MIN_RATIO_SAMPLE_COUNT
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.SupplementaryAttestationInfoAnomalyKind
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.SyntheticGrantGetKeyEntryAccessVectorBlindnessAnomalyKind
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.SyntheticGrantGranteeBlindReadbackAnomalyKind
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.TIMING_SIDE_CHANNEL_THRESHOLD_RATIO
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.TimingSideChannelResult
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.UpdateSubcomponentStaleResponseAnomalyKind
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.VintfKeyMintVersionAnomalyKind
+import com.eltavine.duckdetector.features.tee.data.verification.keystore.timingSideChannelRatio
 import com.eltavine.duckdetector.features.tee.domain.TeeEvidenceItem
 import com.eltavine.duckdetector.features.tee.domain.TeeEvidenceSection
 import com.eltavine.duckdetector.features.tee.domain.TeeNetworkMode
@@ -31,18 +43,6 @@ import com.eltavine.duckdetector.features.tee.domain.TeeSignalLevel
 import com.eltavine.duckdetector.features.tee.domain.TeeTier
 import com.eltavine.duckdetector.features.tee.domain.TeeTrustRoot
 import com.eltavine.duckdetector.features.tee.domain.TeeVerdict
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.AesGcmRoundTripResult
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.GrantDomainAnomalyKind
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.SyntheticGrantGetKeyEntryAccessVectorBlindnessAnomalyKind
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.SyntheticGrantGranteeBlindReadbackAnomalyKind
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.GrantSelfDomainAnomalyKind
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.MIN_RATIO_SAMPLE_COUNT
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.SupplementaryAttestationInfoAnomalyKind
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.TIMING_SIDE_CHANNEL_THRESHOLD_RATIO
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.TimingSideChannelResult
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.UpdateSubcomponentStaleResponseAnomalyKind
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.VintfKeyMintVersionAnomalyKind
-import com.eltavine.duckdetector.features.tee.data.verification.keystore.timingSideChannelRatio
 import java.time.LocalDate
 import java.time.Period
 import java.util.Locale
@@ -96,11 +96,11 @@ class TeeReportReducer(
         val supplementaryWarningCount =
             supplementaryIndicators.count { it.level == TeeSignalLevel.WARN }
         val tamperScore = (
-                (policyHardIndicators.size * 28) +
-                        (policySoftIndicators.size * 8) +
-                        (supplementaryDangerCount * 10) +
-                        (supplementaryWarningCount * 4)
-                ).coerceAtMost(100)
+            (policyHardIndicators.size * 28) +
+                (policySoftIndicators.size * 8) +
+                (supplementaryDangerCount * 10) +
+                (supplementaryWarningCount * 4)
+            ).coerceAtMost(100)
         val sections = buildSections(
             artifacts = artifacts,
             patchState = patchState,
@@ -170,628 +170,634 @@ class TeeReportReducer(
         }
     }
 
-    private fun collectPolicyHardIndicators(artifacts: TeeScanArtifacts): List<TeeEvidenceItem> {
-        return buildList {
-            if (!artifacts.trust.chainSignatureValid) {
-                add(
-                    fact(
-                        "Chain signature",
-                        "Certificate signatures did not verify locally.",
-                        TeeSignalLevel.FAIL
-                    )
-                )
-            }
-            if (artifacts.snapshot.trustedAttestationIndex != null && !artifacts.snapshot.challengeVerified) {
-                add(
-                    fact(
-                        "Challenge",
-                        "Attestation challenge did not match the local request.",
-                        TeeSignalLevel.FAIL
-                    )
-                )
-            }
-            if (artifacts.bootConsistency.vbmetaDigestMismatch) {
-                add(
-                    fact(
-                        "Boot consistency",
-                        "Attested verifiedBootHash did not match ro.boot.vbmeta.digest.",
-                        TeeSignalLevel.FAIL
-                    )
-                )
-            }
-            if (artifacts.bootConsistency.vbmetaDigestMissingWhileAttestedHashPresent) {
-                add(
-                    fact(
-                        "Boot consistency",
-                        "Attested verifiedBootHash was present, but ro.boot.vbmeta.digest was empty.",
-                        TeeSignalLevel.FAIL
-                    )
-                )
-            }
-            if (artifacts.bootConsistency.verifiedBootHashAllZeros) {
-                add(
-                    fact(
-                        "Verified boot hash",
-                        "Attested verifiedBootHash was all zeros.",
-                        TeeSignalLevel.FAIL
-                    )
-                )
-            }
-            if (artifacts.bootConsistency.verifiedBootKeyAllZeros) {
-                add(
-                    fact(
-                        "Verified boot key",
-                        "Attested verifiedBootKey was all zeros.",
-                        TeeSignalLevel.FAIL
-                    )
-                )
-            }
-            if (hasHardRevocation(artifacts)) {
-                add(
-                    fact(
-                        "Revocation",
-                        "Revocation data matched certificate serials from the chain.",
-                        TeeSignalLevel.FAIL
-                    )
-                )
-            }
-            if (artifacts.soter.damaged) {
-                add(fact("Soter", artifacts.soter.summary, TeeSignalLevel.FAIL))
-            }
+    private fun collectPolicyHardIndicators(artifacts: TeeScanArtifacts): List<TeeEvidenceItem> = buildList {
+        if (!artifacts.trust.chainSignatureValid) {
+            add(
+                fact(
+                    "Chain signature",
+                    "Certificate signatures did not verify locally.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (artifacts.snapshot.trustedAttestationIndex != null && !artifacts.snapshot.challengeVerified) {
+            add(
+                fact(
+                    "Challenge",
+                    "Attestation challenge did not match the local request.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (artifacts.bootConsistency.vbmetaDigestMismatch) {
+            add(
+                fact(
+                    "Boot consistency",
+                    "Attested verifiedBootHash did not match ro.boot.vbmeta.digest.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (artifacts.bootConsistency.vbmetaDigestMissingWhileAttestedHashPresent) {
+            add(
+                fact(
+                    "Boot consistency",
+                    "Attested verifiedBootHash was present, but ro.boot.vbmeta.digest was empty.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (artifacts.bootConsistency.verifiedBootHashAllZeros) {
+            add(
+                fact(
+                    "Verified boot hash",
+                    "Attested verifiedBootHash was all zeros.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (artifacts.bootConsistency.verifiedBootKeyAllZeros) {
+            add(
+                fact(
+                    "Verified boot key",
+                    "Attested verifiedBootKey was all zeros.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (hasHardRevocation(artifacts)) {
+            add(
+                fact(
+                    "Revocation",
+                    "Revocation data matched certificate serials from the chain.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (artifacts.soter.damaged) {
+            add(fact("Soter", artifacts.soter.summary, TeeSignalLevel.FAIL))
         }
     }
 
-    private fun collectSupplementaryIndicators(artifacts: TeeScanArtifacts): List<TeeEvidenceItem> {
-        return buildList {
-            if (artifacts.soter.abnormalEnvironment) {
+    private fun collectSupplementaryIndicators(artifacts: TeeScanArtifacts): List<TeeEvidenceItem> = buildList {
+        if (artifacts.soter.abnormalEnvironment) {
+            add(
+                fact(
+                    "Soter environment",
+                    artifacts.soter.summary,
+                    TeeSignalLevel.WARN,
+                ),
+            )
+        }
+        val timingSideChannelSkipSignature = timingSideChannelSkipSignature(artifacts.timingSideChannel)
+        if (timingSideChannelSkipSignature != null) {
+            add(
+                fact(
+                    "Timing side-channel",
+                    timingSideChannelSkipSignature.summary,
+                    timingSideChannelSkipSignature.level,
+                ),
+            )
+        } else if (
+            artifacts.timingSideChannel.measurementAvailable &&
+            artifacts.timingSideChannel.ratioEligible &&
+            artifacts.timingSideChannel.suspicious
+        ) {
+            add(
+                fact(
+                    "Timing side-channel",
+                    timingSideChannelSummary(artifacts),
+                    TeeSignalLevel.WARN,
+                ),
+            )
+        }
+        if (generateModeAnomalyState(artifacts) == GenerateModeAnomalyState.MATCHED) {
+            add(
+                fact(
+                    "TEE Simulator generate-mode fingerprint",
+                    "Matched TEE Simulator generate-mode fingerprint.",
+                    TeeSignalLevel.FAIL,
+                    hiddenCopyText = artifacts.generateModeParcelFingerprint.diagnosticCopyText,
+                ),
+            )
+        }
+        if (artifacts.vintfKeyMintVersion.anomalyKind == VintfKeyMintVersionAnomalyKind.MISMATCH) {
+            add(
+                fact(
+                    "KeyMint VINTF",
+                    "VINTF KeyMint version diverged from attestation. " +
+                        vintfKeyMintVersionValue(artifacts),
+                    TeeSignalLevel.FAIL,
+                    hiddenCopyText = artifacts.vintfKeyMintVersion.diagnosticCopyText,
+                ),
+            )
+        }
+        // Grant checks are supplementary, but these two kinds are strong local evidence:
+        // Grant 检测属于补充证据；但下面两类是强本地证据：
+        // 1) chain split means owner alias and Domain.GRANT return different ordered certificate narratives.
+        // 1) chain split 表示 owner alias 与 Domain.GRANT 返回了不同的有序证书叙事。
+        // 2) key-not-found after owner chain means the alias exists in owner view but not in grant lookup.
+        // 2) owner chain 后 key-not-found 表示 alias 存在于 owner 视图，却不存在于 grant 查找路径。
+        when (artifacts.grantDomainFullChainSplit.anomalyKind) {
+            GrantDomainAnomalyKind.ISOLATED_CHAIN_SPLIT -> {
                 add(
                     fact(
-                        "Soter environment",
-                        artifacts.soter.summary,
-                        TeeSignalLevel.WARN,
-                    )
-                )
-            }
-            val timingSideChannelSkipSignature = timingSideChannelSkipSignature(artifacts.timingSideChannel)
-            if (timingSideChannelSkipSignature != null) {
-                add(
-                    fact(
-                        "Timing side-channel",
-                        timingSideChannelSkipSignature.summary,
-                        timingSideChannelSkipSignature.level,
-                    )
-                )
-            } else if (
-                artifacts.timingSideChannel.measurementAvailable &&
-                artifacts.timingSideChannel.ratioEligible &&
-                artifacts.timingSideChannel.suspicious
-            ) {
-                add(
-                    fact(
-                        "Timing side-channel",
-                        timingSideChannelSummary(artifacts),
-                        TeeSignalLevel.WARN,
-                    )
-                )
-            }
-            if (generateModeAnomalyState(artifacts) == GenerateModeAnomalyState.MATCHED) {
-                add(
-                    fact(
-                        "TEE Simulator generate-mode fingerprint",
-                        "Matched TEE Simulator generate-mode fingerprint.",
+                        "Grant isolated-domain",
+                        "Grant isolated-domain certificate-chain narrative split detected. " +
+                            grantDomainFullChainSplitValue(artifacts),
                         TeeSignalLevel.FAIL,
-                        hiddenCopyText = artifacts.generateModeParcelFingerprint.diagnosticCopyText,
-                    )
-                )
-            }
-            if (artifacts.vintfKeyMintVersion.anomalyKind == VintfKeyMintVersionAnomalyKind.MISMATCH) {
-                add(
-                    fact(
-                        "KeyMint VINTF",
-                        "VINTF KeyMint version diverged from attestation. " +
-                            vintfKeyMintVersionValue(artifacts),
-                        TeeSignalLevel.FAIL,
-                        hiddenCopyText = artifacts.vintfKeyMintVersion.diagnosticCopyText,
-                    )
-                )
-            }
-            // Grant checks are supplementary, but these two kinds are strong local evidence:
-            // Grant 检测属于补充证据；但下面两类是强本地证据：
-            // 1) chain split means owner alias and Domain.GRANT return different ordered certificate narratives.
-            // 1) chain split 表示 owner alias 与 Domain.GRANT 返回了不同的有序证书叙事。
-            // 2) key-not-found after owner chain means the alias exists in owner view but not in grant lookup.
-            // 2) owner chain 后 key-not-found 表示 alias 存在于 owner 视图，却不存在于 grant 查找路径。
-            when (artifacts.grantDomainFullChainSplit.anomalyKind) {
-                GrantDomainAnomalyKind.ISOLATED_CHAIN_SPLIT -> {
-                    add(
-                        fact(
-                            "Grant isolated-domain",
-                            "Grant isolated-domain certificate-chain narrative split detected. " +
-                                grantDomainFullChainSplitValue(artifacts),
-                            TeeSignalLevel.FAIL,
-                            hiddenCopyText = artifacts.grantDomainFullChainSplit.diagnosticCopyText
-                                .takeIf { it.isNotBlank() },
-                        )
-                    )
-                }
-
-                GrantDomainAnomalyKind.ISOLATED_GRANT_KEY_NOT_FOUND_AFTER_OWNER_CHAIN -> {
-                    add(
-                        fact(
-                            "Grant isolated-domain",
-                            "Grant isolated-domain key visibility divergence detected. " +
-                                grantDomainFullChainSplitValue(artifacts),
-                            TeeSignalLevel.FAIL,
-                            hiddenCopyText = artifacts.grantDomainFullChainSplit.diagnosticCopyText
-                                .takeIf { it.isNotBlank() },
-                        )
-                    )
-                }
-
-                GrantDomainAnomalyKind.ISOLATED_PRIVATE_READBACK_CRASH -> {
-                    add(
-                        fact(
-                            "Grant isolated-domain",
-                            "Grant isolated-domain isolated private readback crashed after grant succeeded. " +
-                                grantDomainFullChainSplitValue(artifacts),
-                            TeeSignalLevel.WARN,
-                            hiddenCopyText = artifacts.grantDomainFullChainSplit.diagnosticCopyText
-                                .takeIf { it.isNotBlank() },
-                        )
-                    )
-                }
-
-                GrantDomainAnomalyKind.NONE,
-                GrantDomainAnomalyKind.UNAVAILABLE -> Unit
-            }
-            if (
-                artifacts.syntheticGrantGranteeBlindReadback.anomalyKind ==
-                SyntheticGrantGranteeBlindReadbackAnomalyKind.NON_GRANTEE_READBACK_ALLOWED
-            ) {
-                add(
-                    fact(
-                        "Grant caller binding",
-                        "Grant handle remained readable by its non-grantee owner. " +
-                            syntheticGrantGranteeBlindReadbackValue(artifacts),
-                        TeeSignalLevel.FAIL,
-                        hiddenCopyText = artifacts.syntheticGrantGranteeBlindReadback.diagnosticCopyText
+                        hiddenCopyText = artifacts.grantDomainFullChainSplit.diagnosticCopyText
                             .takeIf { it.isNotBlank() },
-                    )
+                    ),
                 )
             }
-            if (
-                artifacts.syntheticGrantGetKeyEntryAccessVectorBlindness.anomalyKind ==
-                SyntheticGrantGetKeyEntryAccessVectorBlindnessAnomalyKind.GET_KEY_ENTRY_WITHOUT_GET_INFO_ALLOWED
-            ) {
+
+            GrantDomainAnomalyKind.ISOLATED_GRANT_KEY_NOT_FOUND_AFTER_OWNER_CHAIN -> {
                 add(
                     fact(
-                        "Grant access vector",
-                        "Domain.GRANT handle without GET_INFO still allowed getKeyEntry metadata readback. " +
-                            syntheticGrantGetKeyEntryAccessVectorBlindnessValue(artifacts),
+                        "Grant isolated-domain",
+                        "Grant isolated-domain key visibility divergence detected. " +
+                            grantDomainFullChainSplitValue(artifacts),
                         TeeSignalLevel.FAIL,
-                        hiddenCopyText = artifacts.syntheticGrantGetKeyEntryAccessVectorBlindness.diagnosticCopyText
+                        hiddenCopyText = artifacts.grantDomainFullChainSplit.diagnosticCopyText
                             .takeIf { it.isNotBlank() },
-                    )
+                    ),
                 )
             }
-            // self-domain removes the isolated-process policy variable; its key-not-found variant is treated like a visibility split.
-            // self-domain 排除了 isolated-process 策略变量；其 key-not-found 变体按可见性断裂处理。
-            when (artifacts.grantSelfDomainFullChainSplit.anomalyKind) {
-                GrantSelfDomainAnomalyKind.SELF_CHAIN_SPLIT -> {
-                    add(
-                        fact(
-                            "Grant self-domain",
-                            "Grant self-domain certificate-chain split detected. " +
-                                grantSelfDomainFullChainSplitValue(artifacts),
-                            TeeSignalLevel.FAIL,
-                            hiddenCopyText = artifacts.grantSelfDomainFullChainSplit.diagnosticCopyText
-                                .takeIf { it.isNotBlank() },
-                        )
-                    )
-                }
 
-                GrantSelfDomainAnomalyKind.SELF_GRANT_KEY_NOT_FOUND_AFTER_OWNER_CHAIN -> {
-                    add(
-                        fact(
-                            "Grant self-domain",
-                            "Grant self-domain key visibility divergence detected. " +
-                                grantSelfDomainFullChainSplitValue(artifacts),
-                            TeeSignalLevel.FAIL,
-                            hiddenCopyText = artifacts.grantSelfDomainFullChainSplit.diagnosticCopyText
-                                .takeIf { it.isNotBlank() },
-                        )
-                    )
-                }
-
-                GrantSelfDomainAnomalyKind.NONE,
-                GrantSelfDomainAnomalyKind.UNAVAILABLE -> Unit
-            }
-            if (artifacts.keystore2Hook.javaHookDetected) {
+            GrantDomainAnomalyKind.ISOLATED_PRIVATE_READBACK_CRASH -> {
                 add(
                     fact(
-                        "Keystore2",
-                        "Binder reply fingerprint matched a Java-hook style path.",
-                        TeeSignalLevel.FAIL
-                    )
-                )
-            }
-            if (artifacts.legacyKeystorePath.executed &&
-                artifacts.legacyKeystorePath.legacyMaterialAvailable &&
-                !artifacts.legacyKeystorePath.chainMatches
-            ) {
-                add(
-                    fact(
-                        "Legacy keystore",
-                        "Legacy USRCERT_/CACERT_ path diverged from the Java KeyStore certificate chain.",
-                        TeeSignalLevel.WARN
-                    )
-                )
-            }
-            if (artifacts.listEntriesConsistency.executed &&
-                (artifacts.listEntriesConsistency.inconsistent || artifacts.listEntriesConsistency.badParcelableLikeCrash)
-            ) {
-                add(
-                    fact(
-                        "listEntries",
-                        "containsAlias()/aliases() diverged or crashed with a BadParcelable-style path.",
-                        TeeSignalLevel.FAIL
-                    )
-                )
-            }
-            if (artifacts.listEntriesBatched.executed &&
-                (artifacts.listEntriesBatched.cursorEchoed || artifacts.listEntriesBatched.expectedNextMissing)
-            ) {
-                add(
-                    fact(
-                        "listEntriesBatched",
-                        "Keystore2 listEntriesBatched(startPastAlias) diverged from expected cursor semantics.",
-                        if (artifacts.listEntriesBatched.cursorEchoed) TeeSignalLevel.FAIL else TeeSignalLevel.WARN
-                    )
-                )
-            }
-            if (artifacts.keyMetadataSemantics.executed &&
-                (!artifacts.keyMetadataSemantics.usesKeyIdDomain || !artifacts.keyMetadataSemantics.aliasCleared)
-            ) {
-                add(
-                    fact(
-                        "Key metadata",
-                        "Keystore2 metadata.key did not normalize to KEY_ID semantics.",
-                        TeeSignalLevel.FAIL
-                    )
-                )
-            }
-            if (artifacts.keyMetadataShape.executed &&
-                (!artifacts.keyMetadataShape.modificationTimeValid || !artifacts.keyMetadataShape.hasOriginTag)
-            ) {
-                add(
-                    fact(
-                        "Key metadata",
-                        "Keystore2 metadata omitted expected modification time or ORIGIN authorization tags.",
-                        TeeSignalLevel.FAIL
-                    )
-                )
-            }
-            if (artifacts.keyboxImport.executed && !artifacts.keyboxImport.markerPreserved) {
-                add(
-                    fact(
-                        "Keybox import",
-                        "Imported marker certificate came back rewritten.",
-                        TeeSignalLevel.FAIL
-                    )
-                )
-            }
-            if (artifacts.importKeyRetainedAttestationNarrative.executed &&
-                artifacts.importKeyRetainedAttestationNarrative.retainedNarrativeDetected
-            ) {
-                add(
-                    fact(
-                        "ImportKey narrative",
-                        "ImportKey retained attestation narrative detected.",
-                        TeeSignalLevel.FAIL,
-                    )
-                )
-            }
-            when (artifacts.supplementaryAttestationInfo.anomalyKind) {
-                SupplementaryAttestationInfoAnomalyKind.MISSING_ATTESTATION_MODULE_HASH -> {
-                    add(
-                        fact(
-                            "Module hash",
-                            "getSupplementaryAttestationInfo(MODULE_HASH) returned module info, but attestation omitted MODULE_HASH.",
-                            TeeSignalLevel.WARN,
-                            hiddenCopyText = artifacts.supplementaryAttestationInfo.diagnosticCopyText,
-                        )
-                    )
-                }
-                SupplementaryAttestationInfoAnomalyKind.MISMATCH -> {
-                    add(
-                        fact(
-                            "Module hash",
-                            "Attested MODULE_HASH did not match getSupplementaryAttestationInfo(MODULE_HASH).",
-                            TeeSignalLevel.WARN,
-                            hiddenCopyText = artifacts.supplementaryAttestationInfo.diagnosticCopyText,
-                        )
-                    )
-                }
-                SupplementaryAttestationInfoAnomalyKind.UNEXPECTED_ATTESTATION_MODULE_HASH -> {
-                    add(
-                        fact(
-                            "Module hash",
-                            "Attestation carried MODULE_HASH while getSupplementaryAttestationInfo(MODULE_HASH) was unavailable.",
-                            TeeSignalLevel.WARN,
-                            hiddenCopyText = artifacts.supplementaryAttestationInfo.diagnosticCopyText,
-                        )
-                    )
-                }
-                SupplementaryAttestationInfoAnomalyKind.NONE,
-                SupplementaryAttestationInfoAnomalyKind.UNSUPPORTED -> Unit
-            }
-            if (
-                artifacts.updateSubcomponentStaleResponsePersistence.anomalyKind ==
-                UpdateSubcomponentStaleResponseAnomalyKind.STALE_TEE_RESPONSE_AFTER_KEY_ID_UPDATE
-            ) {
-                add(
-                    fact(
-                        "Update persistence",
-                        "UpdateSubcomponent stale TEE response persistence detected.",
-                        TeeSignalLevel.FAIL,
-                    )
-                )
-            }
-            if (!artifacts.pairConsistency.keyMatchesCertificate) {
-                add(
-                    fact(
-                        "Key pair",
-                        "Leaf certificate key did not verify fresh local signatures.",
-                        TeeSignalLevel.FAIL
-                    )
-                )
-            }
-            if (artifacts.aesGcm.executed && !artifacts.aesGcm.roundTripSucceeded) {
-                add(
-                    fact(
-                        "AES-GCM",
-                        "AndroidKeyStore AES-GCM round-trip failed.",
-                        TeeSignalLevel.FAIL,
-                    )
-                )
-            }
-            val aesGcmAuthorizationFailures = aesGcmAuthorizationFailures(artifacts.aesGcm)
-            if (artifacts.aesGcm.executed && aesGcmAuthorizationFailures.isNotEmpty()) {
-                add(
-                    fact(
-                        "AES-GCM",
-                        "AndroidKeyStore AES-GCM accepted unauthorized parameters: ${aesGcmAuthorizationFailures.joinToString("; ")}.",
-                        TeeSignalLevel.FAIL,
-                    )
-                )
-            }
-            if (artifacts.aesGcm.executed && artifacts.aesGcm.insideSecureHardware == false) {
-                add(
-                    fact(
-                        "AES-GCM",
-                        "AndroidKeyStore AES-GCM key was software-backed instead of secure hardware.",
+                        "Grant isolated-domain",
+                        "Grant isolated-domain isolated private readback crashed after grant succeeded. " +
+                            grantDomainFullChainSplitValue(artifacts),
                         TeeSignalLevel.WARN,
-                    )
+                        hiddenCopyText = artifacts.grantDomainFullChainSplit.diagnosticCopyText
+                            .takeIf { it.isNotBlank() },
+                    ),
                 )
             }
-            val keyMintCryptoFailures = keyMintCryptoFailures(artifacts)
-            if (keyMintCryptoFailures.isNotEmpty()) {
+
+            GrantDomainAnomalyKind.NONE,
+            GrantDomainAnomalyKind.UNAVAILABLE,
+            -> Unit
+        }
+        if (
+            artifacts.syntheticGrantGranteeBlindReadback.anomalyKind ==
+            SyntheticGrantGranteeBlindReadbackAnomalyKind.NON_GRANTEE_READBACK_ALLOWED
+        ) {
+            add(
+                fact(
+                    "Grant caller binding",
+                    "Grant handle remained readable by its non-grantee owner. " +
+                        syntheticGrantGranteeBlindReadbackValue(artifacts),
+                    TeeSignalLevel.FAIL,
+                    hiddenCopyText = artifacts.syntheticGrantGranteeBlindReadback.diagnosticCopyText
+                        .takeIf { it.isNotBlank() },
+                ),
+            )
+        }
+        if (
+            artifacts.syntheticGrantGetKeyEntryAccessVectorBlindness.anomalyKind ==
+            SyntheticGrantGetKeyEntryAccessVectorBlindnessAnomalyKind.GET_KEY_ENTRY_WITHOUT_GET_INFO_ALLOWED
+        ) {
+            add(
+                fact(
+                    "Grant access vector",
+                    "Domain.GRANT handle without GET_INFO still allowed getKeyEntry metadata readback. " +
+                        syntheticGrantGetKeyEntryAccessVectorBlindnessValue(artifacts),
+                    TeeSignalLevel.FAIL,
+                    hiddenCopyText = artifacts.syntheticGrantGetKeyEntryAccessVectorBlindness.diagnosticCopyText
+                        .takeIf { it.isNotBlank() },
+                ),
+            )
+        }
+        // self-domain removes the isolated-process policy variable; its key-not-found variant is treated like a visibility split.
+        // self-domain 排除了 isolated-process 策略变量；其 key-not-found 变体按可见性断裂处理。
+        when (artifacts.grantSelfDomainFullChainSplit.anomalyKind) {
+            GrantSelfDomainAnomalyKind.SELF_CHAIN_SPLIT -> {
                 add(
                     fact(
-                        "KeyMint crypto",
-                        "Hardware-backed KeyMint failed crypto capability checks: ${keyMintCryptoFailures.joinToString("; ")}.",
+                        "Grant self-domain",
+                        "Grant self-domain certificate-chain split detected. " +
+                            grantSelfDomainFullChainSplitValue(artifacts),
                         TeeSignalLevel.FAIL,
-                    )
+                        hiddenCopyText = artifacts.grantSelfDomainFullChainSplit.diagnosticCopyText
+                            .takeIf { it.isNotBlank() },
+                    ),
                 )
             }
-            if (!artifacts.lifecycle.deleteRemovedAlias || !artifacts.lifecycle.regeneratedFreshMaterial) {
+
+            GrantSelfDomainAnomalyKind.SELF_GRANT_KEY_NOT_FOUND_AFTER_OWNER_CHAIN -> {
                 add(
                     fact(
-                        "Lifecycle",
-                        "Delete/regenerate behavior contradicted a clean keystore path.",
-                        TeeSignalLevel.FAIL
-                    )
+                        "Grant self-domain",
+                        "Grant self-domain key visibility divergence detected. " +
+                            grantSelfDomainFullChainSplitValue(artifacts),
+                        TeeSignalLevel.FAIL,
+                        hiddenCopyText = artifacts.grantSelfDomainFullChainSplit.diagnosticCopyText
+                            .takeIf { it.isNotBlank() },
+                    ),
                 )
             }
-            if (!artifacts.pureCertificate.pureCertificateReturnsNullKey) {
+
+            GrantSelfDomainAnomalyKind.NONE,
+            GrantSelfDomainAnomalyKind.UNAVAILABLE,
+            -> Unit
+        }
+        if (artifacts.keystore2Hook.javaHookDetected) {
+            add(
+                fact(
+                    "Keystore2",
+                    "Binder reply fingerprint matched a Java-hook style path.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (artifacts.legacyKeystorePath.executed &&
+            artifacts.legacyKeystorePath.legacyMaterialAvailable &&
+            !artifacts.legacyKeystorePath.chainMatches
+        ) {
+            add(
+                fact(
+                    "Legacy keystore",
+                    "Legacy USRCERT_/CACERT_ path diverged from the Java KeyStore certificate chain.",
+                    TeeSignalLevel.WARN,
+                ),
+            )
+        }
+        if (artifacts.listEntriesConsistency.executed &&
+            (artifacts.listEntriesConsistency.inconsistent || artifacts.listEntriesConsistency.badParcelableLikeCrash)
+        ) {
+            add(
+                fact(
+                    "listEntries",
+                    "containsAlias()/aliases() diverged or crashed with a BadParcelable-style path.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (artifacts.listEntriesBatched.executed &&
+            (artifacts.listEntriesBatched.cursorEchoed || artifacts.listEntriesBatched.expectedNextMissing)
+        ) {
+            add(
+                fact(
+                    "listEntriesBatched",
+                    "Keystore2 listEntriesBatched(startPastAlias) diverged from expected cursor semantics.",
+                    if (artifacts.listEntriesBatched.cursorEchoed) TeeSignalLevel.FAIL else TeeSignalLevel.WARN,
+                ),
+            )
+        }
+        if (artifacts.keyMetadataSemantics.executed &&
+            (!artifacts.keyMetadataSemantics.usesKeyIdDomain || !artifacts.keyMetadataSemantics.aliasCleared)
+        ) {
+            add(
+                fact(
+                    "Key metadata",
+                    "Keystore2 metadata.key did not normalize to KEY_ID semantics.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (artifacts.keyMetadataShape.executed &&
+            (!artifacts.keyMetadataShape.modificationTimeValid || !artifacts.keyMetadataShape.hasOriginTag)
+        ) {
+            add(
+                fact(
+                    "Key metadata",
+                    "Keystore2 metadata omitted expected modification time or ORIGIN authorization tags.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (artifacts.keyboxImport.executed && !artifacts.keyboxImport.markerPreserved) {
+            add(
+                fact(
+                    "Keybox import",
+                    "Imported marker certificate came back rewritten.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (artifacts.importKeyRetainedAttestationNarrative.executed &&
+            artifacts.importKeyRetainedAttestationNarrative.retainedNarrativeDetected
+        ) {
+            add(
+                fact(
+                    "ImportKey narrative",
+                    "ImportKey retained attestation narrative detected.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        when (artifacts.supplementaryAttestationInfo.anomalyKind) {
+            SupplementaryAttestationInfoAnomalyKind.MISSING_ATTESTATION_MODULE_HASH -> {
                 add(
                     fact(
-                        "Pure certificate",
-                        "getKey() returned a key object for a certificate-only entry.",
-                        TeeSignalLevel.FAIL
-                    )
+                        "Module hash",
+                        "getSupplementaryAttestationInfo(MODULE_HASH) returned module info, but attestation omitted MODULE_HASH.",
+                        TeeSignalLevel.WARN,
+                        hiddenCopyText = artifacts.supplementaryAttestationInfo.diagnosticCopyText,
+                    ),
                 )
             }
-            if (artifacts.pureCertificateSecurityLevel.executed &&
-                artifacts.pureCertificateSecurityLevel.securityLevelPresent
-            ) {
+
+            SupplementaryAttestationInfoAnomalyKind.MISMATCH -> {
                 add(
                     fact(
-                        "Pure certificate",
-                        "Certificate-only entry exposed Keystore2 security-level metadata.",
-                        TeeSignalLevel.FAIL
-                    )
+                        "Module hash",
+                        "Attested MODULE_HASH did not match getSupplementaryAttestationInfo(MODULE_HASH).",
+                        TeeSignalLevel.WARN,
+                        hiddenCopyText = artifacts.supplementaryAttestationInfo.diagnosticCopyText,
+                    ),
                 )
             }
-            if (artifacts.operationErrorPath.executed &&
-                (!artifacts.operationErrorPath.createOperationSucceeded ||
+
+            SupplementaryAttestationInfoAnomalyKind.UNEXPECTED_ATTESTATION_MODULE_HASH -> {
+                add(
+                    fact(
+                        "Module hash",
+                        "Attestation carried MODULE_HASH while getSupplementaryAttestationInfo(MODULE_HASH) was unavailable.",
+                        TeeSignalLevel.WARN,
+                        hiddenCopyText = artifacts.supplementaryAttestationInfo.diagnosticCopyText,
+                    ),
+                )
+            }
+
+            SupplementaryAttestationInfoAnomalyKind.NONE,
+            SupplementaryAttestationInfoAnomalyKind.UNSUPPORTED,
+            -> Unit
+        }
+        if (
+            artifacts.updateSubcomponentStaleResponsePersistence.anomalyKind ==
+            UpdateSubcomponentStaleResponseAnomalyKind.STALE_TEE_RESPONSE_AFTER_KEY_ID_UPDATE
+        ) {
+            add(
+                fact(
+                    "Update persistence",
+                    "UpdateSubcomponent stale TEE response persistence detected.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (!artifacts.pairConsistency.keyMatchesCertificate) {
+            add(
+                fact(
+                    "Key pair",
+                    "Leaf certificate key did not verify fresh local signatures.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (artifacts.aesGcm.executed && !artifacts.aesGcm.roundTripSucceeded) {
+            add(
+                fact(
+                    "AES-GCM",
+                    "AndroidKeyStore AES-GCM round-trip failed.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        val aesGcmAuthorizationFailures = aesGcmAuthorizationFailures(artifacts.aesGcm)
+        if (artifacts.aesGcm.executed && aesGcmAuthorizationFailures.isNotEmpty()) {
+            add(
+                fact(
+                    "AES-GCM",
+                    "AndroidKeyStore AES-GCM accepted unauthorized parameters: ${aesGcmAuthorizationFailures.joinToString("; ")}.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (artifacts.aesGcm.executed && artifacts.aesGcm.insideSecureHardware == false) {
+            add(
+                fact(
+                    "AES-GCM",
+                    "AndroidKeyStore AES-GCM key was software-backed instead of secure hardware.",
+                    TeeSignalLevel.WARN,
+                ),
+            )
+        }
+        val keyMintCryptoFailures = keyMintCryptoFailures(artifacts)
+        if (keyMintCryptoFailures.isNotEmpty()) {
+            add(
+                fact(
+                    "KeyMint crypto",
+                    "Hardware-backed KeyMint failed crypto capability checks: ${keyMintCryptoFailures.joinToString("; ")}.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (!artifacts.lifecycle.deleteRemovedAlias || !artifacts.lifecycle.regeneratedFreshMaterial) {
+            add(
+                fact(
+                    "Lifecycle",
+                    "Delete/regenerate behavior contradicted a clean keystore path.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (!artifacts.pureCertificate.pureCertificateReturnsNullKey) {
+            add(
+                fact(
+                    "Pure certificate",
+                    "getKey() returned a key object for a certificate-only entry.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (artifacts.pureCertificateSecurityLevel.executed &&
+            artifacts.pureCertificateSecurityLevel.securityLevelPresent
+        ) {
+            add(
+                fact(
+                    "Pure certificate",
+                    "Certificate-only entry exposed Keystore2 security-level metadata.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (artifacts.operationErrorPath.executed &&
+            (
+                !artifacts.operationErrorPath.createOperationSucceeded ||
                     !artifacts.operationErrorPath.updateAadServiceSpecific ||
                     !artifacts.operationErrorPath.oversizedUpdateRejected ||
-                    !artifacts.operationErrorPath.abortInvalidatedHandle)
-            ) {
-                add(
-                    fact(
-                        "Operation path",
-                        "Keystore2 operation error handling diverged from native-style semantics.",
-                        TeeSignalLevel.FAIL
-                    )
+                    !artifacts.operationErrorPath.abortInvalidatedHandle
                 )
-            }
-            if (artifacts.biometricIntegration.executed &&
-                artifacts.biometricIntegration.strongBiometricAvailable &&
-                (!artifacts.biometricIntegration.keyCreated || !artifacts.biometricIntegration.keyRetrieved)
-            ) {
-                add(
-                    fact(
-                        "Biometric TEE",
-                        "Strong biometric was available, but user-auth-bound key creation or retrieval failed.",
-                        TeeSignalLevel.FAIL
-                    )
-                )
-            }
-            if (artifacts.binderHookBootstrap.executed && !artifacts.binderHookBootstrap.hookInstalled) {
-                add(
-                    fact(
-                        "Binder hook",
-                        "Binder hook bootstrap did not complete successfully.",
-                        TeeSignalLevel.FAIL
-                    )
-                )
-            }
-            if (artifacts.binderPatchMode.executed &&
-                artifacts.binderPatchMode.hookInstalled &&
-                (artifacts.binderPatchMode.leafDiffers || artifacts.binderPatchMode.chainDiffers)
-            ) {
-                add(
-                    fact(
-                        "Patch mode",
-                        "generateKey and getKeyEntry returned different certificate materials.",
-                        TeeSignalLevel.FAIL
-                    )
-                )
-            }
-            if (artifacts.binderChainConsistency.executed &&
-                (
-                    !artifacts.binderChainConsistency.hookInstalled ||
-                        artifacts.binderChainConsistency.suspiciousLeafIssuerSpki ||
-                        !artifacts.binderChainConsistency.activeProbeSecondCycleSucceeded ||
-                        !artifacts.binderChainConsistency.deleteEntryRemovedAlias ||
-                        (artifacts.binderChainConsistency.binderMaterialAvailable &&
-                            !artifacts.binderChainConsistency.chainMatches) ||
-                        (artifacts.binderChainConsistency.generateMaterialAvailable &&
+        ) {
+            add(
+                fact(
+                    "Operation path",
+                    "Keystore2 operation error handling diverged from native-style semantics.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (artifacts.biometricIntegration.executed &&
+            artifacts.biometricIntegration.strongBiometricAvailable &&
+            (!artifacts.biometricIntegration.keyCreated || !artifacts.biometricIntegration.keyRetrieved)
+        ) {
+            add(
+                fact(
+                    "Biometric TEE",
+                    "Strong biometric was available, but user-auth-bound key creation or retrieval failed.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (artifacts.binderHookBootstrap.executed && !artifacts.binderHookBootstrap.hookInstalled) {
+            add(
+                fact(
+                    "Binder hook",
+                    "Binder hook bootstrap did not complete successfully.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (artifacts.binderPatchMode.executed &&
+            artifacts.binderPatchMode.hookInstalled &&
+            (artifacts.binderPatchMode.leafDiffers || artifacts.binderPatchMode.chainDiffers)
+        ) {
+            add(
+                fact(
+                    "Patch mode",
+                    "generateKey and getKeyEntry returned different certificate materials.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (artifacts.binderChainConsistency.executed &&
+            (
+                !artifacts.binderChainConsistency.hookInstalled ||
+                    artifacts.binderChainConsistency.suspiciousLeafIssuerSpki ||
+                    !artifacts.binderChainConsistency.activeProbeSecondCycleSucceeded ||
+                    !artifacts.binderChainConsistency.deleteEntryRemovedAlias ||
+                    (
+                        artifacts.binderChainConsistency.binderMaterialAvailable &&
+                            !artifacts.binderChainConsistency.chainMatches
+                        ) ||
+                    (
+                        artifacts.binderChainConsistency.generateMaterialAvailable &&
                             artifacts.binderChainConsistency.binderMaterialAvailable &&
                             (
                                 !artifacts.binderChainConsistency.generateVsGetKeyEntryLeafMatches ||
                                     !artifacts.binderChainConsistency.generateVsGetKeyEntryChainMatches
-                                ))
-                    )
-            ) {
-                add(
-                    fact(
-                        "Binder chain",
-                        if (!artifacts.binderChainConsistency.hookInstalled) {
-                            "Binder capture hook bootstrap failed."
-                        } else {
-                            "Java KeyStore, generateKey, and getKeyEntry certificate materials diverged."
-                        },
-                        TeeSignalLevel.FAIL
-                    )
+                                )
+                        )
                 )
-            }
-            if (artifacts.updateSubcomponent.keyNotFoundStyleFailure) {
-                add(
-                    fact(
-                        "Update path",
-                        "setKeyEntry() failed with a key-not-found style response.",
-                        TeeSignalLevel.FAIL
-                    )
-                )
-            }
-            if (artifacts.native.leafDerPrimaryDetected) {
-                add(
-                    fact(
-                        "TS leaf DER",
-                        "Primary TrickyStore DER fingerprint matched locally.",
-                        TeeSignalLevel.FAIL
-                    )
-                )
-            }
-            if (artifacts.native.gotHookDetected) {
-                add(
-                    fact(
-                        "TrickyStore ioctl",
-                        "libbinder ioctl GOT entry differed from libc.",
-                        TeeSignalLevel.FAIL
-                    )
-                )
-            }
-            if (artifacts.native.inlineHookDetected) {
-                add(
-                    fact(
-                        "TrickyStore ioctl",
-                        "ioctl prologue looked patched or redirected.",
-                        TeeSignalLevel.FAIL
-                    )
-                )
-            }
-            if (artifacts.native.honeypotDetected) {
-                add(
-                    fact(
-                        "TrickyStore ioctl",
-                        "Keystore-style binder honeypot triggered abnormal ioctl timing.",
-                        TeeSignalLevel.FAIL
-                    )
-                )
-            }
-            if (artifacts.native.trickyStoreDetected) {
-                add(
-                    fact(
-                        "TrickyStore",
-                        "Process-side indicators matched ${nativeMethodSummary(artifacts)}.",
-                        TeeSignalLevel.FAIL
-                    )
-                )
-            }
-            artifacts.strongBox.hardFailures.forEach { message ->
-                add(fact("StrongBox", message, TeeSignalLevel.WARN))
-            }
+        ) {
+            add(
+                fact(
+                    "Binder chain",
+                    if (!artifacts.binderChainConsistency.hookInstalled) {
+                        "Binder capture hook bootstrap failed."
+                    } else {
+                        "Java KeyStore, generateKey, and getKeyEntry certificate materials diverged."
+                    },
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (artifacts.updateSubcomponent.keyNotFoundStyleFailure) {
+            add(
+                fact(
+                    "Update path",
+                    "setKeyEntry() failed with a key-not-found style response.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (artifacts.native.leafDerPrimaryDetected) {
+            add(
+                fact(
+                    "TS leaf DER",
+                    "Primary TrickyStore DER fingerprint matched locally.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (artifacts.native.gotHookDetected) {
+            add(
+                fact(
+                    "TrickyStore ioctl",
+                    "libbinder ioctl GOT entry differed from libc.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (artifacts.native.inlineHookDetected) {
+            add(
+                fact(
+                    "TrickyStore ioctl",
+                    "ioctl prologue looked patched or redirected.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (artifacts.native.honeypotDetected) {
+            add(
+                fact(
+                    "TrickyStore ioctl",
+                    "Keystore-style binder honeypot triggered abnormal ioctl timing.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        if (artifacts.native.trickyStoreDetected) {
+            add(
+                fact(
+                    "TrickyStore",
+                    "Process-side indicators matched ${nativeMethodSummary(artifacts)}.",
+                    TeeSignalLevel.FAIL,
+                ),
+            )
+        }
+        artifacts.strongBox.hardFailures.forEach { message ->
+            add(fact("StrongBox", message, TeeSignalLevel.WARN))
         }
     }
 
     private fun collectPolicySoftIndicators(
         artifacts: TeeScanArtifacts,
         patchState: TeePatchState,
-    ): List<TeeEvidenceItem> {
-        return buildList {
-            artifacts.snapshot.errorMessage?.takeIf { it.isNotBlank() }?.let { message ->
-                add(fact("Collector", message, TeeSignalLevel.WARN))
-            }
-            artifacts.chainStructure.issuerMismatches.forEach { mismatch ->
-                add(fact("Issuer path", mismatch, TeeSignalLevel.WARN))
-            }
-            artifacts.chainStructure.expiredCertificates.forEach { expired ->
-                add(fact("Certificate validity", expired, TeeSignalLevel.WARN))
-            }
-            if (artifacts.chainStructure.provisioningConsistencyIssue) {
-                add(
-                    fact(
-                        "Provisioning layout",
-                        "Provisioning info was not adjacent to the trusted attestation certificate.",
-                        TeeSignalLevel.WARN
-                    )
-                )
-            }
-            if (artifacts.oversizedChallenge.acceptedOversizedChallenge) {
-                add(
-                    fact(
-                        "Oversized challenge",
-                        "Attestation accepted oversized challenge sizes: ${artifacts.oversizedChallenge.acceptedSizesLabel()}.",
-                        TeeSignalLevel.WARN
-                    )
-                )
-            }
-            artifacts.rkp.consistencyIssue?.let { issue ->
-                add(fact("RKP consistency", issue, TeeSignalLevel.WARN))
-            }
-            if (hasLocalMassAbuseRevocation(artifacts)) {
-                add(
-                    fact(
-                        "Revocation",
-                        "Built-in local revocation floor matched a certificate serial associated with mass abuse.",
-                        TeeSignalLevel.WARN,
-                    )
-                )
-            }
+    ): List<TeeEvidenceItem> = buildList {
+        artifacts.snapshot.errorMessage?.takeIf { it.isNotBlank() }?.let { message ->
+            add(fact("Collector", message, TeeSignalLevel.WARN))
+        }
+        artifacts.chainStructure.issuerMismatches.forEach { mismatch ->
+            add(fact("Issuer path", mismatch, TeeSignalLevel.WARN))
+        }
+        artifacts.chainStructure.expiredCertificates.forEach { expired ->
+            add(fact("Certificate validity", expired, TeeSignalLevel.WARN))
+        }
+        if (artifacts.chainStructure.provisioningConsistencyIssue) {
+            add(
+                fact(
+                    "Provisioning layout",
+                    "Provisioning info was not adjacent to the trusted attestation certificate.",
+                    TeeSignalLevel.WARN,
+                ),
+            )
+        }
+        if (artifacts.oversizedChallenge.acceptedOversizedChallenge) {
+            add(
+                fact(
+                    "Oversized challenge",
+                    "Attestation accepted oversized challenge sizes: ${artifacts.oversizedChallenge.acceptedSizesLabel()}.",
+                    TeeSignalLevel.WARN,
+                ),
+            )
+        }
+        artifacts.rkp.consistencyIssue?.let { issue ->
+            add(fact("RKP consistency", issue, TeeSignalLevel.WARN))
+        }
+        if (hasLocalMassAbuseRevocation(artifacts)) {
+            add(
+                fact(
+                    "Revocation",
+                    "Built-in local revocation floor matched a certificate serial associated with mass abuse.",
+                    TeeSignalLevel.WARN,
+                ),
+            )
         }
     }
 
@@ -801,47 +807,45 @@ class TeeReportReducer(
         policyHardIndicators: List<TeeEvidenceItem>,
         policySoftIndicators: List<TeeEvidenceItem>,
         supplementaryIndicators: List<TeeEvidenceItem>,
-    ): List<TeeSignal> {
-        return buildList {
+    ): List<TeeSignal> = buildList {
+        add(
+            TeeSignal(
+                "Local chain",
+                if (artifacts.trust.chainSignatureValid) "Verified" else "Failed",
+                if (artifacts.trust.chainSignatureValid) TeeSignalLevel.PASS else TeeSignalLevel.FAIL,
+            ),
+        )
+        add(TeeSignal("Boot", bootSignalValue(artifacts), bootSignalLevel(artifacts)))
+        add(
+            TeeSignal(
+                "Signals",
+                indicatorValue(
+                    policyHardIndicators = policyHardIndicators,
+                    policySoftIndicators = policySoftIndicators,
+                    supplementaryIndicators = supplementaryIndicators,
+                ),
+                indicatorLevel(
+                    policyHardIndicators = policyHardIndicators,
+                    policySoftIndicators = policySoftIndicators,
+                    supplementaryIndicators = supplementaryIndicators,
+                ),
+            ),
+        )
+        if (generateModeAnomalyState(artifacts) == GenerateModeAnomalyState.MATCHED) {
+            add(TeeSignal("TEE Simulator generate-mode fingerprint", "Matched", TeeSignalLevel.FAIL))
+        }
+        add(TeeSignal("CRL", crlSignalValue(artifacts), crlSignalLevel(artifacts)))
+        if (artifacts.native.trickyStoreDetected || artifacts.native.leafDerPrimaryDetected || artifacts.native.leafDerSecondaryDetected) {
+            add(TeeSignal("Native", nativeSignalValue(artifacts), nativeSignalLevel(artifacts)))
+        }
+        if (artifacts.keystore2Hook.available || artifacts.keystore2Hook.javaHookDetected) {
             add(
                 TeeSignal(
-                    "Local chain",
-                    if (artifacts.trust.chainSignatureValid) "Verified" else "Failed",
-                    if (artifacts.trust.chainSignatureValid) TeeSignalLevel.PASS else TeeSignalLevel.FAIL
-                )
-            )
-            add(TeeSignal("Boot", bootSignalValue(artifacts), bootSignalLevel(artifacts)))
-            add(
-                TeeSignal(
-                    "Signals",
-                    indicatorValue(
-                        policyHardIndicators = policyHardIndicators,
-                        policySoftIndicators = policySoftIndicators,
-                        supplementaryIndicators = supplementaryIndicators,
-                    ),
-                    indicatorLevel(
-                        policyHardIndicators = policyHardIndicators,
-                        policySoftIndicators = policySoftIndicators,
-                        supplementaryIndicators = supplementaryIndicators,
-                    ),
+                    "Keystore2",
+                    keystore2Value(artifacts),
+                    if (artifacts.keystore2Hook.javaHookDetected) TeeSignalLevel.FAIL else TeeSignalLevel.INFO,
                 ),
             )
-            if (generateModeAnomalyState(artifacts) == GenerateModeAnomalyState.MATCHED) {
-                add(TeeSignal("TEE Simulator generate-mode fingerprint", "Matched", TeeSignalLevel.FAIL))
-            }
-            add(TeeSignal("CRL", crlSignalValue(artifacts), crlSignalLevel(artifacts)))
-            if (artifacts.native.trickyStoreDetected || artifacts.native.leafDerPrimaryDetected || artifacts.native.leafDerSecondaryDetected) {
-                add(TeeSignal("Native", nativeSignalValue(artifacts), nativeSignalLevel(artifacts)))
-            }
-            if (artifacts.keystore2Hook.available || artifacts.keystore2Hook.javaHookDetected) {
-                add(
-                    TeeSignal(
-                        "Keystore2",
-                        keystore2Value(artifacts),
-                        if (artifacts.keystore2Hook.javaHookDetected) TeeSignalLevel.FAIL else TeeSignalLevel.INFO,
-                    ),
-                )
-            }
         }
     }
 
@@ -851,379 +855,379 @@ class TeeReportReducer(
         policyHardIndicators: List<TeeEvidenceItem>,
         policySoftIndicators: List<TeeEvidenceItem>,
         supplementaryIndicators: List<TeeEvidenceItem>,
-    ): List<TeeEvidenceSection> {
-        return listOf(
-            TeeEvidenceSection(
-                title = "Trust",
-                items = buildList {
-                    add(
-                        fact(
-                            "Local chain",
-                            if (artifacts.trust.chainSignatureValid) "Verified" else "Failed",
-                            if (artifacts.trust.chainSignatureValid) TeeSignalLevel.PASS else TeeSignalLevel.FAIL
-                        )
-                    )
-                    add(
-                        fact(
-                            "Trust root",
-                            trustRootLabel(artifacts.trust.trustRoot),
-                            trustLevel(artifacts)
-                        )
-                    )
-                    add(
-                        fact(
-                            "Chain layout",
-                            chainLayoutValue(artifacts),
-                            chainLayoutLevel(artifacts)
-                        )
-                    )
-                    add(fact("RKP", rkpValue(artifacts), rkpDisplayLevel(artifacts)))
-                    add(fact("CRL", crlValue(artifacts), crlSignalLevel(artifacts)))
-                    add(
-                        fact(
-                            "Root fingerprint",
-                            shortFingerprint(artifacts.trust.rootFingerprint),
-                            TeeSignalLevel.INFO
-                        )
-                    )
-                },
-            ),
-            TeeEvidenceSection(
-                title = "Attestation",
-                items = buildList {
-                    add(
-                        fact(
-                            "Tier",
-                            tierValue(artifacts),
-                            tierLevel(effectiveTier(artifacts))
-                        )
-                    )
-                    add(fact("Versions", versionsValue(artifacts.snapshot), TeeSignalLevel.INFO))
-                    add(
-                        fact(
-                            "Challenge",
-                            challengeValue(artifacts.snapshot),
-                            challengeLevel(artifacts.snapshot)
-                        )
-                    )
-                    add(
-                        fact(
-                            "Verified boot",
-                            verifiedBootValue(artifacts.snapshot),
-                            verifiedBootLevel(artifacts.snapshot)
-                        )
-                    )
-                    add(
-                        fact(
-                            "Boot consistency",
-                            bootConsistencyValue(artifacts),
-                            bootSignalLevel(artifacts)
-                        )
-                    )
-                    add(
-                        fact(
-                            "Device IDs",
-                            deviceInfoValue(artifacts.snapshot),
-                            deviceInfoLevel(artifacts.snapshot)
-                        )
-                    )
-                    add(
-                        fact(
-                            "Key properties",
-                            keyPropertiesValue(artifacts.snapshot),
-                            TeeSignalLevel.INFO
-                        )
-                    )
-                    add(fact("User auth", authStateValue(artifacts.snapshot), TeeSignalLevel.INFO))
-                    add(
-                        fact(
-                            "Application",
-                            applicationInfoValue(artifacts.snapshot),
-                            TeeSignalLevel.INFO
-                        )
-                    )
-                },
-            ),
-            TeeEvidenceSection(
-                title = "Checks",
-                items = buildList {
-                    add(
-                        fact(
-                            "Indicators",
-                            indicatorValue(
-                                policyHardIndicators = policyHardIndicators,
-                                policySoftIndicators = policySoftIndicators,
-                                supplementaryIndicators = supplementaryIndicators,
-                            ),
-                            indicatorLevel(
-                                policyHardIndicators = policyHardIndicators,
-                                policySoftIndicators = policySoftIndicators,
-                                supplementaryIndicators = supplementaryIndicators,
-                            ),
-                        )
-                    )
-                    add(
-                        fact(
-                            "Key pair",
-                            keyPairValue(artifacts),
-                            if (artifacts.pairConsistency.keyMatchesCertificate) TeeSignalLevel.PASS else TeeSignalLevel.FAIL
-                        )
-                    )
-                    add(
-                        fact(
-                            "AES-GCM",
-                            aesGcmValue(artifacts),
-                            aesGcmLevel(artifacts)
-                        )
-                    )
-                    add(fact("Lifecycle", lifecycleValue(artifacts), lifecycleLevel(artifacts)))
-                    add(
-                        fact(
-                            "KeyMint crypto",
-                            keyMintCryptoValue(artifacts),
-                            keyMintCryptoLevel(artifacts)
-                        )
-                    )
-                    add(
-                        fact(
-                            "Timing",
-                            timingValue(artifacts),
-                            if (artifacts.timing.suspicious) TeeSignalLevel.WARN else TeeSignalLevel.INFO
-                        )
-                    )
-                    add(
-                        fact(
-                            "Timing side-channel",
-                            timingSideChannelValue(artifacts),
-                            timingSideChannelLevel(artifacts),
-                            hiddenCopyText = artifacts.timingSideChannel.stackCopyPayload,
-                        )
-                    )
-                    add(
-                        fact(
-                            "Oversized challenge",
-                            oversizedChallengeValue(artifacts),
-                            oversizedChallengeLevel(artifacts)
-                        )
-                    )
-                    add(
-                        fact(
-                            "TEE Simulator generate-mode fingerprint",
-                            generateModeAnomalyValue(artifacts),
-                            generateModeAnomalyLevel(artifacts),
-                            hiddenCopyText = artifacts.generateModeParcelFingerprint.diagnosticCopyText,
-                        )
-                    )
-                    add(fact("Keybox", keyboxValue(artifacts), keyboxLevel(artifacts)))
-                    add(
-                        fact(
-                            "ImportKey narrative",
-                            importKeyRetainedAttestationNarrativeValue(artifacts),
-                            importKeyRetainedAttestationNarrativeLevel(artifacts)
-                        )
-                    )
-                    add(
-                        fact(
-                            "KeyMint VINTF",
-                            vintfKeyMintVersionValue(artifacts),
-                            vintfKeyMintVersionLevel(artifacts),
-                            hiddenCopyText = artifacts.vintfKeyMintVersion.diagnosticCopyText,
-                        )
-                    )
-                    add(
-                        fact(
-                            "Module hash",
-                            supplementaryAttestationInfoValue(artifacts),
-                            supplementaryAttestationInfoLevel(artifacts),
-                            hiddenCopyText = artifacts.supplementaryAttestationInfo.diagnosticCopyText,
-                        )
-                    )
-                    add(
-                        fact(
-                            "Grant isolated-domain",
-                            grantDomainFullChainSplitValue(artifacts),
-                            grantDomainFullChainSplitLevel(artifacts),
-                            hiddenCopyText = artifacts.grantDomainFullChainSplit.diagnosticCopyText
-                                .takeIf { it.isNotBlank() },
-                        )
-                    )
-                    add(
-                        fact(
-                            "Grant caller binding",
-                            syntheticGrantGranteeBlindReadbackValue(artifacts),
-                            syntheticGrantGranteeBlindReadbackLevel(artifacts),
-                            hiddenCopyText = artifacts.syntheticGrantGranteeBlindReadback.diagnosticCopyText
-                                .takeIf { it.isNotBlank() },
-                        )
-                    )
-                    add(
-                        fact(
-                            "Grant access vector",
-                            syntheticGrantGetKeyEntryAccessVectorBlindnessValue(artifacts),
-                            syntheticGrantGetKeyEntryAccessVectorBlindnessLevel(artifacts),
-                            hiddenCopyText = artifacts.syntheticGrantGetKeyEntryAccessVectorBlindness.diagnosticCopyText
-                                .takeIf { it.isNotBlank() },
-                        )
-                    )
-                    add(
-                        fact(
-                            "Grant self-domain",
-                            grantSelfDomainFullChainSplitValue(artifacts),
-                            grantSelfDomainFullChainSplitLevel(artifacts),
-                            hiddenCopyText = artifacts.grantSelfDomainFullChainSplit.diagnosticCopyText
-                                .takeIf { it.isNotBlank() },
-                        )
-                    )
-                    add(
-                        fact(
-                            "Keystore2",
-                            keystore2Value(artifacts),
-                            if (artifacts.keystore2Hook.javaHookDetected) TeeSignalLevel.FAIL else TeeSignalLevel.INFO
-                        )
-                    )
-                    add(
-                        fact(
-                            "Legacy keystore",
-                            legacyKeystorePathValue(artifacts),
-                            legacyKeystorePathLevel(artifacts)
-                        )
-                    )
-                    add(
-                        fact(
-                            "listEntries",
-                            listEntriesConsistencyValue(artifacts),
-                            listEntriesConsistencyLevel(artifacts)
-                        )
-                    )
-                    add(
-                        fact(
-                            "listEntriesBatched",
-                            listEntriesBatchedValue(artifacts),
-                            listEntriesBatchedLevel(artifacts)
-                        )
-                    )
-                    add(
-                        fact(
-                            "Metadata key",
-                            keyMetadataSemanticsValue(artifacts),
-                            keyMetadataSemanticsLevel(artifacts)
-                        )
-                    )
-                    add(
-                        fact(
-                            "Metadata shape",
-                            keyMetadataShapeValue(artifacts),
-                            keyMetadataShapeLevel(artifacts)
-                        )
-                    )
-                    add(
-                        fact(
-                            "Pure cert",
-                            pureCertificateValue(artifacts),
-                            if (artifacts.pureCertificate.pureCertificateReturnsNullKey) TeeSignalLevel.PASS else TeeSignalLevel.FAIL
-                        )
-                    )
-                    add(
-                        fact(
-                            "Pure cert level",
-                            pureCertificateTopLevelSecurityValue(artifacts),
-                            pureCertificateTopLevelSecurityLevel(artifacts)
-                        )
-                    )
-                    add(
-                        fact(
-                            "Pure cert metadata",
-                            pureCertificateMetadataSecurityValue(artifacts),
-                            pureCertificateMetadataSecurityLevel(artifacts)
-                        )
-                    )
-                    add(
-                        fact(
-                            "Operation path",
-                            operationErrorPathValue(artifacts),
-                            operationErrorPathLevel(artifacts)
-                        )
-                    )
-                    add(
-                        fact(
-                            "Biometric TEE",
-                            biometricIntegrationValue(artifacts),
-                            biometricIntegrationLevel(artifacts)
-                        )
-                    )
-                    add(
-                        fact(
-                            "Binder hook",
-                            binderHookBootstrapValue(artifacts),
-                            binderHookBootstrapLevel(artifacts)
-                        )
-                    )
-                    add(
-                        fact(
-                            "Patch mode",
-                            binderPatchModeValue(artifacts),
-                            binderPatchModeLevel(artifacts)
-                        )
-                    )
-                    add(
-                        fact(
-                            "Binder chain",
-                            binderChainConsistencyValue(artifacts),
-                            binderChainConsistencyLevel(artifacts)
-                        )
-                    )
-                    add(
-                        fact(
-                            "Update path",
-                            updateSubcomponentValue(artifacts),
-                            if (artifacts.updateSubcomponent.keyNotFoundStyleFailure) TeeSignalLevel.FAIL else TeeSignalLevel.PASS
-                        )
-                    )
-                    add(
-                        fact(
-                            "Update persistence",
-                            updateSubcomponentStaleResponsePersistenceValue(artifacts),
-                            updateSubcomponentStaleResponsePersistenceLevel(artifacts)
-                        )
-                    )
-                    add(
-                        fact(
-                            "Pruning",
-                            pruningValue(artifacts),
-                            TeeSignalLevel.INFO
-                        )
-                    )
-                    add(
-                        fact(
-                            "Dual algorithm",
-                            dualAlgorithmValue(artifacts),
-                            TeeSignalLevel.INFO
-                        )
-                    )
-                    add(
-                        fact(
-                            "ID attestation",
-                            idAttestationValue(artifacts),
-                            if (artifacts.idAttestation.mismatches.isNotEmpty()) TeeSignalLevel.WARN else TeeSignalLevel.INFO
-                        )
-                    )
-                    add(fact("StrongBox", strongBoxValue(artifacts), strongBoxLevel(artifacts)))
-                    add(fact("Native", nativeValue(artifacts), nativeSignalLevel(artifacts)))
-                    add(fact("Soter", artifacts.soter.summary, soterLevel(artifacts)))
-                },
-            ),
-        )
-    }
+    ): List<TeeEvidenceSection> = listOf(
+        TeeEvidenceSection(
+            title = "Trust",
+            items = buildList {
+                add(
+                    fact(
+                        "Local chain",
+                        if (artifacts.trust.chainSignatureValid) "Verified" else "Failed",
+                        if (artifacts.trust.chainSignatureValid) TeeSignalLevel.PASS else TeeSignalLevel.FAIL,
+                    ),
+                )
+                add(
+                    fact(
+                        "Trust root",
+                        trustRootLabel(artifacts.trust.trustRoot),
+                        trustLevel(artifacts),
+                    ),
+                )
+                add(
+                    fact(
+                        "Chain layout",
+                        chainLayoutValue(artifacts),
+                        chainLayoutLevel(artifacts),
+                    ),
+                )
+                add(fact("RKP", rkpValue(artifacts), rkpDisplayLevel(artifacts)))
+                add(fact("CRL", crlValue(artifacts), crlSignalLevel(artifacts)))
+                add(
+                    fact(
+                        "Root fingerprint",
+                        shortFingerprint(artifacts.trust.rootFingerprint),
+                        TeeSignalLevel.INFO,
+                    ),
+                )
+            },
+        ),
+        TeeEvidenceSection(
+            title = "Attestation",
+            items = buildList {
+                add(
+                    fact(
+                        "Tier",
+                        tierValue(artifacts),
+                        tierLevel(effectiveTier(artifacts)),
+                    ),
+                )
+                add(fact("Versions", versionsValue(artifacts.snapshot), TeeSignalLevel.INFO))
+                add(
+                    fact(
+                        "Challenge",
+                        challengeValue(artifacts.snapshot),
+                        challengeLevel(artifacts.snapshot),
+                    ),
+                )
+                add(
+                    fact(
+                        "Verified boot",
+                        verifiedBootValue(artifacts.snapshot),
+                        verifiedBootLevel(artifacts.snapshot),
+                    ),
+                )
+                add(
+                    fact(
+                        "Boot consistency",
+                        bootConsistencyValue(artifacts),
+                        bootSignalLevel(artifacts),
+                    ),
+                )
+                add(
+                    fact(
+                        "Device IDs",
+                        deviceInfoValue(artifacts.snapshot),
+                        deviceInfoLevel(artifacts.snapshot),
+                    ),
+                )
+                add(
+                    fact(
+                        "Key properties",
+                        keyPropertiesValue(artifacts.snapshot),
+                        TeeSignalLevel.INFO,
+                    ),
+                )
+                add(fact("User auth", authStateValue(artifacts.snapshot), TeeSignalLevel.INFO))
+                add(
+                    fact(
+                        "Application",
+                        applicationInfoValue(artifacts.snapshot),
+                        TeeSignalLevel.INFO,
+                    ),
+                )
+            },
+        ),
+        TeeEvidenceSection(
+            title = "Checks",
+            items = buildList {
+                add(
+                    fact(
+                        "Indicators",
+                        indicatorValue(
+                            policyHardIndicators = policyHardIndicators,
+                            policySoftIndicators = policySoftIndicators,
+                            supplementaryIndicators = supplementaryIndicators,
+                        ),
+                        indicatorLevel(
+                            policyHardIndicators = policyHardIndicators,
+                            policySoftIndicators = policySoftIndicators,
+                            supplementaryIndicators = supplementaryIndicators,
+                        ),
+                    ),
+                )
+                add(
+                    fact(
+                        "Key pair",
+                        keyPairValue(artifacts),
+                        if (artifacts.pairConsistency.keyMatchesCertificate) TeeSignalLevel.PASS else TeeSignalLevel.FAIL,
+                    ),
+                )
+                add(
+                    fact(
+                        "AES-GCM",
+                        aesGcmValue(artifacts),
+                        aesGcmLevel(artifacts),
+                    ),
+                )
+                add(fact("Lifecycle", lifecycleValue(artifacts), lifecycleLevel(artifacts)))
+                add(
+                    fact(
+                        "KeyMint crypto",
+                        keyMintCryptoValue(artifacts),
+                        keyMintCryptoLevel(artifacts),
+                    ),
+                )
+                add(
+                    fact(
+                        "Timing",
+                        timingValue(artifacts),
+                        if (artifacts.timing.suspicious) TeeSignalLevel.WARN else TeeSignalLevel.INFO,
+                    ),
+                )
+                add(
+                    fact(
+                        "Timing side-channel",
+                        timingSideChannelValue(artifacts),
+                        timingSideChannelLevel(artifacts),
+                        hiddenCopyText = artifacts.timingSideChannel.stackCopyPayload,
+                    ),
+                )
+                add(
+                    fact(
+                        "Oversized challenge",
+                        oversizedChallengeValue(artifacts),
+                        oversizedChallengeLevel(artifacts),
+                    ),
+                )
+                add(
+                    fact(
+                        "TEE Simulator generate-mode fingerprint",
+                        generateModeAnomalyValue(artifacts),
+                        generateModeAnomalyLevel(artifacts),
+                        hiddenCopyText = artifacts.generateModeParcelFingerprint.diagnosticCopyText,
+                    ),
+                )
+                add(fact("Keybox", keyboxValue(artifacts), keyboxLevel(artifacts)))
+                add(
+                    fact(
+                        "ImportKey narrative",
+                        importKeyRetainedAttestationNarrativeValue(artifacts),
+                        importKeyRetainedAttestationNarrativeLevel(artifacts),
+                    ),
+                )
+                add(
+                    fact(
+                        "KeyMint VINTF",
+                        vintfKeyMintVersionValue(artifacts),
+                        vintfKeyMintVersionLevel(artifacts),
+                        hiddenCopyText = artifacts.vintfKeyMintVersion.diagnosticCopyText,
+                    ),
+                )
+                add(
+                    fact(
+                        "Module hash",
+                        supplementaryAttestationInfoValue(artifacts),
+                        supplementaryAttestationInfoLevel(artifacts),
+                        hiddenCopyText = artifacts.supplementaryAttestationInfo.diagnosticCopyText,
+                    ),
+                )
+                add(
+                    fact(
+                        "Grant isolated-domain",
+                        grantDomainFullChainSplitValue(artifacts),
+                        grantDomainFullChainSplitLevel(artifacts),
+                        hiddenCopyText = artifacts.grantDomainFullChainSplit.diagnosticCopyText
+                            .takeIf { it.isNotBlank() },
+                    ),
+                )
+                add(
+                    fact(
+                        "Grant caller binding",
+                        syntheticGrantGranteeBlindReadbackValue(artifacts),
+                        syntheticGrantGranteeBlindReadbackLevel(artifacts),
+                        hiddenCopyText = artifacts.syntheticGrantGranteeBlindReadback.diagnosticCopyText
+                            .takeIf { it.isNotBlank() },
+                    ),
+                )
+                add(
+                    fact(
+                        "Grant access vector",
+                        syntheticGrantGetKeyEntryAccessVectorBlindnessValue(artifacts),
+                        syntheticGrantGetKeyEntryAccessVectorBlindnessLevel(artifacts),
+                        hiddenCopyText = artifacts.syntheticGrantGetKeyEntryAccessVectorBlindness.diagnosticCopyText
+                            .takeIf { it.isNotBlank() },
+                    ),
+                )
+                add(
+                    fact(
+                        "Grant self-domain",
+                        grantSelfDomainFullChainSplitValue(artifacts),
+                        grantSelfDomainFullChainSplitLevel(artifacts),
+                        hiddenCopyText = artifacts.grantSelfDomainFullChainSplit.diagnosticCopyText
+                            .takeIf { it.isNotBlank() },
+                    ),
+                )
+                add(
+                    fact(
+                        "Keystore2",
+                        keystore2Value(artifacts),
+                        if (artifacts.keystore2Hook.javaHookDetected) TeeSignalLevel.FAIL else TeeSignalLevel.INFO,
+                    ),
+                )
+                add(
+                    fact(
+                        "Legacy keystore",
+                        legacyKeystorePathValue(artifacts),
+                        legacyKeystorePathLevel(artifacts),
+                    ),
+                )
+                add(
+                    fact(
+                        "listEntries",
+                        listEntriesConsistencyValue(artifacts),
+                        listEntriesConsistencyLevel(artifacts),
+                    ),
+                )
+                add(
+                    fact(
+                        "listEntriesBatched",
+                        listEntriesBatchedValue(artifacts),
+                        listEntriesBatchedLevel(artifacts),
+                    ),
+                )
+                add(
+                    fact(
+                        "Metadata key",
+                        keyMetadataSemanticsValue(artifacts),
+                        keyMetadataSemanticsLevel(artifacts),
+                    ),
+                )
+                add(
+                    fact(
+                        "Metadata shape",
+                        keyMetadataShapeValue(artifacts),
+                        keyMetadataShapeLevel(artifacts),
+                    ),
+                )
+                add(
+                    fact(
+                        "Pure cert",
+                        pureCertificateValue(artifacts),
+                        if (artifacts.pureCertificate.pureCertificateReturnsNullKey) TeeSignalLevel.PASS else TeeSignalLevel.FAIL,
+                    ),
+                )
+                add(
+                    fact(
+                        "Pure cert level",
+                        pureCertificateTopLevelSecurityValue(artifacts),
+                        pureCertificateTopLevelSecurityLevel(artifacts),
+                    ),
+                )
+                add(
+                    fact(
+                        "Pure cert metadata",
+                        pureCertificateMetadataSecurityValue(artifacts),
+                        pureCertificateMetadataSecurityLevel(artifacts),
+                    ),
+                )
+                add(
+                    fact(
+                        "Operation path",
+                        operationErrorPathValue(artifacts),
+                        operationErrorPathLevel(artifacts),
+                    ),
+                )
+                add(
+                    fact(
+                        "Biometric TEE",
+                        biometricIntegrationValue(artifacts),
+                        biometricIntegrationLevel(artifacts),
+                    ),
+                )
+                add(
+                    fact(
+                        "Binder hook",
+                        binderHookBootstrapValue(artifacts),
+                        binderHookBootstrapLevel(artifacts),
+                    ),
+                )
+                add(
+                    fact(
+                        "Patch mode",
+                        binderPatchModeValue(artifacts),
+                        binderPatchModeLevel(artifacts),
+                    ),
+                )
+                add(
+                    fact(
+                        "Binder chain",
+                        binderChainConsistencyValue(artifacts),
+                        binderChainConsistencyLevel(artifacts),
+                    ),
+                )
+                add(
+                    fact(
+                        "Update path",
+                        updateSubcomponentValue(artifacts),
+                        if (artifacts.updateSubcomponent.keyNotFoundStyleFailure) TeeSignalLevel.FAIL else TeeSignalLevel.PASS,
+                    ),
+                )
+                add(
+                    fact(
+                        "Update persistence",
+                        updateSubcomponentStaleResponsePersistenceValue(artifacts),
+                        updateSubcomponentStaleResponsePersistenceLevel(artifacts),
+                    ),
+                )
+                add(
+                    fact(
+                        "Pruning",
+                        pruningValue(artifacts),
+                        TeeSignalLevel.INFO,
+                    ),
+                )
+                add(
+                    fact(
+                        "Dual algorithm",
+                        dualAlgorithmValue(artifacts),
+                        TeeSignalLevel.INFO,
+                    ),
+                )
+                add(
+                    fact(
+                        "ID attestation",
+                        idAttestationValue(artifacts),
+                        if (artifacts.idAttestation.mismatches.isNotEmpty()) TeeSignalLevel.WARN else TeeSignalLevel.INFO,
+                    ),
+                )
+                add(fact("StrongBox", strongBoxValue(artifacts), strongBoxLevel(artifacts)))
+                add(fact("Native", nativeValue(artifacts), nativeSignalLevel(artifacts)))
+                add(fact("Soter", artifacts.soter.summary, soterLevel(artifacts)))
+            },
+        ),
+    )
 
     private fun buildPatchState(artifacts: TeeScanArtifacts): TeePatchState {
         val runtimePatch = Build.VERSION.SECURITY_PATCH?.takeIf { it.isNotBlank() }
         val attestedPatch = artifacts.snapshot.osPatchLevel
         val grade = when {
             runtimePatch == null || attestedPatch == null -> TeePatchGrade.UNKNOWN
+
             runtimePatch == attestedPatch -> TeePatchGrade.MATCHED
+
             monthDistance(
                 runtimePatch,
-                attestedPatch
+                attestedPatch,
             )?.let { it <= 3 } == true -> TeePatchGrade.WARNING
 
             else -> TeePatchGrade.SUSPICIOUS
@@ -1254,9 +1258,13 @@ class TeeReportReducer(
         }
 
         TeeVerdict.TAMPERED -> "Policy-backed attestation anomalies were detected"
+
         TeeVerdict.SUSPICIOUS -> "Policy-backed attestation evidence needs review"
+
         TeeVerdict.BROKEN -> "Hardware-backed local verification was not established"
+
         TeeVerdict.INCONCLUSIVE -> "Local verification stayed inconclusive"
+
         TeeVerdict.LOADING -> "TEE"
     }
 
@@ -1277,10 +1285,12 @@ class TeeReportReducer(
         TeeVerdict.SUSPICIOUS -> policySoftIndicators.firstOrNull()?.body
             ?: "Policy-backed review signals suggest further review."
 
-        TeeVerdict.BROKEN -> artifacts.snapshot.errorMessage
-            ?: "Local verification could not establish hardware-backed trust."
+        TeeVerdict.BROKEN ->
+            artifacts.snapshot.errorMessage
+                ?: "Local verification could not establish hardware-backed trust."
 
         TeeVerdict.INCONCLUSIVE -> "Signals were mixed and did not converge on a stable local result."
+
         TeeVerdict.LOADING -> "Collecting local attestation and keystore evidence."
     }
 
@@ -1297,30 +1307,32 @@ class TeeReportReducer(
         }
 
         TeeVerdict.TAMPERED -> "${policyHardIndicators.size} policy anomaly"
+
         TeeVerdict.SUSPICIOUS -> "${policySoftIndicators.size} policy review"
+
         TeeVerdict.BROKEN -> "No hardware trust"
+
         TeeVerdict.INCONCLUSIVE -> "Mixed signals"
+
         TeeVerdict.LOADING -> "Scanning"
     }
 
-    private fun trustSummaryFor(artifacts: TeeScanArtifacts): String {
-        return buildString {
-            append("Local trust path: ")
-            append(trustRootLabel(normalizeTrustRoot(artifacts.trust.trustRoot)))
-            append(", chain ")
-            append(if (artifacts.trust.chainSignatureValid) "verified" else "failed")
-            if (artifacts.rkp.provisioned) {
-                append(", ")
-                append(
-                    when {
-                        !artifacts.trust.chainSignatureValid -> "RKP observed on an invalid local chain"
-                        hasLocalTrustReviewSignals(artifacts) -> "RKP observed, local trust needs review"
-                        else -> "RKP observed"
-                    }
-                )
-            } else if (artifacts.rkp.consistencyIssue != null) {
-                append(", provisioning needs review")
-            }
+    private fun trustSummaryFor(artifacts: TeeScanArtifacts): String = buildString {
+        append("Local trust path: ")
+        append(trustRootLabel(normalizeTrustRoot(artifacts.trust.trustRoot)))
+        append(", chain ")
+        append(if (artifacts.trust.chainSignatureValid) "verified" else "failed")
+        if (artifacts.rkp.provisioned) {
+            append(", ")
+            append(
+                when {
+                    !artifacts.trust.chainSignatureValid -> "RKP observed on an invalid local chain"
+                    hasLocalTrustReviewSignals(artifacts) -> "RKP observed, local trust needs review"
+                    else -> "RKP observed"
+                },
+            )
+        } else if (artifacts.rkp.consistencyIssue != null) {
+            append(", provisioning needs review")
         }
     }
 
@@ -1346,6 +1358,7 @@ class TeeReportReducer(
             ?.displayName()
         return when {
             attest == null && keymaster == null && strongBoxAttestation == null -> effective.displayName()
+
             else -> buildString {
                 append(effective.displayName())
                 attest?.let {
@@ -1364,18 +1377,18 @@ class TeeReportReducer(
         }
     }
 
-    private fun effectiveTier(artifacts: TeeScanArtifacts): TeeTier {
-        return when {
-            artifacts.snapshot.tier == TeeTier.STRONGBOX -> TeeTier.STRONGBOX
-            artifacts.snapshot.tier != TeeTier.TEE -> artifacts.snapshot.tier
-            artifacts.strongBox.available && artifacts.strongBox.attestationTier == TeeTier.STRONGBOX ->
-                TeeTier.STRONGBOX
+    private fun effectiveTier(artifacts: TeeScanArtifacts): TeeTier = when {
+        artifacts.snapshot.tier == TeeTier.STRONGBOX -> TeeTier.STRONGBOX
 
-            artifacts.strongBox.available && artifacts.strongBox.keyInfoLevel == "StrongBox" ->
-                TeeTier.STRONGBOX
+        artifacts.snapshot.tier != TeeTier.TEE -> artifacts.snapshot.tier
 
-            else -> artifacts.snapshot.tier
-        }
+        artifacts.strongBox.available && artifacts.strongBox.attestationTier == TeeTier.STRONGBOX ->
+            TeeTier.STRONGBOX
+
+        artifacts.strongBox.available && artifacts.strongBox.keyInfoLevel == "StrongBox" ->
+            TeeTier.STRONGBOX
+
+        else -> artifacts.snapshot.tier
     }
 
     private fun versionsValue(snapshot: AttestationSnapshot): String {
@@ -1385,14 +1398,13 @@ class TeeReportReducer(
         return "attest $attestation • keymaster $keymaster • Android $os"
     }
 
-    private fun challengeValue(snapshot: AttestationSnapshot): String {
-        return when {
-            snapshot.trustedAttestationIndex == null -> "Unavailable"
-            snapshot.challengeVerified -> snapshot.challengeSummary?.let { "Matched • $it" }
-                ?: "Matched"
+    private fun challengeValue(snapshot: AttestationSnapshot): String = when {
+        snapshot.trustedAttestationIndex == null -> "Unavailable"
 
-            else -> snapshot.challengeSummary?.let { "Mismatch • $it" } ?: "Mismatch"
-        }
+        snapshot.challengeVerified -> snapshot.challengeSummary?.let { "Matched • $it" }
+            ?: "Matched"
+
+        else -> snapshot.challengeSummary?.let { "Mismatch • $it" } ?: "Mismatch"
     }
 
     private fun verifiedBootValue(snapshot: AttestationSnapshot): String {
@@ -1415,18 +1427,16 @@ class TeeReportReducer(
         }
     }
 
-    private fun patchValue(patchState: TeePatchState): String {
-        return buildString {
-            append("runtime ")
-            append(patchState.systemPatchLevel ?: "n/a")
-            append(" • attest ")
-            append(patchState.teePatchLevel ?: "n/a")
-            if (patchState.vendorPatchLevel != null || patchState.bootPatchLevel != null) {
-                append(" • vendor ")
-                append(patchState.vendorPatchLevel ?: "n/a")
-                append(" • boot ")
-                append(patchState.bootPatchLevel ?: "n/a")
-            }
+    private fun patchValue(patchState: TeePatchState): String = buildString {
+        append("runtime ")
+        append(patchState.systemPatchLevel ?: "n/a")
+        append(" • attest ")
+        append(patchState.teePatchLevel ?: "n/a")
+        if (patchState.vendorPatchLevel != null || patchState.bootPatchLevel != null) {
+            append(" • vendor ")
+            append(patchState.vendorPatchLevel ?: "n/a")
+            append(" • boot ")
+            append(patchState.bootPatchLevel ?: "n/a")
         }
     }
 
@@ -1463,6 +1473,7 @@ class TeeReportReducer(
         val auth = snapshot.authState
         return when {
             auth.noAuthRequired == true -> "No user auth required"
+
             auth.userAuthTypes.isNotEmpty() -> buildString {
                 append(auth.userAuthTypes.joinToString(separator = "/"))
                 auth.authTimeoutSeconds?.let {
@@ -1500,15 +1511,13 @@ class TeeReportReducer(
         return "len ${artifacts.chainStructure.chainLength} • ext ${artifacts.chainStructure.attestationExtensionCount} • trusted $trustedIndex"
     }
 
-    private fun rkpValue(artifacts: TeeScanArtifacts): String {
-        return when {
-            artifacts.rkp.provisioned && !artifacts.trust.chainSignatureValid -> "Observed • local chain failed"
-            artifacts.rkp.provisioned && hasLocalTrustReviewSignals(artifacts) -> "Observed • local trust needs review"
-            artifacts.rkp.provisioned && artifacts.rkp.validityDays != null -> "Provisioned • ${artifacts.rkp.validityDays}d leaf"
-            artifacts.rkp.provisioned -> "Provisioned"
-            artifacts.rkp.consistencyIssue != null -> "Review provisioning"
-            else -> "Not observed"
-        }
+    private fun rkpValue(artifacts: TeeScanArtifacts): String = when {
+        artifacts.rkp.provisioned && !artifacts.trust.chainSignatureValid -> "Observed • local chain failed"
+        artifacts.rkp.provisioned && hasLocalTrustReviewSignals(artifacts) -> "Observed • local trust needs review"
+        artifacts.rkp.provisioned && artifacts.rkp.validityDays != null -> "Provisioned • ${artifacts.rkp.validityDays}d leaf"
+        artifacts.rkp.provisioned -> "Provisioned"
+        artifacts.rkp.consistencyIssue != null -> "Review provisioning"
+        else -> "Not observed"
     }
 
     private fun crlValue(artifacts: TeeScanArtifacts): String {
@@ -1552,11 +1561,9 @@ class TeeReportReducer(
         return artifacts.pairConsistency.medianSignMicros?.let { "$base • ${it}us" } ?: base
     }
 
-    private fun lifecycleValue(artifacts: TeeScanArtifacts): String {
-        return when {
-            artifacts.lifecycle.deleteRemovedAlias && artifacts.lifecycle.regeneratedFreshMaterial -> "Delete ok • fresh material"
-            else -> "Delete/regenerate contradiction"
-        }
+    private fun lifecycleValue(artifacts: TeeScanArtifacts): String = when {
+        artifacts.lifecycle.deleteRemovedAlias && artifacts.lifecycle.regeneratedFreshMaterial -> "Delete ok • fresh material"
+        else -> "Delete/regenerate contradiction"
     }
 
     private fun aesGcmValue(artifacts: TeeScanArtifacts): String {
@@ -1564,6 +1571,7 @@ class TeeReportReducer(
         val authorizationFailures = aesGcmAuthorizationFailures(result)
         return when {
             !result.executed -> "Skipped"
+
             !result.roundTripSucceeded -> buildString {
                 append("Round-trip failed")
                 result.keyInfoLevel?.let {
@@ -1806,12 +1814,10 @@ class TeeReportReducer(
         }
     }
 
-    private fun keyboxValue(artifacts: TeeScanArtifacts): String {
-        return when {
-            !artifacts.keyboxImport.executed -> "Skipped"
-            artifacts.keyboxImport.markerPreserved -> "Marker preserved"
-            else -> "Marker replaced"
-        }
+    private fun keyboxValue(artifacts: TeeScanArtifacts): String = when {
+        !artifacts.keyboxImport.executed -> "Skipped"
+        artifacts.keyboxImport.markerPreserved -> "Marker preserved"
+        else -> "Marker replaced"
     }
 
     private fun importKeyRetainedAttestationNarrativeValue(artifacts: TeeScanArtifacts): String {
@@ -1829,33 +1835,27 @@ class TeeReportReducer(
         return "$status • $detail"
     }
 
-    private fun oversizedChallengeValue(artifacts: TeeScanArtifacts): String {
-        return if (artifacts.oversizedChallenge.acceptedOversizedChallenge) {
-            "Accepted ${artifacts.oversizedChallenge.acceptedSizesLabel()}"
-        } else {
-            "Rejected ${artifacts.oversizedChallenge.attemptedSizesLabel()}"
-        }
+    private fun oversizedChallengeValue(artifacts: TeeScanArtifacts): String = if (artifacts.oversizedChallenge.acceptedOversizedChallenge) {
+        "Accepted ${artifacts.oversizedChallenge.acceptedSizesLabel()}"
+    } else {
+        "Rejected ${artifacts.oversizedChallenge.attemptedSizesLabel()}"
     }
 
-    private fun generateModeAnomalyValue(artifacts: TeeScanArtifacts): String {
-        return when (generateModeAnomalyState(artifacts)) {
-            GenerateModeAnomalyState.MATCHED ->
-                "Matched TEE Simulator generate-mode fingerprint."
+    private fun generateModeAnomalyValue(artifacts: TeeScanArtifacts): String = when (generateModeAnomalyState(artifacts)) {
+        GenerateModeAnomalyState.MATCHED ->
+            "Matched TEE Simulator generate-mode fingerprint."
 
-            GenerateModeAnomalyState.CLEAN ->
-                "No TEE Simulator generate-mode fingerprint observed."
+        GenerateModeAnomalyState.CLEAN ->
+            "No TEE Simulator generate-mode fingerprint observed."
 
-            GenerateModeAnomalyState.UNAVAILABLE -> "TEE Simulator generate-mode fingerprint probe unavailable."
-        }
+        GenerateModeAnomalyState.UNAVAILABLE -> "TEE Simulator generate-mode fingerprint probe unavailable."
     }
 
-    private fun keystore2Value(artifacts: TeeScanArtifacts): String {
-        return when {
-            artifacts.keystore2Hook.javaHookDetected -> "Java-style reply"
-            artifacts.keystore2Hook.nativeStyleResponse -> "Native-style reply"
-            !artifacts.keystore2Hook.available -> "Unavailable"
-            else -> artifacts.keystore2Hook.errorCode?.let { "Error $it" } ?: "Unexpected reply"
-        }
+    private fun keystore2Value(artifacts: TeeScanArtifacts): String = when {
+        artifacts.keystore2Hook.javaHookDetected -> "Java-style reply"
+        artifacts.keystore2Hook.nativeStyleResponse -> "Native-style reply"
+        !artifacts.keystore2Hook.available -> "Unavailable"
+        else -> artifacts.keystore2Hook.errorCode?.let { "Error $it" } ?: "Unexpected reply"
     }
 
     private fun grantDomainFullChainSplitValue(artifacts: TeeScanArtifacts): String {
@@ -1873,6 +1873,7 @@ class TeeReportReducer(
                 result.granteeUid?.let { append(" uid=$it") }
                 result.detail.takeIf { it.isNotBlank() }?.let { append(" • $it") }
             }
+
             result.executed && result.available -> buildString {
                 append("Clean")
                 append(" kind=")
@@ -1882,6 +1883,7 @@ class TeeReportReducer(
                 result.granteeUid?.let { append(" uid=$it") }
                 result.detail.takeIf { it.isNotBlank() }?.let { append(" • $it") }
             }
+
             else -> buildString {
                 append("Unavailable")
                 append(" kind=")
@@ -1903,6 +1905,7 @@ class TeeReportReducer(
                     append(" ownerReplay=true")
                     result.detail.takeIf { it.isNotBlank() }?.let { append(" • $it") }
                 }
+
             result.executed && result.available &&
                 result.anomalyKind == SyntheticGrantGranteeBlindReadbackAnomalyKind.NONE ->
                 buildString {
@@ -1911,8 +1914,10 @@ class TeeReportReducer(
                     append(" ownerReplay=KEY_NOT_FOUND")
                     result.detail.takeIf { it.isNotBlank() }?.let { append(" • $it") }
                 }
+
             result.anomalyKind == SyntheticGrantGranteeBlindReadbackAnomalyKind.SKIPPED_AFTER_EXISTING_GRANT_DANGER ->
                 "Skipped • ${result.detail}"
+
             else -> buildString {
                 append("Unavailable kind=")
                 append(result.anomalyKind.name)
@@ -1934,6 +1939,7 @@ class TeeReportReducer(
                     append(" granteeRead=true")
                     result.detail.takeIf { it.isNotBlank() }?.let { append(" • $it") }
                 }
+
             result.executed && result.available &&
                 result.anomalyKind == SyntheticGrantGetKeyEntryAccessVectorBlindnessAnomalyKind.NONE ->
                 buildString {
@@ -1943,9 +1949,11 @@ class TeeReportReducer(
                     append(" granteeRead=PERMISSION_DENIED")
                     result.detail.takeIf { it.isNotBlank() }?.let { append(" • $it") }
                 }
+
             result.anomalyKind ==
                 SyntheticGrantGetKeyEntryAccessVectorBlindnessAnomalyKind.SKIPPED_AFTER_EXISTING_GRANT_DANGER ->
                 "Skipped • ${result.detail}"
+
             else -> buildString {
                 append("Unavailable kind=")
                 append(result.anomalyKind.name)
@@ -1993,28 +2001,22 @@ class TeeReportReducer(
         }
     }
 
-    private fun pureCertificateValue(artifacts: TeeScanArtifacts): String {
-        return if (artifacts.pureCertificate.pureCertificateReturnsNullKey) {
-            "Null key as expected"
-        } else {
-            "Returned a key object"
-        }
+    private fun pureCertificateValue(artifacts: TeeScanArtifacts): String = if (artifacts.pureCertificate.pureCertificateReturnsNullKey) {
+        "Null key as expected"
+    } else {
+        "Returned a key object"
     }
 
-    private fun pureCertificateTopLevelSecurityValue(artifacts: TeeScanArtifacts): String {
-        return when {
-            !artifacts.pureCertificateSecurityLevel.executed -> "Skipped"
-            artifacts.pureCertificateSecurityLevel.securityLevelPresent -> "Security level exposed"
-            else -> "No security level exposed"
-        }
+    private fun pureCertificateTopLevelSecurityValue(artifacts: TeeScanArtifacts): String = when {
+        !artifacts.pureCertificateSecurityLevel.executed -> "Skipped"
+        artifacts.pureCertificateSecurityLevel.securityLevelPresent -> "Security level exposed"
+        else -> "No security level exposed"
     }
 
-    private fun pureCertificateMetadataSecurityValue(artifacts: TeeScanArtifacts): String {
-        return when {
-            !artifacts.pureCertificateSecurityLevel.executed -> "Skipped"
-            artifacts.pureCertificateSecurityLevel.metadataSecurityLevelPresent -> "Metadata security level exposed"
-            else -> "No metadata security level exposed"
-        }
+    private fun pureCertificateMetadataSecurityValue(artifacts: TeeScanArtifacts): String = when {
+        !artifacts.pureCertificateSecurityLevel.executed -> "Skipped"
+        artifacts.pureCertificateSecurityLevel.metadataSecurityLevelPresent -> "Metadata security level exposed"
+        else -> "No metadata security level exposed"
     }
 
     private fun keyMetadataSemanticsValue(artifacts: TeeScanArtifacts): String {
@@ -2050,12 +2052,10 @@ class TeeReportReducer(
         return "$status • $detail"
     }
 
-    private fun updateSubcomponentValue(artifacts: TeeScanArtifacts): String {
-        return when {
-            artifacts.updateSubcomponent.keyNotFoundStyleFailure -> "Key-not-found style failure"
-            artifacts.updateSubcomponent.updateSucceeded -> "No anomaly"
-            else -> "Unexpected failure"
-        }
+    private fun updateSubcomponentValue(artifacts: TeeScanArtifacts): String = when {
+        artifacts.updateSubcomponent.keyNotFoundStyleFailure -> "Key-not-found style failure"
+        artifacts.updateSubcomponent.updateSucceeded -> "No anomaly"
+        else -> "Unexpected failure"
     }
 
     private fun updateSubcomponentStaleResponsePersistenceValue(artifacts: TeeScanArtifacts): String {
@@ -2102,30 +2102,24 @@ class TeeReportReducer(
         }
     }
 
-    private fun pruningValue(artifacts: TeeScanArtifacts): String {
-        return if (artifacts.pruning.operationsCreated == 0) {
-            "Skipped"
-        } else {
-            "${artifacts.pruning.invalidatedOperations}/${artifacts.pruning.operationsCreated} invalidated"
-        }
+    private fun pruningValue(artifacts: TeeScanArtifacts): String = if (artifacts.pruning.operationsCreated == 0) {
+        "Skipped"
+    } else {
+        "${artifacts.pruning.invalidatedOperations}/${artifacts.pruning.operationsCreated} invalidated"
     }
 
-    private fun dualAlgorithmValue(artifacts: TeeScanArtifacts): String {
-        return if (artifacts.dualAlgorithm.mismatchDetected) {
-            "RSA/EC chain difference observed"
-        } else {
-            "RSA/EC chains aligned"
-        }
+    private fun dualAlgorithmValue(artifacts: TeeScanArtifacts): String = if (artifacts.dualAlgorithm.mismatchDetected) {
+        "RSA/EC chain difference observed"
+    } else {
+        "RSA/EC chains aligned"
     }
 
-    private fun idAttestationValue(artifacts: TeeScanArtifacts): String {
-        return when {
-            !artifacts.idAttestation.probeRan -> "Skipped"
-            artifacts.idAttestation.mismatches.isNotEmpty() -> "${artifacts.idAttestation.mismatches.size} mismatch(es)"
-            artifacts.idAttestation.unavailableFields.size >= 5 -> "No comparable IDs exposed"
-            artifacts.idAttestation.unavailableFields.isNotEmpty() -> "${artifacts.idAttestation.unavailableFields.size} comparable field(s) not exposed"
-            else -> "Available fields aligned"
-        }
+    private fun idAttestationValue(artifacts: TeeScanArtifacts): String = when {
+        !artifacts.idAttestation.probeRan -> "Skipped"
+        artifacts.idAttestation.mismatches.isNotEmpty() -> "${artifacts.idAttestation.mismatches.size} mismatch(es)"
+        artifacts.idAttestation.unavailableFields.size >= 5 -> "No comparable IDs exposed"
+        artifacts.idAttestation.unavailableFields.isNotEmpty() -> "${artifacts.idAttestation.unavailableFields.size} comparable field(s) not exposed"
+        else -> "Available fields aligned"
     }
 
     private fun biometricIntegrationValue(artifacts: TeeScanArtifacts): String {
@@ -2192,22 +2186,24 @@ class TeeReportReducer(
         }
     }
 
-    private fun strongBoxValue(artifacts: TeeScanArtifacts): String {
-        return when {
-            artifacts.strongBox.hardFailures.isNotEmpty() -> artifacts.strongBox.hardFailures.first()
-            artifacts.strongBox.warnings.isNotEmpty() -> artifacts.strongBox.warnings.first()
-            !artifacts.strongBox.requested && !artifacts.strongBox.advertised -> "Not advertised"
-            artifacts.strongBox.available -> buildString {
-                append("Available")
-                artifacts.strongBox.keyInfoLevel?.let {
-                    append(" • ")
-                    append(it)
-                }
-            }
+    private fun strongBoxValue(artifacts: TeeScanArtifacts): String = when {
+        artifacts.strongBox.hardFailures.isNotEmpty() -> artifacts.strongBox.hardFailures.first()
 
-            artifacts.strongBox.requested -> "Not confirmed"
-            else -> "Skipped"
+        artifacts.strongBox.warnings.isNotEmpty() -> artifacts.strongBox.warnings.first()
+
+        !artifacts.strongBox.requested && !artifacts.strongBox.advertised -> "Not advertised"
+
+        artifacts.strongBox.available -> buildString {
+            append("Available")
+            artifacts.strongBox.keyInfoLevel?.let {
+                append(" • ")
+                append(it)
+            }
         }
+
+        artifacts.strongBox.requested -> "Not confirmed"
+
+        else -> "Skipped"
     }
 
     private fun listEntriesConsistencyValue(artifacts: TeeScanArtifacts): String {
@@ -2230,14 +2226,12 @@ class TeeReportReducer(
         }
     }
 
-    private fun aesGcmLevel(artifacts: TeeScanArtifacts): TeeSignalLevel {
-        return when {
-            !artifacts.aesGcm.executed -> TeeSignalLevel.INFO
-            !artifacts.aesGcm.roundTripSucceeded -> TeeSignalLevel.FAIL
-            aesGcmAuthorizationFailures(artifacts.aesGcm).isNotEmpty() -> TeeSignalLevel.FAIL
-            artifacts.aesGcm.insideSecureHardware == false -> TeeSignalLevel.WARN
-            else -> TeeSignalLevel.PASS
-        }
+    private fun aesGcmLevel(artifacts: TeeScanArtifacts): TeeSignalLevel = when {
+        !artifacts.aesGcm.executed -> TeeSignalLevel.INFO
+        !artifacts.aesGcm.roundTripSucceeded -> TeeSignalLevel.FAIL
+        aesGcmAuthorizationFailures(artifacts.aesGcm).isNotEmpty() -> TeeSignalLevel.FAIL
+        artifacts.aesGcm.insideSecureHardware == false -> TeeSignalLevel.WARN
+        else -> TeeSignalLevel.PASS
     }
 
     private fun aesGcmAuthorizationFailures(result: AesGcmRoundTripResult): List<String> {
@@ -2295,12 +2289,16 @@ class TeeReportReducer(
             // These anomaly kinds are already curated by the probe, so reducer can safely upgrade them without parsing detail text.
             // 这些 anomaly kind 已由 probe 结构化归类，reducer 不需要解析 detail 文本即可升级。
             result.anomalyKind == GrantDomainAnomalyKind.ISOLATED_CHAIN_SPLIT -> TeeSignalLevel.FAIL
+
             result.anomalyKind == GrantDomainAnomalyKind.ISOLATED_GRANT_KEY_NOT_FOUND_AFTER_OWNER_CHAIN ->
                 TeeSignalLevel.FAIL
+
             result.anomalyKind == GrantDomainAnomalyKind.ISOLATED_PRIVATE_READBACK_CRASH -> TeeSignalLevel.WARN
 
             result.executed && result.splitDetected -> TeeSignalLevel.FAIL
+
             result.executed && result.available -> TeeSignalLevel.PASS
+
             else -> TeeSignalLevel.INFO
         }
     }
@@ -2309,10 +2307,13 @@ class TeeReportReducer(
         val result = artifacts.syntheticGrantGranteeBlindReadback
         return when (result.anomalyKind) {
             SyntheticGrantGranteeBlindReadbackAnomalyKind.NON_GRANTEE_READBACK_ALLOWED -> TeeSignalLevel.FAIL
+
             SyntheticGrantGranteeBlindReadbackAnomalyKind.NONE ->
                 if (result.executed && result.available) TeeSignalLevel.PASS else TeeSignalLevel.INFO
+
             SyntheticGrantGranteeBlindReadbackAnomalyKind.SKIPPED_AFTER_EXISTING_GRANT_DANGER,
-            SyntheticGrantGranteeBlindReadbackAnomalyKind.UNAVAILABLE -> TeeSignalLevel.INFO
+            SyntheticGrantGranteeBlindReadbackAnomalyKind.UNAVAILABLE,
+            -> TeeSignalLevel.INFO
         }
     }
 
@@ -2321,10 +2322,13 @@ class TeeReportReducer(
         return when (result.anomalyKind) {
             SyntheticGrantGetKeyEntryAccessVectorBlindnessAnomalyKind.GET_KEY_ENTRY_WITHOUT_GET_INFO_ALLOWED ->
                 TeeSignalLevel.FAIL
+
             SyntheticGrantGetKeyEntryAccessVectorBlindnessAnomalyKind.NONE ->
                 if (result.executed && result.available) TeeSignalLevel.PASS else TeeSignalLevel.INFO
+
             SyntheticGrantGetKeyEntryAccessVectorBlindnessAnomalyKind.SKIPPED_AFTER_EXISTING_GRANT_DANGER,
-            SyntheticGrantGetKeyEntryAccessVectorBlindnessAnomalyKind.UNAVAILABLE -> TeeSignalLevel.INFO
+            SyntheticGrantGetKeyEntryAccessVectorBlindnessAnomalyKind.UNAVAILABLE,
+            -> TeeSignalLevel.INFO
         }
     }
 
@@ -2337,7 +2341,9 @@ class TeeReportReducer(
                 result.anomalyKind == GrantSelfDomainAnomalyKind.SELF_GRANT_KEY_NOT_FOUND_AFTER_OWNER_CHAIN -> {
                 TeeSignalLevel.FAIL
             }
+
             result.executed && result.available -> TeeSignalLevel.PASS
+
             else -> TeeSignalLevel.INFO
         }
     }
@@ -2351,9 +2357,11 @@ class TeeReportReducer(
                 TeeSignalLevel.FAIL
 
             UpdateSubcomponentStaleResponseAnomalyKind.NONE -> TeeSignalLevel.PASS
+
             UpdateSubcomponentStaleResponseAnomalyKind.UPDATE_SUBCOMPONENT_UNOBSERVABLE,
             UpdateSubcomponentStaleResponseAnomalyKind.UPDATE_FAILED,
-            UpdateSubcomponentStaleResponseAnomalyKind.UNAVAILABLE -> TeeSignalLevel.INFO
+            UpdateSubcomponentStaleResponseAnomalyKind.UNAVAILABLE,
+            -> TeeSignalLevel.INFO
         }
     }
 
@@ -2388,10 +2396,12 @@ class TeeReportReducer(
         val result = artifacts.operationErrorPath
         return when {
             !result.executed -> TeeSignalLevel.INFO
+
             !result.createOperationSucceeded ||
                 !result.updateAadServiceSpecific ||
                 !result.oversizedUpdateRejected ||
                 !result.abortInvalidatedHandle -> TeeSignalLevel.FAIL
+
             result.fallbackCompatParamsUsed -> TeeSignalLevel.WARN
 
             else -> TeeSignalLevel.PASS
@@ -2454,95 +2464,93 @@ class TeeReportReducer(
         }
     }
 
-    private fun nativeValue(artifacts: TeeScanArtifacts): String {
-        return when {
-            artifacts.native.trickyStoreDetected -> buildString {
-                append(nativeMethodSummary(artifacts))
-                append(" • ")
+    private fun nativeValue(artifacts: TeeScanArtifacts): String = when {
+        artifacts.native.trickyStoreDetected -> buildString {
+            append(nativeMethodSummary(artifacts))
+            append(" • ")
+            append(artifacts.native.trickyStoreTimerSource)
+            append(" • ")
+            append(artifacts.native.trickyStoreAffinityStatus)
+            nativeTimingStatsSummary(artifacts)?.let {
+                append('\n')
+                append(it)
+            }
+            artifacts.native.trickyStoreDetails
+                .takeUnless { it == "Native probe unavailable" }
+                ?.takeIf { it.isNotBlank() }
+                ?.let {
+                    append('\n')
+                    append(it)
+                }
+        }
+
+        artifacts.native.trickyStoreDetails != "Native probe unavailable" &&
+            !hasNativeReviewSignals(artifacts) &&
+            !artifacts.native.leafDerPrimaryDetected -> buildString {
+            append(artifacts.native.trickyStoreDetails)
+            nativeTimingStatsSummary(artifacts)?.let {
+                append("\n")
+                append(it)
+            }
+            if (artifacts.native.trickyStoreTimerSource != "unknown") {
+                append("\n")
                 append(artifacts.native.trickyStoreTimerSource)
                 append(" • ")
                 append(artifacts.native.trickyStoreAffinityStatus)
-                nativeTimingStatsSummary(artifacts)?.let {
-                    append('\n')
-                    append(it)
-                }
-                artifacts.native.trickyStoreDetails
-                    .takeUnless { it == "Native probe unavailable" }
-                    ?.takeIf { it.isNotBlank() }
-                    ?.let {
-                        append('\n')
-                        append(it)
-                    }
             }
-            artifacts.native.trickyStoreDetails != "Native probe unavailable" &&
-                !hasNativeReviewSignals(artifacts) &&
-                !artifacts.native.leafDerPrimaryDetected -> buildString {
-                append(artifacts.native.trickyStoreDetails)
-                nativeTimingStatsSummary(artifacts)?.let {
-                    append("\n")
-                    append(it)
-                }
-                if (artifacts.native.trickyStoreTimerSource != "unknown") {
-                    append("\n")
-                    append(artifacts.native.trickyStoreTimerSource)
-                    append(" • ")
-                    append(artifacts.native.trickyStoreAffinityStatus)
-                }
-            }
-            artifacts.native.leafDerPrimaryDetected -> "Primary DER hit"
-            hasNativeReviewSignals(artifacts) -> buildString {
-                append(nativeReviewSummary(artifacts))
-                if (artifacts.native.syscallMismatchDetected) {
-                    append('\n')
-                    append(syscallMismatchExplanation())
-                }
-            }
-
-            else -> "No local process-side anomaly"
         }
-    }
 
-    private fun nativeTimingStatsSummary(artifacts: TeeScanArtifacts): String? {
-        return buildList {
-            val suspiciousRuns = artifacts.native.trickyStoreTimingSuspiciousRunCount
-            val totalRuns = artifacts.native.trickyStoreTimingRunCount
-            if (suspiciousRuns != null && totalRuns != null && totalRuns > 0) {
-                add("$suspiciousRuns/$totalRuns suspicious runs")
+        artifacts.native.leafDerPrimaryDetected -> "Primary DER hit"
+
+        hasNativeReviewSignals(artifacts) -> buildString {
+            append(nativeReviewSummary(artifacts))
+            if (artifacts.native.syscallMismatchDetected) {
+                append('\n')
+                append(syscallMismatchExplanation())
             }
-            artifacts.native.trickyStoreTimingMedianGapNs
-                ?.takeIf { it > 0L }
-                ?.let { add("median gap ${formatNanoseconds(it)}") }
-            artifacts.native.trickyStoreTimingGapMadNs
-                ?.takeIf { it > 0L }
-                ?.let { add("gap MAD ${formatNanoseconds(it)}") }
-            artifacts.native.trickyStoreTimingMedianNoiseFloorNs
-                ?.takeIf { it > 0L }
-                ?.let { add("noise floor ${formatNanoseconds(it)}") }
-            artifacts.native.trickyStoreTimingMedianRatioPercent
-                ?.takeIf { it > 0 }
-                ?.let { add("median ratio ${formatRatioPercent(it)}") }
-        }.takeIf { it.isNotEmpty() }?.joinToString(separator = " • ")
-    }
-
-    private fun formatNanoseconds(valueNs: Long): String {
-        return when {
-            valueNs >= 1_000_000L -> String.format(Locale.US, "%.2fms", valueNs / 1_000_000.0)
-            valueNs >= 100L -> String.format(Locale.US, "%.1fus", valueNs / 1_000.0)
-            else -> "${valueNs}ns"
         }
+
+        else -> "No local process-side anomaly"
     }
 
-    private fun formatRatioPercent(percent: Int): String {
-        return String.format(Locale.US, "%.2fx", percent / 100.0)
+    private fun nativeTimingStatsSummary(artifacts: TeeScanArtifacts): String? = buildList {
+        val suspiciousRuns = artifacts.native.trickyStoreTimingSuspiciousRunCount
+        val totalRuns = artifacts.native.trickyStoreTimingRunCount
+        if (suspiciousRuns != null && totalRuns != null && totalRuns > 0) {
+            add("$suspiciousRuns/$totalRuns suspicious runs")
+        }
+        artifacts.native.trickyStoreTimingMedianGapNs
+            ?.takeIf { it > 0L }
+            ?.let { add("median gap ${formatNanoseconds(it)}") }
+        artifacts.native.trickyStoreTimingGapMadNs
+            ?.takeIf { it > 0L }
+            ?.let { add("gap MAD ${formatNanoseconds(it)}") }
+        artifacts.native.trickyStoreTimingMedianNoiseFloorNs
+            ?.takeIf { it > 0L }
+            ?.let { add("noise floor ${formatNanoseconds(it)}") }
+        artifacts.native.trickyStoreTimingMedianRatioPercent
+            ?.takeIf { it > 0 }
+            ?.let { add("median ratio ${formatRatioPercent(it)}") }
+    }.takeIf { it.isNotEmpty() }?.joinToString(separator = " • ")
+
+    private fun formatNanoseconds(valueNs: Long): String = when {
+        valueNs >= 1_000_000L -> String.format(Locale.US, "%.2fms", valueNs / 1_000_000.0)
+        valueNs >= 100L -> String.format(Locale.US, "%.1fus", valueNs / 1_000.0)
+        else -> "${valueNs}ns"
     }
+
+    private fun formatRatioPercent(percent: Int): String = String.format(Locale.US, "%.2fx", percent / 100.0)
 
     private fun bootConsistencyValue(artifacts: TeeScanArtifacts): String {
         val result = artifacts.bootConsistency
         val root = artifacts.snapshot.rootOfTrust
         return when {
             result.hasHardAnomaly -> "Mismatch • ${result.detail}"
+
             root == null -> "Unavailable • ${result.detail}"
+
             !result.runtimePropsAvailable -> "Unavailable • ${result.detail}"
+
             result.runtimeComparisonPerformed ->
                 "Matched • ${result.detail}"
 
@@ -2616,10 +2624,12 @@ class TeeReportReducer(
         }
     }
 
-    private fun deviceInfoLevel(snapshot: AttestationSnapshot): TeeSignalLevel {
-        return if (snapshot.deviceInfo.asDisplayMap()
-                .isEmpty()
-        ) TeeSignalLevel.INFO else TeeSignalLevel.PASS
+    private fun deviceInfoLevel(snapshot: AttestationSnapshot): TeeSignalLevel = if (snapshot.deviceInfo.asDisplayMap()
+            .isEmpty()
+    ) {
+        TeeSignalLevel.INFO
+    } else {
+        TeeSignalLevel.PASS
     }
 
     private fun trustLevel(artifacts: TeeScanArtifacts): TeeSignalLevel = when {
@@ -2752,23 +2762,19 @@ class TeeReportReducer(
         }
     }
 
-    private fun String.containsAllNeedles(needles: List<String>): Boolean {
-        return needles.all { contains(it) }
-    }
+    private fun String.containsAllNeedles(needles: List<String>): Boolean = needles.all { contains(it) }
 
-    private fun String.matchesTeeSimulatorLegacyDbSignature(): Boolean {
-        return containsAllNeedles(
-            listOf(
-                "android.os.ServiceSpecificException (code -75)",
-                "at android.os.Parcel.createExceptionOrNull",
-                "at android.os.Parcel.createException",
-                "at android.os.Parcel.readException",
-                "Caused by:",
-                "0: Legacy database is empty.",
-                "1: Error::Rc(r#KEY_NOT_FOUND) (code 7)",
-            ),
-        )
-    }
+    private fun String.matchesTeeSimulatorLegacyDbSignature(): Boolean = containsAllNeedles(
+        listOf(
+            "android.os.ServiceSpecificException (code -75)",
+            "at android.os.Parcel.createExceptionOrNull",
+            "at android.os.Parcel.createException",
+            "at android.os.Parcel.readException",
+            "Caused by:",
+            "0: Legacy database is empty.",
+            "1: Error::Rc(r#KEY_NOT_FOUND) (code 7)",
+        ),
+    )
 
     private fun strongBoxLevel(artifacts: TeeScanArtifacts): TeeSignalLevel = when {
         artifacts.strongBox.hardFailures.isNotEmpty() -> TeeSignalLevel.WARN
@@ -2797,8 +2803,11 @@ class TeeReportReducer(
     ) {
         SupplementaryAttestationInfoAnomalyKind.MISSING_ATTESTATION_MODULE_HASH,
         SupplementaryAttestationInfoAnomalyKind.MISMATCH,
-        SupplementaryAttestationInfoAnomalyKind.UNEXPECTED_ATTESTATION_MODULE_HASH -> TeeSignalLevel.WARN
+        SupplementaryAttestationInfoAnomalyKind.UNEXPECTED_ATTESTATION_MODULE_HASH,
+        -> TeeSignalLevel.WARN
+
         SupplementaryAttestationInfoAnomalyKind.NONE -> TeeSignalLevel.PASS
+
         SupplementaryAttestationInfoAnomalyKind.UNSUPPORTED -> TeeSignalLevel.INFO
     }
 
@@ -2806,10 +2815,13 @@ class TeeReportReducer(
         artifacts.vintfKeyMintVersion.anomalyKind
     ) {
         VintfKeyMintVersionAnomalyKind.MISMATCH -> TeeSignalLevel.FAIL
+
         VintfKeyMintVersionAnomalyKind.NONE -> TeeSignalLevel.PASS
+
         VintfKeyMintVersionAnomalyKind.UNREADABLE,
         VintfKeyMintVersionAnomalyKind.NO_DECLARATION,
-        VintfKeyMintVersionAnomalyKind.NO_ATTESTED_VERSION -> TeeSignalLevel.INFO
+        VintfKeyMintVersionAnomalyKind.NO_ATTESTED_VERSION,
+        -> TeeSignalLevel.INFO
     }
 
     private fun vintfKeyMintVersionValue(artifacts: TeeScanArtifacts): String {
@@ -2817,12 +2829,16 @@ class TeeReportReducer(
         return when (result.anomalyKind) {
             VintfKeyMintVersionAnomalyKind.MISMATCH ->
                 "VINTF declaration did not match attested version. ${result.detail}"
+
             VintfKeyMintVersionAnomalyKind.NONE ->
                 "VINTF declaration matched attested KeyMint version. ${result.detail}"
+
             VintfKeyMintVersionAnomalyKind.UNREADABLE ->
                 "VINTF manifest was not fully readable. ${result.detail}"
+
             VintfKeyMintVersionAnomalyKind.NO_DECLARATION ->
                 "No comparable KeyMint VINTF declaration was found. ${result.detail}"
+
             VintfKeyMintVersionAnomalyKind.NO_ATTESTED_VERSION ->
                 "Attested KeyMint version was unavailable. ${result.detail}"
         }
@@ -2833,16 +2849,20 @@ class TeeReportReducer(
         return when (result.anomalyKind) {
             SupplementaryAttestationInfoAnomalyKind.MISSING_ATTESTATION_MODULE_HASH ->
                 "MODULE_HASH omitted from attestation. ${result.detail}"
+
             SupplementaryAttestationInfoAnomalyKind.MISMATCH ->
                 "MODULE_HASH did not match supplementary attestation info. ${result.detail}"
+
             SupplementaryAttestationInfoAnomalyKind.UNEXPECTED_ATTESTATION_MODULE_HASH ->
                 "MODULE_HASH present while supplementary attestation info was unavailable. ${result.detail}"
+
             SupplementaryAttestationInfoAnomalyKind.NONE ->
                 if (result.attestedModuleHashHex == null) {
                     "MODULE_HASH not required by attestation version. ${result.detail}"
                 } else {
                     "MODULE_HASH matched supplementary attestation info. ${result.detail}"
                 }
+
             SupplementaryAttestationInfoAnomalyKind.UNSUPPORTED ->
                 "Unavailable. ${result.detail}"
         }
@@ -2854,9 +2874,12 @@ class TeeReportReducer(
         supplementaryIndicators: List<TeeEvidenceItem>,
     ): TeeSignalLevel = when {
         policyHardIndicators.isNotEmpty() -> TeeSignalLevel.FAIL
+
         supplementaryIndicators.any { it.level == TeeSignalLevel.FAIL } -> TeeSignalLevel.FAIL
+
         policySoftIndicators.isNotEmpty() ||
             supplementaryIndicators.any { it.level == TeeSignalLevel.WARN } -> TeeSignalLevel.WARN
+
         else -> TeeSignalLevel.PASS
     }
 
@@ -2874,10 +2897,13 @@ class TeeReportReducer(
             .takeIf { it.isNotBlank() && it != "null" }
         return when {
             result.matched -> GenerateModeAnomalyState.MATCHED
+
             // tees 样例里的 code -75 + legacy-db 组合落在 timing skip payload 里时，语义上也属于 TEE Simulator 生成链路命中。
             // When the tees code -75 + legacy-db combination lands in a timing skip payload, it also counts as a TEE Simulator generate-path hit.
             timingPayload?.matchesTeeSimulatorLegacyDbSignature() == true -> GenerateModeAnomalyState.MATCHED
+
             result.available -> GenerateModeAnomalyState.CLEAN
+
             else -> GenerateModeAnomalyState.UNAVAILABLE
         }
     }
@@ -2886,17 +2912,17 @@ class TeeReportReducer(
         policyHardIndicators: List<TeeEvidenceItem>,
         policySoftIndicators: List<TeeEvidenceItem>,
         supplementaryIndicators: List<TeeEvidenceItem>,
-    ): String {
-        return "${policyHardIndicators.size} policy hard • " +
-                "${policySoftIndicators.size} policy review • " +
-                "${supplementaryIndicators.size} local"
-    }
+    ): String = "${policyHardIndicators.size} policy hard • " +
+        "${policySoftIndicators.size} policy review • " +
+        "${supplementaryIndicators.size} local"
 
     private fun supplementaryReviewLevel(indicators: List<TeeEvidenceItem>): TeeSignalLevel = when {
         // Report aggregation is severity-first: a later FAIL must still outrank an earlier WARN.
         // Report 聚合按严重级别优先：后出现的 FAIL 必须压过先出现的 WARN。
         indicators.any { it.level == TeeSignalLevel.FAIL } -> TeeSignalLevel.FAIL
+
         indicators.any { it.level == TeeSignalLevel.WARN } -> TeeSignalLevel.WARN
+
         else -> TeeSignalLevel.INFO
     }
 
@@ -2908,27 +2934,21 @@ class TeeReportReducer(
             ?: firstOrNull()
     }
 
-    private fun syscallMismatchExplanation(): String {
-        return "Possible cause: vendor binder/libc compatibility differences. No stronger hook fingerprint was found."
-    }
+    private fun syscallMismatchExplanation(): String = "Possible cause: vendor binder/libc compatibility differences. No stronger hook fingerprint was found."
 
-    private fun hasNativeReviewSignals(artifacts: TeeScanArtifacts): Boolean {
-        return artifacts.native.syscallMismatchDetected ||
-                artifacts.native.leafDerSecondaryDetected ||
-                artifacts.native.tracingDetected ||
-                artifacts.native.suspiciousMappings.isNotEmpty()
-    }
+    private fun hasNativeReviewSignals(artifacts: TeeScanArtifacts): Boolean = artifacts.native.syscallMismatchDetected ||
+        artifacts.native.leafDerSecondaryDetected ||
+        artifacts.native.tracingDetected ||
+        artifacts.native.suspiciousMappings.isNotEmpty()
 
-    private fun nativeReviewSummary(artifacts: TeeScanArtifacts): String {
-        return buildList {
-            if (artifacts.native.syscallMismatchDetected) add("Syscall mismatch")
-            if (artifacts.native.leafDerSecondaryDetected) add("Secondary DER hit")
-            if (artifacts.native.tracingDetected) add("Tracing active")
-            if (artifacts.native.suspiciousMappings.isNotEmpty()) {
-                add("${artifacts.native.suspiciousMappings.size} suspicious mapping(s)")
-            }
-        }.joinToString(separator = " • ")
-    }
+    private fun nativeReviewSummary(artifacts: TeeScanArtifacts): String = buildList {
+        if (artifacts.native.syscallMismatchDetected) add("Syscall mismatch")
+        if (artifacts.native.leafDerSecondaryDetected) add("Secondary DER hit")
+        if (artifacts.native.tracingDetected) add("Tracing active")
+        if (artifacts.native.suspiciousMappings.isNotEmpty()) {
+            add("${artifacts.native.suspiciousMappings.size} suspicious mapping(s)")
+        }
+    }.joinToString(separator = " • ")
 
     private fun nativeMethodSummary(artifacts: TeeScanArtifacts): String {
         val labels = artifacts.native.trickyStoreMethods
@@ -2944,13 +2964,11 @@ class TeeReportReducer(
         return labels.ifEmpty { listOf("TrickyStore") }.joinToString(separator = " • ")
     }
 
-    private fun nativePrimarySignalLabel(artifacts: TeeScanArtifacts): String {
-        return when {
-            artifacts.native.gotHookDetected -> "GOT hook"
-            artifacts.native.inlineHookDetected -> "Inline hook"
-            artifacts.native.honeypotDetected -> "Honeypot"
-            else -> nativeMethodSummary(artifacts)
-        }
+    private fun nativePrimarySignalLabel(artifacts: TeeScanArtifacts): String = when {
+        artifacts.native.gotHookDetected -> "GOT hook"
+        artifacts.native.inlineHookDetected -> "Inline hook"
+        artifacts.native.honeypotDetected -> "Honeypot"
+        else -> nativeMethodSummary(artifacts)
     }
 
     private fun prettyNativeMethod(method: String): String = when (method) {
@@ -2982,10 +3000,8 @@ class TeeReportReducer(
         else -> TeeSignalLevel.PASS
     }
 
-    private fun hasHardRevocation(artifacts: TeeScanArtifacts): Boolean {
-        return artifacts.crl.revokedCertificates.any {
-            it.evidenceKind == RevokedCertificateEvidenceKind.STANDARD_REVOCATION
-        }
+    private fun hasHardRevocation(artifacts: TeeScanArtifacts): Boolean = artifacts.crl.revokedCertificates.any {
+        it.evidenceKind == RevokedCertificateEvidenceKind.STANDARD_REVOCATION
     }
 
     private fun hasLocalMassAbuseRevocation(artifacts: TeeScanArtifacts): Boolean {
@@ -2995,9 +3011,7 @@ class TeeReportReducer(
         }
     }
 
-    private fun hasLocalTrustReviewSignals(artifacts: TeeScanArtifacts): Boolean {
-        return artifacts.trust.expiredCertificates.isNotEmpty() || artifacts.trust.issuerMismatches.isNotEmpty()
-    }
+    private fun hasLocalTrustReviewSignals(artifacts: TeeScanArtifacts): Boolean = artifacts.trust.expiredCertificates.isNotEmpty() || artifacts.trust.issuerMismatches.isNotEmpty()
 
     private fun TeeTier.displayName(): String = when (this) {
         TeeTier.UNKNOWN -> "Unknown"
@@ -3007,18 +3021,16 @@ class TeeReportReducer(
         TeeTier.STRONGBOX -> "StrongBox"
     }
 
-    private fun monthDistance(runtimePatch: String, attestedPatch: String): Int? {
-        return runCatching {
-            val runtime = parsePatchDate(runtimePatch)
-            val attested = parsePatchDate(attestedPatch)
-            if (runtime == null || attested == null) {
-                null
-            } else {
-                val period = Period.between(runtime, attested)
-                (period.years * 12 + period.months).absoluteValue
-            }
-        }.getOrNull()
-    }
+    private fun monthDistance(runtimePatch: String, attestedPatch: String): Int? = runCatching {
+        val runtime = parsePatchDate(runtimePatch)
+        val attested = parsePatchDate(attestedPatch)
+        if (runtime == null || attested == null) {
+            null
+        } else {
+            val period = Period.between(runtime, attested)
+            (period.years * 12 + period.months).absoluteValue
+        }
+    }.getOrNull()
 
     private fun parsePatchDate(input: String): LocalDate? {
         val trimmed = input.trim()

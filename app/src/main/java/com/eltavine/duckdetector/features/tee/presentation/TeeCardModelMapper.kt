@@ -130,23 +130,27 @@ class TeeCardModelMapper {
 
     private fun verdictValue(report: TeeReport): String = when (report.verdict) {
         TeeVerdict.LOADING -> "Scanning"
+
         TeeVerdict.CONSISTENT -> if (report.supplementaryIndicatorCount > 0) {
             "Aligned + review"
         } else {
             "Aligned"
         }
+
         TeeVerdict.SUSPICIOUS -> "Review"
+
         TeeVerdict.TAMPERED -> "Tampered"
+
         TeeVerdict.BROKEN -> "Broken"
+
         TeeVerdict.INCONCLUSIVE -> "Mixed"
     }
 
-    private fun rkpBadgeLabel(report: TeeReport): String? =
-        if (report.rkpState.provisioned && report.localTrustChainLevel == TeeSignalLevel.PASS) {
-            "RKP"
-        } else {
-            null
-        }
+    private fun rkpBadgeLabel(report: TeeReport): String? = if (report.rkpState.provisioned && report.localTrustChainLevel == TeeSignalLevel.PASS) {
+        "RKP"
+    } else {
+        null
+    }
 
     private fun TeeReport.topFindingDetail(): String? {
         if (
@@ -181,7 +185,7 @@ class TeeCardModelMapper {
                                 item.title == "Grant caller binding"
                             )
                 }
-                ?: return null
+            ?: return null
 
         val keyVisibilityDiverged =
             summary.contains("key visibility", ignoreCase = true) ||
@@ -193,6 +197,7 @@ class TeeCardModelMapper {
             } else {
                 "Grant self-domain certificate chain diverged; open TEE details for stage diagnostics."
             }
+
             "Grant isolated-domain" -> if (keyVisibilityDiverged) {
                 "Grant isolated-domain key visibility diverged; open TEE details for stage diagnostics."
             } else if (grantFailure.level == TeeSignalLevel.WARN) {
@@ -200,8 +205,10 @@ class TeeCardModelMapper {
             } else {
                 "Grant isolated-domain certificate chain diverged; open TEE details for stage diagnostics."
             }
+
             "Grant caller binding" ->
                 "Grant handle caller binding failed; open TEE details for stage diagnostics."
+
             else -> null
         }
     }
@@ -217,64 +224,73 @@ class TeeCardModelMapper {
     private fun iconFor(
         sectionTitle: String,
         itemTitle: String,
-    ): TeeFactIcon {
-        return when (sectionTitle) {
-            "Trust" -> when (itemTitle) {
-                "Trust root" -> TeeFactIcon.TRUST
-                "RKP" -> TeeFactIcon.RKP
-                "CRL" -> TeeFactIcon.NETWORK
-                "Root fingerprint" -> TeeFactIcon.CERTIFICATE
-                else -> TeeFactIcon.CERTIFICATE
-            }
-
-            "Attestation" -> when (itemTitle) {
-                "Verified boot" -> TeeFactIcon.BOOT
-                "Boot consistency" -> TeeFactIcon.BOOT
-                "Patch levels" -> TeeFactIcon.PATCH
-                "Device IDs" -> TeeFactIcon.DEVICE
-                "Key properties" -> TeeFactIcon.KEY
-                "User auth" -> TeeFactIcon.AUTH
-                "Application" -> TeeFactIcon.APP
-                else -> TeeFactIcon.KEY
-            }
-
-            "Checks" -> when (itemTitle) {
-                "Timing" -> TeeFactIcon.TIMING
-                "StrongBox" -> TeeFactIcon.STRONGBOX
-                "Native" -> TeeFactIcon.NATIVE
-                "Soter" -> TeeFactIcon.SOTER
-                "Indicators" -> TeeFactIcon.WARNING
-                else -> TeeFactIcon.KEYSTORE
-            }
-
-            else -> TeeFactIcon.WARNING
+    ): TeeFactIcon = when (sectionTitle) {
+        "Trust" -> when (itemTitle) {
+            "Trust root" -> TeeFactIcon.TRUST
+            "RKP" -> TeeFactIcon.RKP
+            "CRL" -> TeeFactIcon.NETWORK
+            "Root fingerprint" -> TeeFactIcon.CERTIFICATE
+            else -> TeeFactIcon.CERTIFICATE
         }
+
+        "Attestation" -> when (itemTitle) {
+            "Verified boot" -> TeeFactIcon.BOOT
+            "Boot consistency" -> TeeFactIcon.BOOT
+            "Patch levels" -> TeeFactIcon.PATCH
+            "Device IDs" -> TeeFactIcon.DEVICE
+            "Key properties" -> TeeFactIcon.KEY
+            "User auth" -> TeeFactIcon.AUTH
+            "Application" -> TeeFactIcon.APP
+            else -> TeeFactIcon.KEY
+        }
+
+        "Checks" -> when (itemTitle) {
+            "Timing" -> TeeFactIcon.TIMING
+            "StrongBox" -> TeeFactIcon.STRONGBOX
+            "Native" -> TeeFactIcon.NATIVE
+            "Soter" -> TeeFactIcon.SOTER
+            "Indicators" -> TeeFactIcon.WARNING
+            else -> TeeFactIcon.KEYSTORE
+        }
+
+        else -> TeeFactIcon.WARNING
     }
 
     private fun TeeReport.toDetectorStatus(): DetectorStatus = when (verdict) {
         TeeVerdict.LOADING -> DetectorStatus.info(InfoKind.SUPPORT)
+
         TeeVerdict.CONSISTENT,
-        TeeVerdict.SUSPICIOUS -> when {
+        TeeVerdict.SUSPICIOUS,
+        -> when {
             // Dashboard aggregates only TeeCardModel.status; consume reducer structure, not prose or row titles.
             // Dashboard 只聚合 TeeCardModel.status；这里消费 reducer 的结构化级别，不解析文案或行标题。
             supplementaryReviewLevel == TeeSignalLevel.FAIL -> DetectorStatus.danger()
+
             supplementaryReviewLevel == TeeSignalLevel.WARN -> DetectorStatus.warning()
+
             verdict == TeeVerdict.SUSPICIOUS -> DetectorStatus.warning()
+
             supplementaryIndicatorCount > 0 -> DetectorStatus.warning()
+
             else -> DetectorStatus.allClear()
         }
+
         TeeVerdict.TAMPERED, TeeVerdict.BROKEN -> DetectorStatus.danger()
+
         TeeVerdict.INCONCLUSIVE -> DetectorStatus.info(InfoKind.ERROR)
     }
 
     private fun TeeReport.tierStatus(): DetectorStatus = when (tier) {
         com.eltavine.duckdetector.features.tee.domain.TeeTier.STRONGBOX,
-        com.eltavine.duckdetector.features.tee.domain.TeeTier.TEE -> DetectorStatus.allClear()
+        com.eltavine.duckdetector.features.tee.domain.TeeTier.TEE,
+        -> DetectorStatus.allClear()
 
         com.eltavine.duckdetector.features.tee.domain.TeeTier.SOFTWARE -> DetectorStatus.warning()
+
         com.eltavine.duckdetector.features.tee.domain.TeeTier.NONE -> DetectorStatus.danger()
+
         com.eltavine.duckdetector.features.tee.domain.TeeTier.UNKNOWN -> DetectorStatus.info(
-            InfoKind.SUPPORT
+            InfoKind.SUPPORT,
         )
     }
 
@@ -293,12 +309,11 @@ class TeeCardModelMapper {
         TeeSignalLevel.FAIL -> DetectorStatus.danger()
     }
 
-    private fun com.eltavine.duckdetector.features.tee.domain.TeeTier.displayName(): String =
-        when (this) {
-            com.eltavine.duckdetector.features.tee.domain.TeeTier.UNKNOWN -> "Unknown"
-            com.eltavine.duckdetector.features.tee.domain.TeeTier.NONE -> "None"
-            com.eltavine.duckdetector.features.tee.domain.TeeTier.SOFTWARE -> "Software"
-            com.eltavine.duckdetector.features.tee.domain.TeeTier.TEE -> "TEE"
-            com.eltavine.duckdetector.features.tee.domain.TeeTier.STRONGBOX -> "StrongBox"
-        }
+    private fun com.eltavine.duckdetector.features.tee.domain.TeeTier.displayName(): String = when (this) {
+        com.eltavine.duckdetector.features.tee.domain.TeeTier.UNKNOWN -> "Unknown"
+        com.eltavine.duckdetector.features.tee.domain.TeeTier.NONE -> "None"
+        com.eltavine.duckdetector.features.tee.domain.TeeTier.SOFTWARE -> "Software"
+        com.eltavine.duckdetector.features.tee.domain.TeeTier.TEE -> "TEE"
+        com.eltavine.duckdetector.features.tee.domain.TeeTier.STRONGBOX -> "StrongBox"
+    }
 }

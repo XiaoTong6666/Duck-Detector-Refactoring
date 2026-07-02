@@ -156,44 +156,38 @@ class RootProcessAuditProbe {
         )
     }
 
-    private fun readText(file: File, maxChars: Int): String? {
-        return try {
-            file.inputStream().buffered().use { stream ->
-                val buffer = ByteArray(maxChars)
-                val count = stream.read(buffer)
-                if (count <= 0) {
-                    ""
-                } else {
-                    String(buffer, 0, count).trim()
-                }
+    private fun readText(file: File, maxChars: Int): String? = try {
+        file.inputStream().buffered().use { stream ->
+            val buffer = ByteArray(maxChars)
+            val count = stream.read(buffer)
+            if (count <= 0) {
+                ""
+            } else {
+                String(buffer, 0, count).trim()
             }
-        } catch (_: IOException) {
-            null
-        } catch (_: SecurityException) {
-            null
         }
+    } catch (_: IOException) {
+        null
+    } catch (_: SecurityException) {
+        null
     }
 
     private fun parseStatusField(
         statusText: String,
         key: String,
-    ): String? {
-        return statusText.lineSequence()
-            .firstOrNull { it.startsWith("$key:") }
-            ?.substringAfter(':')
-            ?.trim()
-            ?.takeIf { it.isNotEmpty() }
-    }
+    ): String? = statusText.lineSequence()
+        .firstOrNull { it.startsWith("$key:") }
+        ?.substringAfter(':')
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
 
     private fun parseFirstId(
         statusText: String,
         key: String,
-    ): Int? {
-        return parseStatusField(statusText, key)
-            ?.split(Regex("\\s+"))
-            ?.firstOrNull()
-            ?.toIntOrNull()
-    }
+    ): Int? = parseStatusField(statusText, key)
+        ?.split(Regex("\\s+"))
+        ?.firstOrNull()
+        ?.toIntOrNull()
 
     private companion object {
         private const val PROC_ROOT = "/proc"

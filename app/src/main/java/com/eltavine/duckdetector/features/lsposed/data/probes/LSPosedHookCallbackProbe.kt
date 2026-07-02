@@ -27,9 +27,7 @@ data class LSPosedHookCallbackProbeResult(
 
 class LSPosedHookCallbackProbe {
 
-    fun run(): LSPosedHookCallbackProbeResult {
-        return evaluate(Thread.getDefaultUncaughtExceptionHandler())
-    }
+    fun run(): LSPosedHookCallbackProbeResult = evaluate(Thread.getDefaultUncaughtExceptionHandler())
 
     internal fun evaluate(
         handler: Thread.UncaughtExceptionHandler?,

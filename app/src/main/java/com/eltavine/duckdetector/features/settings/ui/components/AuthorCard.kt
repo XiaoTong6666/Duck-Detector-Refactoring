@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("ktlint:standard:function-naming")
+
 package com.eltavine.duckdetector.features.settings.ui.components
 
 import android.graphics.BitmapFactory
@@ -62,14 +64,14 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChangeIgnoreConsumed
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.platform.LocalDensity
 import com.eltavine.duckdetector.R
-import com.eltavine.duckdetector.core.ui.openExternalUri
 import com.eltavine.duckdetector.core.ui.components.WrapSafeText
+import com.eltavine.duckdetector.core.ui.openExternalUri
 import com.eltavine.duckdetector.ui.theme.ShapeTokens
 import compose.icons.SimpleIcons
 import compose.icons.simpleicons.Assemblyscript
@@ -446,45 +448,41 @@ private fun loadContributorSnapshots(context: android.content.Context): List<Con
                         avatarAssetPath = item.optString("avatarAssetPath").trim().ifBlank { null },
                         summaryKey = item.optString("summaryKey").trim().ifBlank { null },
                         contributionKeys = item.optJSONArray("contributionKeys").toStringList(),
-                    )
+                    ),
                 )
             }
         }
     }.getOrDefault(emptyList())
 }
 
-private fun summaryResIdForKey(summaryKey: String?): Int {
-    return when (summaryKey) {
-        "author_summary_eltavine" -> R.string.author_summary_eltavine
-        "author_summary_baka" -> R.string.author_summary_baka
-        "author_summary_xiaotong" -> R.string.author_summary_xiaotong
-        "author_summary_searchur" -> R.string.author_summary_searchur
-        "author_summary_wxx" -> R.string.author_summary_wxx
-        "author_summary_alex" -> R.string.author_summary_alex
-        "author_summary_hsskyboy" -> R.string.author_summary_hsskyboy
-        "author_summary_lingqing" -> R.string.author_summary_lingqing
-        "author_summary_qwq233" -> R.string.author_summary_qwq233
-        "author_summary_sqmy" -> R.string.author_summary_sqmy
-        "author_summary_victor" -> R.string.author_summary_victor
-        "author_summary_zg089" -> R.string.author_summary_zg089
-        "author_summary_coolzyd" -> R.string.author_summary_coolzyd
-        "author_summary_947409161" -> R.string.author_summary_947409161
-        "author_summary_mirin" -> R.string.author_summary_mirin
-        "author_summary_aviraxp" -> R.string.author_summary_aviraxp
-        "author_summary_5ec1cff" -> R.string.author_summary_5ec1cff
-        else -> R.string.author_summary_default
-    }
+private fun summaryResIdForKey(summaryKey: String?): Int = when (summaryKey) {
+    "author_summary_eltavine" -> R.string.author_summary_eltavine
+    "author_summary_baka" -> R.string.author_summary_baka
+    "author_summary_xiaotong" -> R.string.author_summary_xiaotong
+    "author_summary_searchur" -> R.string.author_summary_searchur
+    "author_summary_wxx" -> R.string.author_summary_wxx
+    "author_summary_alex" -> R.string.author_summary_alex
+    "author_summary_hsskyboy" -> R.string.author_summary_hsskyboy
+    "author_summary_lingqing" -> R.string.author_summary_lingqing
+    "author_summary_qwq233" -> R.string.author_summary_qwq233
+    "author_summary_sqmy" -> R.string.author_summary_sqmy
+    "author_summary_victor" -> R.string.author_summary_victor
+    "author_summary_zg089" -> R.string.author_summary_zg089
+    "author_summary_coolzyd" -> R.string.author_summary_coolzyd
+    "author_summary_947409161" -> R.string.author_summary_947409161
+    "author_summary_mirin" -> R.string.author_summary_mirin
+    "author_summary_aviraxp" -> R.string.author_summary_aviraxp
+    "author_summary_5ec1cff" -> R.string.author_summary_5ec1cff
+    else -> R.string.author_summary_default
 }
 
-private fun authorContributionForKey(key: String): AuthorContribution? {
-    return when (key.lowercase()) {
-        "ui" -> AuthorContribution.Ui
-        "cpp" -> AuthorContribution.Cpp
-        "asm" -> AuthorContribution.Asm
-        "kotlin" -> AuthorContribution.Kotlin
-        "security" -> AuthorContribution.Security
-        else -> null
-    }
+private fun authorContributionForKey(key: String): AuthorContribution? = when (key.lowercase()) {
+    "ui" -> AuthorContribution.Ui
+    "cpp" -> AuthorContribution.Cpp
+    "asm" -> AuthorContribution.Asm
+    "kotlin" -> AuthorContribution.Kotlin
+    "security" -> AuthorContribution.Security
+    else -> null
 }
 
 private fun JSONArray?.toStringList(): List<String> {

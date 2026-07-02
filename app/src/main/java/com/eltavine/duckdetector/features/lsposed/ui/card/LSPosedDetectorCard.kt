@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("ktlint:standard:function-naming")
+
 package com.eltavine.duckdetector.features.lsposed.ui.card
 
 import androidx.compose.foundation.layout.Arrangement
@@ -29,8 +31,8 @@ import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.rounded.CrisisAlert
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Memory
-import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -296,29 +298,27 @@ private fun LSPosedImpactRow(
 private fun rowIcon(
     row: LSPosedDetailRowModel,
     fallback: ImageVector,
-): ImageVector {
-    return when {
-        row.label.contains("bridge", ignoreCase = true) ||
-                row.label.contains("service", ignoreCase = true) -> Icons.Rounded.AccountTree
+): ImageVector = when {
+    row.label.contains("bridge", ignoreCase = true) ||
+        row.label.contains("service", ignoreCase = true) -> Icons.Rounded.AccountTree
 
-        row.value.equals("Installed", ignoreCase = true) ||
-                row.value.equals("Module", ignoreCase = true) ||
-                row.label.contains("package", ignoreCase = true) ||
-                row.label.contains("manager", ignoreCase = true) -> Icons.Rounded.Apps
+    row.value.equals("Installed", ignoreCase = true) ||
+        row.value.equals("Module", ignoreCase = true) ||
+        row.label.contains("package", ignoreCase = true) ||
+        row.label.contains("manager", ignoreCase = true) -> Icons.Rounded.Apps
 
-        row.value.equals("Mapped", ignoreCase = true) ||
-                row.value.equals("Residual", ignoreCase = true) ||
-                row.label.contains("heap", ignoreCase = true) ||
-                row.label.contains("mapping", ignoreCase = true) -> Icons.Rounded.Memory
+    row.value.equals("Mapped", ignoreCase = true) ||
+        row.value.equals("Residual", ignoreCase = true) ||
+        row.label.contains("heap", ignoreCase = true) ||
+        row.label.contains("mapping", ignoreCase = true) -> Icons.Rounded.Memory
 
-        row.label.contains("policy", ignoreCase = true) ||
-                row.label.contains("selinux", ignoreCase = true) ||
-                row.label.contains("execmem", ignoreCase = true) -> Icons.Rounded.Security
+    row.label.contains("policy", ignoreCase = true) ||
+        row.label.contains("selinux", ignoreCase = true) ||
+        row.label.contains("execmem", ignoreCase = true) -> Icons.Rounded.Security
 
-        row.label.contains("stack", ignoreCase = true) ||
-                row.label.contains("xposed", ignoreCase = true) ||
-                row.label.contains("lsposed", ignoreCase = true) -> Icons.Rounded.BugReport
+    row.label.contains("stack", ignoreCase = true) ||
+        row.label.contains("xposed", ignoreCase = true) ||
+        row.label.contains("lsposed", ignoreCase = true) -> Icons.Rounded.BugReport
 
-        else -> fallback
-    }
+    else -> fallback
 }

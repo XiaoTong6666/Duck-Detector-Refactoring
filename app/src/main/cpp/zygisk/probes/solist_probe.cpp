@@ -33,7 +33,8 @@ struct SoListScanState {
 std::string normalize_library_path(std::string path) {
     constexpr std::string_view kDeletedSuffix = " (deleted)";
     if (path.size() > kDeletedSuffix.size() &&
-        path.compare(path.size() - kDeletedSuffix.size(), kDeletedSuffix.size(), kDeletedSuffix) == 0) {
+        path.compare(path.size() - kDeletedSuffix.size(), kDeletedSuffix.size(), kDeletedSuffix) ==
+            0) {
         path.erase(path.size() - kDeletedSuffix.size());
     }
     return path;
@@ -50,7 +51,8 @@ ProbeResult collect_solist_probe() {
             if (state == nullptr) {
                 return 0;
             }
-            const std::string name = info->dlpi_name == nullptr ? std::string() : std::string(info->dlpi_name);
+            const std::string name =
+                info->dlpi_name == nullptr ? std::string() : std::string(info->dlpi_name);
             if (state->callback_index > 0 && name.empty()) {
                 state->empty_path_count += 1;
             }
@@ -60,8 +62,7 @@ ProbeResult collect_solist_probe() {
             state->callback_index += 1;
             return 0;
         },
-        &state
-    );
+        &state);
 
     const auto maps = read_proc_maps();
     std::set<std::string> mapped_shared_objects;
@@ -86,8 +87,8 @@ ProbeResult collect_solist_probe() {
     if (mapped_count > named_count + 3) {
         std::ostringstream detail;
         detail << "Executable maps expose " << mapped_count
-               << " unique shared-object paths while dl_iterate_phdr only reported "
-               << named_count << " named libraries.";
+               << " unique shared-object paths while dl_iterate_phdr only reported " << named_count
+               << " named libraries.";
         result.traces.push_back({
             SignalGroup::kLinker,
             SignalSeverity::kWarning,

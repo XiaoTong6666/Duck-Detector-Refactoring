@@ -45,28 +45,24 @@ class TeeGrantDomainGranteeProxy(
     fun readGrantedCertificateChain(
         grantId: Long,
         keystore2Binder: IBinder,
-    ): TeeGrantDomainGranteeChainResult {
-        return readGrantedCertificateChainInternal(
-            transactionCode = TeeGrantDomainGranteeProtocol.TRANSACTION_READ_GRANTED_CHAIN,
-            grantId = grantId,
-            keystore2Binder = keystore2Binder,
-        )
-    }
+    ): TeeGrantDomainGranteeChainResult = readGrantedCertificateChainInternal(
+        transactionCode = TeeGrantDomainGranteeProtocol.TRANSACTION_READ_GRANTED_CHAIN,
+        grantId = grantId,
+        keystore2Binder = keystore2Binder,
+    )
 
     fun readGrantedCertificateChainJavaApi(
         grantId: Long,
         hiddenApi: Boolean,
-    ): TeeGrantDomainGranteeChainResult {
-        return readGrantedCertificateChainInternal(
-            transactionCode = if (hiddenApi) {
-                TeeGrantDomainGranteeProtocol.TRANSACTION_READ_GRANTED_CHAIN_HIDDEN
-            } else {
-                TeeGrantDomainGranteeProtocol.TRANSACTION_READ_GRANTED_CHAIN_PUBLIC
-            },
-            grantId = grantId,
-            keystore2Binder = null,
-        )
-    }
+    ): TeeGrantDomainGranteeChainResult = readGrantedCertificateChainInternal(
+        transactionCode = if (hiddenApi) {
+            TeeGrantDomainGranteeProtocol.TRANSACTION_READ_GRANTED_CHAIN_HIDDEN
+        } else {
+            TeeGrantDomainGranteeProtocol.TRANSACTION_READ_GRANTED_CHAIN_PUBLIC
+        },
+        grantId = grantId,
+        keystore2Binder = null,
+    )
 
     private fun readGrantedCertificateChainInternal(
         transactionCode: Int,

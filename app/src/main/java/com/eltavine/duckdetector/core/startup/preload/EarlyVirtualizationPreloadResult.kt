@@ -144,31 +144,28 @@ data class EarlyVirtualizationPreloadResult(
 
         fun empty(
             source: EarlyVirtualizationPreloadSource = EarlyVirtualizationPreloadSource.NONE,
-        ): EarlyVirtualizationPreloadResult {
-            return EarlyVirtualizationPreloadResult(source = source)
-        }
+        ): EarlyVirtualizationPreloadResult = EarlyVirtualizationPreloadResult(source = source)
 
-        fun fromIntent(intent: Intent?): EarlyVirtualizationPreloadResult =
-            fromBundle(intent?.extras)
+        fun fromIntent(intent: Intent?): EarlyVirtualizationPreloadResult = fromBundle(intent?.extras)
 
         fun fromBundle(bundle: Bundle?): EarlyVirtualizationPreloadResult {
             if (bundle == null) {
                 return empty()
             }
             val inferredHasRun = bundle.getBoolean(KEY_HAS_RUN, false) ||
-                    bundle.containsKey(KEY_DETECTED) ||
-                    bundle.containsKey(KEY_DETECTION_METHOD) ||
-                    bundle.containsKey(KEY_DETAILS) ||
-                    bundle.containsKey(KEY_MOUNT_NAMESPACE_INODE) ||
-                    bundle.containsKey(KEY_APEX_MOUNT_KEY) ||
-                    bundle.containsKey(KEY_SYSTEM_MOUNT_KEY) ||
-                    bundle.containsKey(KEY_VENDOR_MOUNT_KEY) ||
-                    bundle.containsKey(KEY_QEMU_PROPERTY) ||
-                    bundle.containsKey(KEY_EMULATOR_HARDWARE) ||
-                    bundle.containsKey(KEY_DEVICE_NODE) ||
-                    bundle.containsKey(KEY_AVF_RUNTIME) ||
-                    bundle.containsKey(KEY_AUTHFS_RUNTIME) ||
-                    bundle.containsKey(KEY_NATIVE_BRIDGE)
+                bundle.containsKey(KEY_DETECTED) ||
+                bundle.containsKey(KEY_DETECTION_METHOD) ||
+                bundle.containsKey(KEY_DETAILS) ||
+                bundle.containsKey(KEY_MOUNT_NAMESPACE_INODE) ||
+                bundle.containsKey(KEY_APEX_MOUNT_KEY) ||
+                bundle.containsKey(KEY_SYSTEM_MOUNT_KEY) ||
+                bundle.containsKey(KEY_VENDOR_MOUNT_KEY) ||
+                bundle.containsKey(KEY_QEMU_PROPERTY) ||
+                bundle.containsKey(KEY_EMULATOR_HARDWARE) ||
+                bundle.containsKey(KEY_DEVICE_NODE) ||
+                bundle.containsKey(KEY_AVF_RUNTIME) ||
+                bundle.containsKey(KEY_AUTHFS_RUNTIME) ||
+                bundle.containsKey(KEY_NATIVE_BRIDGE)
             return fromCapturedExtras(
                 EarlyVirtualizationPreloadCapturedExtras(
                     hasRun = inferredHasRun,
@@ -196,44 +193,42 @@ data class EarlyVirtualizationPreloadResult(
 
         internal fun fromCapturedExtras(
             extras: EarlyVirtualizationPreloadCapturedExtras,
-        ): EarlyVirtualizationPreloadResult {
-            return EarlyVirtualizationPreloadResult(
-                hasRun = extras.hasRun,
-                detected = extras.detected,
-                detectionMethod = extras.detectionMethod,
-                details = extras.details,
-                mountNamespaceInode = extras.mountNamespaceInode,
-                apexMountKey = extras.apexMountKey,
-                systemMountKey = extras.systemMountKey,
-                vendorMountKey = extras.vendorMountKey,
-                qemuPropertyDetected = extras.qemuPropertyDetected,
-                emulatorHardwareDetected = extras.emulatorHardwareDetected,
-                deviceNodeDetected = extras.deviceNodeDetected,
-                avfRuntimeDetected = extras.avfRuntimeDetected,
-                authfsRuntimeDetected = extras.authfsRuntimeDetected,
-                nativeBridgeDetected = extras.nativeBridgeDetected,
-                isContextValid = extras.contextValid,
-                source = EarlyVirtualizationPreloadSource.INTENT,
-            ).normalize()
-        }
+        ): EarlyVirtualizationPreloadResult = EarlyVirtualizationPreloadResult(
+            hasRun = extras.hasRun,
+            detected = extras.detected,
+            detectionMethod = extras.detectionMethod,
+            details = extras.details,
+            mountNamespaceInode = extras.mountNamespaceInode,
+            apexMountKey = extras.apexMountKey,
+            systemMountKey = extras.systemMountKey,
+            vendorMountKey = extras.vendorMountKey,
+            qemuPropertyDetected = extras.qemuPropertyDetected,
+            emulatorHardwareDetected = extras.emulatorHardwareDetected,
+            deviceNodeDetected = extras.deviceNodeDetected,
+            avfRuntimeDetected = extras.avfRuntimeDetected,
+            authfsRuntimeDetected = extras.authfsRuntimeDetected,
+            nativeBridgeDetected = extras.nativeBridgeDetected,
+            isContextValid = extras.contextValid,
+            source = EarlyVirtualizationPreloadSource.INTENT,
+        ).normalize()
 
         internal fun fromCapturedValues(
             values: Map<String, Any?>,
         ): EarlyVirtualizationPreloadResult {
             val inferredHasRun = values.boolean(KEY_HAS_RUN) ||
-                    values.containsKey(KEY_DETECTED) ||
-                    values.containsKey(KEY_DETECTION_METHOD) ||
-                    values.containsKey(KEY_DETAILS) ||
-                    values.containsKey(KEY_MOUNT_NAMESPACE_INODE) ||
-                    values.containsKey(KEY_APEX_MOUNT_KEY) ||
-                    values.containsKey(KEY_SYSTEM_MOUNT_KEY) ||
-                    values.containsKey(KEY_VENDOR_MOUNT_KEY) ||
-                    values.containsKey(KEY_QEMU_PROPERTY) ||
-                    values.containsKey(KEY_EMULATOR_HARDWARE) ||
-                    values.containsKey(KEY_DEVICE_NODE) ||
-                    values.containsKey(KEY_AVF_RUNTIME) ||
-                    values.containsKey(KEY_AUTHFS_RUNTIME) ||
-                    values.containsKey(KEY_NATIVE_BRIDGE)
+                values.containsKey(KEY_DETECTED) ||
+                values.containsKey(KEY_DETECTION_METHOD) ||
+                values.containsKey(KEY_DETAILS) ||
+                values.containsKey(KEY_MOUNT_NAMESPACE_INODE) ||
+                values.containsKey(KEY_APEX_MOUNT_KEY) ||
+                values.containsKey(KEY_SYSTEM_MOUNT_KEY) ||
+                values.containsKey(KEY_VENDOR_MOUNT_KEY) ||
+                values.containsKey(KEY_QEMU_PROPERTY) ||
+                values.containsKey(KEY_EMULATOR_HARDWARE) ||
+                values.containsKey(KEY_DEVICE_NODE) ||
+                values.containsKey(KEY_AVF_RUNTIME) ||
+                values.containsKey(KEY_AUTHFS_RUNTIME) ||
+                values.containsKey(KEY_NATIVE_BRIDGE)
             return fromCapturedExtras(
                 EarlyVirtualizationPreloadCapturedExtras(
                     hasRun = inferredHasRun,
@@ -269,8 +264,6 @@ data class EarlyVirtualizationPreloadResult(
             }
         }
 
-        private fun Map<String, Any?>.string(key: String): String {
-            return (this[key] as? String).orEmpty()
-        }
+        private fun Map<String, Any?>.string(key: String): String = (this[key] as? String).orEmpty()
     }
 }

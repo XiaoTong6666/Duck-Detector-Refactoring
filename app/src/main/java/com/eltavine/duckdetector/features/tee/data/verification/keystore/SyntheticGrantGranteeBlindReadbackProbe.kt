@@ -158,49 +158,47 @@ class SyntheticGrantGranteeBlindReadbackProbe(
     }
 
     companion object {
-        fun skippedAfterExistingGrantDanger(): SyntheticGrantGranteeBlindReadbackResult {
-            return SyntheticGrantGranteeBlindReadbackResult(
-                anomalyKind = SyntheticGrantGranteeBlindReadbackAnomalyKind.SKIPPED_AFTER_EXISTING_GRANT_DANGER,
-                detail = "Skipped because an existing grant detector already reported danger.",
-            )
-        }
+        fun skippedAfterExistingGrantDanger(): SyntheticGrantGranteeBlindReadbackResult = SyntheticGrantGranteeBlindReadbackResult(
+            anomalyKind = SyntheticGrantGranteeBlindReadbackAnomalyKind.SKIPPED_AFTER_EXISTING_GRANT_DANGER,
+            detail = "Skipped because an existing grant detector already reported danger.",
+        )
 
         internal fun evaluateOwnerReplay(
             granteeUid: Int,
             ownerReplay: Keystore2PrivateGrantResult,
-        ): SyntheticGrantGranteeBlindReadbackResult {
-            return when {
-                ownerReplay.available -> SyntheticGrantGranteeBlindReadbackResult(
+        ): SyntheticGrantGranteeBlindReadbackResult = when {
+            ownerReplay.available -> SyntheticGrantGranteeBlindReadbackResult(
+                executed = true,
+                available = true,
+                grantCreated = true,
+                granteeUid = granteeUid,
+                granteeReadSucceeded = true,
+                ownerReplaySucceeded = true,
+                ownerReplayErrorKind = Keystore2PrivateGrantErrorKind.NONE,
+                anomalyKind = SyntheticGrantGranteeBlindReadbackAnomalyKind.NON_GRANTEE_READBACK_ALLOWED,
+                detail = "Private: non-grantee owner replay succeeded for isolated grant handle.",
+            )
+
+            ownerReplay.errorKind == Keystore2PrivateGrantErrorKind.KEY_NOT_FOUND ->
+                SyntheticGrantGranteeBlindReadbackResult(
                     executed = true,
                     available = true,
                     grantCreated = true,
                     granteeUid = granteeUid,
                     granteeReadSucceeded = true,
-                    ownerReplaySucceeded = true,
-                    ownerReplayErrorKind = Keystore2PrivateGrantErrorKind.NONE,
-                    anomalyKind = SyntheticGrantGranteeBlindReadbackAnomalyKind.NON_GRANTEE_READBACK_ALLOWED,
-                    detail = "Private: non-grantee owner replay succeeded for isolated grant handle.",
-                )
-                ownerReplay.errorKind == Keystore2PrivateGrantErrorKind.KEY_NOT_FOUND ->
-                    SyntheticGrantGranteeBlindReadbackResult(
-                        executed = true,
-                        available = true,
-                        grantCreated = true,
-                        granteeUid = granteeUid,
-                        granteeReadSucceeded = true,
-                        ownerReplayErrorKind = ownerReplay.errorKind,
-                        anomalyKind = SyntheticGrantGranteeBlindReadbackAnomalyKind.NONE,
-                        detail = "Private: owner replay rejected with KEY_NOT_FOUND.",
-                    )
-                else -> SyntheticGrantGranteeBlindReadbackResult(
-                    executed = true,
-                    grantCreated = true,
-                    granteeUid = granteeUid,
-                    granteeReadSucceeded = true,
                     ownerReplayErrorKind = ownerReplay.errorKind,
-                    detail = "Private: owner replay unavailable (${ownerReplay.detail}).",
+                    anomalyKind = SyntheticGrantGranteeBlindReadbackAnomalyKind.NONE,
+                    detail = "Private: owner replay rejected with KEY_NOT_FOUND.",
                 )
-            }
+
+            else -> SyntheticGrantGranteeBlindReadbackResult(
+                executed = true,
+                grantCreated = true,
+                granteeUid = granteeUid,
+                granteeReadSucceeded = true,
+                ownerReplayErrorKind = ownerReplay.errorKind,
+                detail = "Private: owner replay unavailable (${ownerReplay.detail}).",
+            )
         }
     }
 }

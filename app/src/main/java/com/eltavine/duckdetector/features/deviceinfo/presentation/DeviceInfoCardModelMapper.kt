@@ -27,58 +27,48 @@ import com.eltavine.duckdetector.features.deviceinfo.ui.model.DeviceInfoSectionM
 
 class DeviceInfoCardModelMapper {
 
-    fun map(report: DeviceInfoReport): DeviceInfoCardModel {
-        return DeviceInfoCardModel(
-            title = "Device Info",
-            subtitle = buildSubtitle(report),
-            status = if (report.stage == DeviceInfoStage.FAILED) {
-                DetectorStatus.info(InfoKind.ERROR)
-            } else {
-                DetectorStatus.info(InfoKind.SUPPORT)
-            },
-            verdict = buildVerdict(report),
-            summary = buildSummary(report),
-            headerFacts = buildHeaderFacts(report),
-            sections = buildSections(report),
-        )
+    fun map(report: DeviceInfoReport): DeviceInfoCardModel = DeviceInfoCardModel(
+        title = "Device Info",
+        subtitle = buildSubtitle(report),
+        status = if (report.stage == DeviceInfoStage.FAILED) {
+            DetectorStatus.info(InfoKind.ERROR)
+        } else {
+            DetectorStatus.info(InfoKind.SUPPORT)
+        },
+        verdict = buildVerdict(report),
+        summary = buildSummary(report),
+        headerFacts = buildHeaderFacts(report),
+        sections = buildSections(report),
+    )
+
+    private fun buildSubtitle(report: DeviceInfoReport): String = when (report.stage) {
+        DeviceInfoStage.LOADING -> "identity + build + android + runtime + display"
+        DeviceInfoStage.FAILED -> "local device profile unavailable"
+        DeviceInfoStage.READY -> "${report.totalCount} local device facts"
     }
 
-    private fun buildSubtitle(report: DeviceInfoReport): String {
-        return when (report.stage) {
-            DeviceInfoStage.LOADING -> "identity + build + android + runtime + display"
-            DeviceInfoStage.FAILED -> "local device profile unavailable"
-            DeviceInfoStage.READY -> "${report.totalCount} local device facts"
-        }
+    private fun buildVerdict(report: DeviceInfoReport): String = when (report.stage) {
+        DeviceInfoStage.LOADING -> "Collecting local device profile"
+        DeviceInfoStage.FAILED -> "Device profile unavailable"
+        DeviceInfoStage.READY -> "Have a good day"
     }
 
-    private fun buildVerdict(report: DeviceInfoReport): String {
-        return when (report.stage) {
-            DeviceInfoStage.LOADING -> "Collecting local device profile"
-            DeviceInfoStage.FAILED -> "Device profile unavailable"
-            DeviceInfoStage.READY -> "Have a good day"
-        }
-    }
-
-    private fun buildSummary(report: DeviceInfoReport): String {
-        return when (report.stage) {
-            DeviceInfoStage.LOADING -> "This card is purely contextual and does not affect detector severity or ranking."
-            DeviceInfoStage.FAILED -> report.errorMessage ?: "Device info collection failed."
-            DeviceInfoStage.READY -> "This card is informational only. It gives you a fixed local profile snapshot to read alongside the detector cards above."
-        }
+    private fun buildSummary(report: DeviceInfoReport): String = when (report.stage) {
+        DeviceInfoStage.LOADING -> "This card is purely contextual and does not affect detector severity or ranking."
+        DeviceInfoStage.FAILED -> report.errorMessage ?: "Device info collection failed."
+        DeviceInfoStage.READY -> "This card is informational only. It gives you a fixed local profile snapshot to read alongside the detector cards above."
     }
 
     private fun buildHeaderFacts(report: DeviceInfoReport): List<DeviceInfoHeaderFactModel> {
-        fun valueOf(section: String, label: String): String {
-            return report.sections.firstOrNull { it.title == section }
-                ?.entries
-                ?.firstOrNull { it.label == label }
-                ?.value
-                ?: when (report.stage) {
-                    DeviceInfoStage.LOADING -> "Pending"
-                    DeviceInfoStage.FAILED -> "Error"
-                    DeviceInfoStage.READY -> "Unavailable"
-                }
-        }
+        fun valueOf(section: String, label: String): String = report.sections.firstOrNull { it.title == section }
+            ?.entries
+            ?.firstOrNull { it.label == label }
+            ?.value
+            ?: when (report.stage) {
+                DeviceInfoStage.LOADING -> "Pending"
+                DeviceInfoStage.FAILED -> "Error"
+                DeviceInfoStage.READY -> "Unavailable"
+            }
 
         return listOf(
             DeviceInfoHeaderFactModel("Brand", valueOf("Identity", "Brand")),
@@ -88,49 +78,45 @@ class DeviceInfoCardModelMapper {
         )
     }
 
-    private fun buildSections(report: DeviceInfoReport): List<DeviceInfoSectionModel> {
-        return when (report.stage) {
-            DeviceInfoStage.LOADING -> listOf(
-                placeholderSection("Identity"),
-                placeholderSection("Build"),
-                placeholderSection("Android"),
-                placeholderSection("Runtime"),
-                placeholderSection("Context"),
-            )
+    private fun buildSections(report: DeviceInfoReport): List<DeviceInfoSectionModel> = when (report.stage) {
+        DeviceInfoStage.LOADING -> listOf(
+            placeholderSection("Identity"),
+            placeholderSection("Build"),
+            placeholderSection("Android"),
+            placeholderSection("Runtime"),
+            placeholderSection("Context"),
+        )
 
-            DeviceInfoStage.FAILED -> listOf(
-                DeviceInfoSectionModel(
-                    title = "Unavailable",
-                    rows = listOf(
-                        DeviceInfoRowModel(
-                            label = "Reason",
-                            value = report.errorMessage ?: "Unknown error",
-                        ),
+        DeviceInfoStage.FAILED -> listOf(
+            DeviceInfoSectionModel(
+                title = "Unavailable",
+                rows = listOf(
+                    DeviceInfoRowModel(
+                        label = "Reason",
+                        value = report.errorMessage ?: "Unknown error",
                     ),
                 ),
-            )
+            ),
+        )
 
-            DeviceInfoStage.READY -> report.sections.map { section ->
-                DeviceInfoSectionModel(
-                    title = section.title,
-                    rows = section.entries.map { entry ->
-                        DeviceInfoRowModel(
-                            label = entry.label,
-                            value = entry.value,
-                            detailMonospace = entry.detailMonospace,
-                        )
-                    },
-                )
-            }
+        DeviceInfoStage.READY -> report.sections.map { section ->
+            DeviceInfoSectionModel(
+                title = section.title,
+                rows = section.entries.map { entry ->
+                    DeviceInfoRowModel(
+                        label = entry.label,
+                        value = entry.value,
+                        detailMonospace = entry.detailMonospace,
+                    )
+                },
+            )
         }
     }
 
-    private fun placeholderSection(title: String): DeviceInfoSectionModel {
-        return DeviceInfoSectionModel(
-            title = title,
-            rows = listOf(
-                DeviceInfoRowModel("Loading", "Pending"),
-            ),
-        )
-    }
+    private fun placeholderSection(title: String): DeviceInfoSectionModel = DeviceInfoSectionModel(
+        title = title,
+        rows = listOf(
+            DeviceInfoRowModel("Loading", "Pending"),
+        ),
+    )
 }

@@ -58,8 +58,8 @@ class DangerousAppsCardModelMapperTest {
         assertTrue(
             model.headerFacts.any { fact ->
                 fact.label == "PM" &&
-                        fact.status.severity == DetectionSeverity.WARNING &&
-                        fact.value.contains("43")
+                    fact.status.severity == DetectionSeverity.WARNING &&
+                    fact.value.contains("43")
             },
         )
     }

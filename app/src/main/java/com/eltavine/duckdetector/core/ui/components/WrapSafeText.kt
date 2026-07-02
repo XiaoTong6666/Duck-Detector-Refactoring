@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("ktlint:standard:function-naming")
+
 package com.eltavine.duckdetector.core.ui.components
 
 import androidx.compose.material3.LocalTextStyle
@@ -22,11 +24,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 
-private const val LongTokenBreakInterval = 12
-private const val ZeroWidthSpace = '\u200B'
+private const val LONG_TOKEN_BREAK_INTERVAL = 12
+private const val ZERO_WIDTH_SPACE = '\u200B'
 
 @Composable
 fun WrapSafeText(
@@ -47,9 +49,9 @@ fun WrapSafeText(
 }
 
 private fun String.withWrapOpportunities(): String {
-    if (length <= LongTokenBreakInterval) return this
+    if (length <= LONG_TOKEN_BREAK_INTERVAL) return this
 
-    val builder = StringBuilder(length + (length / LongTokenBreakInterval))
+    val builder = StringBuilder(length + (length / LONG_TOKEN_BREAK_INTERVAL))
     var uninterruptedCount = 0
 
     for (character in this) {
@@ -57,15 +59,15 @@ private fun String.withWrapOpportunities(): String {
 
         if (character.createsNaturalBreak()) {
             if (!character.isWhitespace()) {
-                builder.append(ZeroWidthSpace)
+                builder.append(ZERO_WIDTH_SPACE)
             }
             uninterruptedCount = 0
             continue
         }
 
         uninterruptedCount += 1
-        if (uninterruptedCount >= LongTokenBreakInterval) {
-            builder.append(ZeroWidthSpace)
+        if (uninterruptedCount >= LONG_TOKEN_BREAK_INTERVAL) {
+            builder.append(ZERO_WIDTH_SPACE)
             uninterruptedCount = 0
         }
     }
@@ -73,19 +75,17 @@ private fun String.withWrapOpportunities(): String {
     return builder.toString()
 }
 
-private fun Char.createsNaturalBreak(): Boolean {
-    return isWhitespace() || this in setOf(
-        '-',
-        '_',
-        '/',
-        '\\',
-        '.',
-        ':',
-        ',',
-        ';',
-        '|',
-        '+',
-        '@',
-        '#'
-    )
-}
+private fun Char.createsNaturalBreak(): Boolean = isWhitespace() || this in setOf(
+    '-',
+    '_',
+    '/',
+    '\\',
+    '.',
+    ':',
+    ',',
+    ';',
+    '|',
+    '+',
+    '@',
+    '#',
+)

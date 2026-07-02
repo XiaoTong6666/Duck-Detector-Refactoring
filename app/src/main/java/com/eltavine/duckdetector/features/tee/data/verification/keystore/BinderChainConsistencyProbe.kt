@@ -75,8 +75,10 @@ class BinderChainConsistencyProbe(
             }
             val aggregateKeystoreAvailable = firstCycle.keystoreChain.isNotEmpty() && secondCycle.keystoreChain.isNotEmpty()
             val aggregateBinderMaterialAvailable =
-                firstCycle.binderChain.isNotEmpty() || firstCycle.generateChain.isNotEmpty() ||
-                    secondCycle.binderChain.isNotEmpty() || secondCycle.generateChain.isNotEmpty()
+                firstCycle.binderChain.isNotEmpty() ||
+                    firstCycle.generateChain.isNotEmpty() ||
+                    secondCycle.binderChain.isNotEmpty() ||
+                    secondCycle.generateChain.isNotEmpty()
             val suspiciousKeystoreChain =
                 firstCycle.suspiciousLeafIssuerSpki || secondCycle.suspiciousLeafIssuerSpki
             val keystoreMatchesGetKeyEntry = firstCycle.keystoreMatchesGetKeyEntry && secondCycle.keystoreMatchesGetKeyEntry
@@ -90,7 +92,7 @@ class BinderChainConsistencyProbe(
                 hookInstalled = true,
                 keystoreChainAvailable = aggregateKeystoreAvailable,
                 generateMaterialAvailable =
-                    firstCycle.generateChain.isNotEmpty() || secondCycle.generateChain.isNotEmpty(),
+                firstCycle.generateChain.isNotEmpty() || secondCycle.generateChain.isNotEmpty(),
                 binderMaterialAvailable = aggregateBinderMaterialAvailable,
                 suspiciousLeafIssuerSpki = suspiciousKeystoreChain,
                 activeProbeRepeated = true,
@@ -243,17 +245,15 @@ class BinderChainConsistencyProbe(
         return leafSpki.contentEquals(issuerSpki)
     }
 
-    private fun verifyDeleteEntryRemovesAlias(keyStore: java.security.KeyStore, alias: String): Boolean {
-        return runCatching {
-            if (!keyStore.containsAlias(alias)) {
-                true
-            } else {
-                keyStore.deleteEntry(alias)
-                keyStore.load(null)
-                !keyStore.containsAlias(alias)
-            }
-        }.getOrDefault(false)
-    }
+    private fun verifyDeleteEntryRemovesAlias(keyStore: java.security.KeyStore, alias: String): Boolean = runCatching {
+        if (!keyStore.containsAlias(alias)) {
+            true
+        } else {
+            keyStore.deleteEntry(alias)
+            keyStore.load(null)
+            !keyStore.containsAlias(alias)
+        }
+    }.getOrDefault(false)
 
     private fun buildFullChain(leafDer: ByteArray?, chainBlob: ByteArray?): List<ByteArray> {
         val out = mutableListOf<ByteArray>()
@@ -276,9 +276,7 @@ class BinderChainConsistencyProbe(
         return out
     }
 
-    private fun chainsEqualDer(left: List<ByteArray>, right: List<ByteArray>): Boolean {
-        return left.size == right.size && left.zip(right).all { (a, b) -> a.contentEquals(b) }
-    }
+    private fun chainsEqualDer(left: List<ByteArray>, right: List<ByteArray>): Boolean = left.size == right.size && left.zip(right).all { (a, b) -> a.contentEquals(b) }
 
     private fun describeChainMismatch(keystoreChain: List<ByteArray>, otherChain: List<ByteArray>): String {
         val min = minOf(keystoreChain.size, otherChain.size)
@@ -294,12 +292,10 @@ class BinderChainConsistencyProbe(
         }
     }
 
-    private fun tryGetSerialHex(certDer: ByteArray): String {
-        return runCatching {
-            val certificate = certificateFactory.generateCertificate(ByteArrayInputStream(certDer)) as X509Certificate
-            certificate.serialNumber.toString(16).lowercase(Locale.US)
-        }.getOrDefault("parse_failed")
-    }
+    private fun tryGetSerialHex(certDer: ByteArray): String = runCatching {
+        val certificate = certificateFactory.generateCertificate(ByteArrayInputStream(certDer)) as X509Certificate
+        certificate.serialNumber.toString(16).lowercase(Locale.US)
+    }.getOrDefault("parse_failed")
 }
 
 data class BinderChainConsistencyResult(
@@ -341,20 +337,18 @@ private data class ActiveCycleResult(
             generateChain: List<ByteArray> = emptyList(),
             failureLabel: String,
             detail: String,
-        ): ActiveCycleResult {
-            return ActiveCycleResult(
-                succeeded = false,
-                keystoreChain = keystoreChain,
-                binderChain = binderChain,
-                generateChain = generateChain,
-                suspiciousLeafIssuerSpki = false,
-                leafMatches = false,
-                keystoreMatchesGetKeyEntry = false,
-                generateVsGetKeyEntryLeafMatches = true,
-                generateVsGetKeyEntryChainMatches = true,
-                failureLabel = failureLabel,
-                detail = detail,
-            )
-        }
+        ): ActiveCycleResult = ActiveCycleResult(
+            succeeded = false,
+            keystoreChain = keystoreChain,
+            binderChain = binderChain,
+            generateChain = generateChain,
+            suspiciousLeafIssuerSpki = false,
+            leafMatches = false,
+            keystoreMatchesGetKeyEntry = false,
+            generateVsGetKeyEntryLeafMatches = true,
+            generateVsGetKeyEntryChainMatches = true,
+            failureLabel = failureLabel,
+            detail = detail,
+        )
     }
 }
