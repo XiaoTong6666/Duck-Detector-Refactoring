@@ -50,10 +50,20 @@ open class ZygoteNextLocalProbe {
         namespaceInode: Long = 0L,
     ): ZygoteNextProcessSnapshot {
         var rootPropagation = ""
+        var rootMountId = 0L
+        var minimumMountId = 0L
+        var maximumMountId = 0L
+        var mountCount = 0
         val markers = mutableListOf<ZygoteNextMountMarker>()
         lines.forEach { line ->
             val parsed = parseLine(line) ?: return@forEach
+            mountCount += 1
+            if (minimumMountId == 0L || parsed.mountId < minimumMountId) {
+                minimumMountId = parsed.mountId
+            }
+            if (parsed.mountId > maximumMountId) maximumMountId = parsed.mountId
             if (parsed.mountPoint == "/") {
+                rootMountId = parsed.mountId
                 rootPropagation = parsed.optionalFields
                     .filter { it.startsWith("shared:") || it.startsWith("master:") }
                     .joinToString(" ")
@@ -77,7 +87,10 @@ open class ZygoteNextLocalProbe {
             uid = uid,
             mountNamespaceInode = namespaceInode,
             rootPropagation = rootPropagation,
-            mountCount = lines.size,
+            rootMountId = rootMountId,
+            minimumMountId = minimumMountId,
+            maximumMountId = maximumMountId,
+            mountCount = mountCount,
             markers = markers,
         )
     }
@@ -88,7 +101,9 @@ open class ZygoteNextLocalProbe {
         val before = line.substring(0, separator).split(' ').filter(String::isNotEmpty)
         val after = line.substring(separator + 3).split(' ').filter(String::isNotEmpty)
         if (before.size < 6 || after.size < 2) return null
+        val mountId = before[0].toLongOrNull()?.takeIf { it > 0L } ?: return null
         return ParsedMountInfo(
+            mountId = mountId,
             mountRoot = before[3],
             mountPoint = before[4],
             optionalFields = before.drop(6),
@@ -155,6 +170,7 @@ open class ZygoteNextLocalProbe {
     }
 
     private data class ParsedMountInfo(
+        val mountId: Long,
         val mountRoot: String,
         val mountPoint: String,
         val optionalFields: List<String>,

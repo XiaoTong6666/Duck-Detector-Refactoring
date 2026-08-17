@@ -366,10 +366,12 @@ class MountRepository(
                     MountZygoteNextState.PENDING -> "Pending"
                     MountZygoteNextState.UNSUPPORTED -> "Requires Android 17"
                     MountZygoteNextState.UNAVAILABLE -> "Unavailable"
-                    MountZygoteNextState.READY -> if (zygoteNext.leakDetected) {
-                        "${zygoteNext.dangerousMarkers.size} root mount(s)"
-                    } else {
-                        "Clean"
+                    MountZygoteNextState.READY -> when {
+                        zygoteNext.leakDetected ->
+                            "${zygoteNext.dangerousMarkers.size} root mount(s)"
+
+                        !zygoteNext.hasInitNamespaceCoverage -> "Coverage unverified"
+                        else -> "Clean"
                     }
                 },
                 outcome = when (zygoteNext.state) {
@@ -377,10 +379,10 @@ class MountRepository(
                     MountZygoteNextState.UNSUPPORTED,
                     MountZygoteNextState.UNAVAILABLE -> MountMethodOutcome.SUPPORT
 
-                    MountZygoteNextState.READY -> if (zygoteNext.leakDetected) {
-                        MountMethodOutcome.DANGER
-                    } else {
-                        MountMethodOutcome.CLEAN
+                    MountZygoteNextState.READY -> when {
+                        zygoteNext.leakDetected -> MountMethodOutcome.DANGER
+                        !zygoteNext.hasInitNamespaceCoverage -> MountMethodOutcome.SUPPORT
+                        else -> MountMethodOutcome.CLEAN
                     }
                 },
                 detail = buildZygoteNextMethodDetail(zygoteNext),
@@ -502,10 +504,16 @@ class MountRepository(
             sdkInt = sdkInt,
             mainNamespaceInode = mainProcess.mountNamespaceInode,
             mainPropagation = mainProcess.rootPropagation,
+            mainRootMountId = mainProcess.rootMountId,
+            mainMinimumMountId = mainProcess.minimumMountId,
+            mainMaximumMountId = mainProcess.maximumMountId,
             mainMountCount = mainProcess.mountCount,
             mainMarkers = mainProcess.markers.map { it.toMountMarker() },
             isolatedNamespaceInode = isolatedProcess.mountNamespaceInode,
             isolatedPropagation = isolatedProcess.rootPropagation,
+            isolatedRootMountId = isolatedProcess.rootMountId,
+            isolatedMinimumMountId = isolatedProcess.minimumMountId,
+            isolatedMaximumMountId = isolatedProcess.maximumMountId,
             isolatedMountCount = isolatedProcess.mountCount,
             isolatedMarkers = isolatedProcess.markers.map { it.toMountMarker() },
             errorDetail = errorDetail,
@@ -531,6 +539,8 @@ class MountRepository(
 
             MountZygoteNextState.READY -> buildString {
                 append("Compares the classic app mount view with an Android 17 zygote_next native isolated process. ")
+                append(report.namespaceAssessmentDetail)
+                append(' ')
                 append("main=")
                 append(report.mainPropagation.ifBlank { "unclassified" })
                 append(", isolated=")

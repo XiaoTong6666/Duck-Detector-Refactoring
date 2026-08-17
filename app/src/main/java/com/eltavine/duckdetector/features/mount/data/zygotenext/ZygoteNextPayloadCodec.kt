@@ -52,8 +52,15 @@ object ZygoteNextPayloadCodec {
         val parentPid = values.requireInt(KEY_PARENT_PID)
         val uid = values.requireInt(KEY_UID)
         val namespaceInode = values.requireLong(KEY_MOUNT_NAMESPACE)
+        val rootMountId = values.requireLong(KEY_ROOT_MOUNT_ID)
+        val minimumMountId = values.requireLong(KEY_MINIMUM_MOUNT_ID)
+        val maximumMountId = values.requireLong(KEY_MAXIMUM_MOUNT_ID)
         val mountCount = values.requireInt(KEY_MOUNT_COUNT)
-        require(pid > 0 && parentPid >= 0 && uid >= 0 && namespaceInode > 0L && mountCount > 0) {
+        require(
+            pid > 0 && parentPid >= 0 && uid >= 0 && namespaceInode > 0L &&
+                rootMountId > 0L && minimumMountId > 0L && maximumMountId >= minimumMountId &&
+                rootMountId in minimumMountId..maximumMountId && mountCount > 0
+        ) {
             "Incomplete zygote_next process snapshot."
         }
 
@@ -64,6 +71,9 @@ object ZygoteNextPayloadCodec {
             uid = uid,
             mountNamespaceInode = namespaceInode,
             rootPropagation = values[KEY_ROOT_PROPAGATION].orEmpty(),
+            rootMountId = rootMountId,
+            minimumMountId = minimumMountId,
+            maximumMountId = maximumMountId,
             mountCount = mountCount,
             markers = markers,
             errorDetail = error,
@@ -135,7 +145,7 @@ object ZygoteNextPayloadCodec {
             ?: throw IllegalArgumentException("Missing or invalid $key in zygote_next payload.")
     }
 
-    private const val PAYLOAD_VERSION = "1"
+    private const val PAYLOAD_VERSION = "2"
     private const val MARKER_FIELD_COUNT = 6
     private const val KEY_VERSION = "VERSION"
     private const val KEY_AVAILABLE = "AVAILABLE"
@@ -144,6 +154,9 @@ object ZygoteNextPayloadCodec {
     private const val KEY_UID = "UID"
     private const val KEY_MOUNT_NAMESPACE = "MOUNT_NAMESPACE"
     private const val KEY_ROOT_PROPAGATION = "ROOT_PROPAGATION"
+    private const val KEY_ROOT_MOUNT_ID = "ROOT_MOUNT_ID"
+    private const val KEY_MINIMUM_MOUNT_ID = "MIN_MOUNT_ID"
+    private const val KEY_MAXIMUM_MOUNT_ID = "MAX_MOUNT_ID"
     private const val KEY_MOUNTINFO_READABLE = "MOUNTINFO_READABLE"
     private const val KEY_MOUNT_COUNT = "MOUNT_COUNT"
     private const val KEY_MARKER = "MARKER"

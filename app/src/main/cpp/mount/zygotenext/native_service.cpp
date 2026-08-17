@@ -15,6 +15,7 @@
  */
 
 #include <ctype.h>
+#include <cerrno>
 #include <android/binder_ibinder.h>
 #include <android/binder_parcel.h>
 #include <android/native_service.h>
@@ -52,6 +53,7 @@ const AIBinder_Class *g_probe_class = nullptr;
 std::string g_payload;
 
 struct MountRecord {
+    uint64_t mount_id = 0;
     std::string root;
     std::string point;
     std::string file_system_type;
@@ -104,6 +106,17 @@ bool parse_mount_record(const std::string &line, MountRecord *record) {
     const auto before = split_spaces(line.substr(0, separator));
     const auto after = split_spaces(line.substr(separator + 3));
     if (before.size() < 6 || after.size() < 2) return false;
+    if (before[0].empty() || before[0].find_first_not_of("0123456789") != std::string::npos) {
+        return false;
+    }
+    errno = 0;
+    char *mount_id_end = nullptr;
+    const uint64_t mount_id = strtoull(before[0].c_str(), &mount_id_end, 10);
+    if (errno == ERANGE || mount_id_end == before[0].c_str() || *mount_id_end != '\0' ||
+        mount_id == 0) {
+        return false;
+    }
+    record->mount_id = mount_id;
     record->root = before[3];
     record->point = before[4];
     record->optional_fields.assign(before.begin() + 6, before.end());
@@ -196,15 +209,23 @@ std::string collect_payload() {
     std::vector<MarkerRecord> markers;
     std::string root_propagation;
     std::string error;
+    uint64_t root_mount_id = 0;
+    uint64_t minimum_mount_id = 0;
+    uint64_t maximum_mount_id = 0;
     int mount_count = 0;
     bool readable = mountinfo.good();
     if (readable) {
         std::string line;
         while (std::getline(mountinfo, line)) {
-            ++mount_count;
             MountRecord record;
             if (!parse_mount_record(line, &record)) continue;
+            ++mount_count;
+            if (minimum_mount_id == 0 || record.mount_id < minimum_mount_id) {
+                minimum_mount_id = record.mount_id;
+            }
+            if (record.mount_id > maximum_mount_id) maximum_mount_id = record.mount_id;
             if (record.point == "/") {
+                root_mount_id = record.mount_id;
                 std::vector<std::string> propagation;
                 for (const auto &field: record.optional_fields) {
                     if (field.rfind("shared:", 0) == 0 || field.rfind("master:", 0) == 0) {
@@ -227,13 +248,16 @@ std::string collect_payload() {
     }
 
     std::ostringstream payload;
-    payload << "VERSION=1\n";
+    payload << "VERSION=2\n";
     payload << "AVAILABLE=" << (readable ? '1' : '0') << '\n';
     payload << "PID=" << getpid() << '\n';
     payload << "PPID=" << getppid() << '\n';
     payload << "UID=" << getuid() << '\n';
     payload << "MOUNT_NAMESPACE=" << read_namespace_inode() << '\n';
     payload << "ROOT_PROPAGATION=" << escape_field(root_propagation) << '\n';
+    payload << "ROOT_MOUNT_ID=" << root_mount_id << '\n';
+    payload << "MIN_MOUNT_ID=" << minimum_mount_id << '\n';
+    payload << "MAX_MOUNT_ID=" << maximum_mount_id << '\n';
     payload << "MOUNTINFO_READABLE=" << (readable ? '1' : '0') << '\n';
     payload << "MOUNT_COUNT=" << mount_count << '\n';
     payload << "ERROR=" << escape_field(error) << '\n';

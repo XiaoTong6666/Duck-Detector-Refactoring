@@ -26,6 +26,7 @@ import com.eltavine.duckdetector.features.mount.data.zygotenext.ZygoteNextProbeS
 import com.eltavine.duckdetector.features.mount.data.zygotenext.ZygoteNextProcessSnapshot
 import com.eltavine.duckdetector.features.mount.domain.MountMethodOutcome
 import com.eltavine.duckdetector.features.mount.domain.MountStage
+import com.eltavine.duckdetector.features.mount.domain.MountZygoteNextNamespaceAssessment
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -57,10 +58,107 @@ class MountZygoteNextRepositoryTest {
         ).scan()
 
         assertTrue(report.zygoteNext.contrastObserved)
+        assertEquals(
+            MountZygoteNextNamespaceAssessment.INIT_MANAGED,
+            report.zygoteNext.namespaceAssessment,
+        )
         assertEquals(0, report.dangerSignalCount)
         assertEquals(0, report.warningSignalCount)
         assertEquals(
             MountMethodOutcome.CLEAN,
+            report.methods.single { it.label == "Zygote next mount view" }.outcome,
+        )
+    }
+
+    @Test
+    fun `missing mount id ordering is support instead of clean`() = runBlocking {
+        val base = readyResult()
+        val report = repository(
+            nativeSnapshot = cleanSnapshot(),
+            zygoteNextResult = base.copy(
+                isolatedProcess = base.isolatedProcess.copy(rootMountId = 0L),
+            ),
+        ).scan()
+
+        assertEquals(
+            MountZygoteNextNamespaceAssessment.UNVERIFIED,
+            report.zygoteNext.namespaceAssessment,
+        )
+        assertEquals(
+            MountMethodOutcome.SUPPORT,
+            report.methods.single { it.label == "Zygote next mount view" }.outcome,
+        )
+    }
+
+    @Test
+    fun `shared native root without slave classic root is unverified`() = runBlocking {
+        val base = readyResult()
+        val report = repository(
+            nativeSnapshot = cleanSnapshot(),
+            zygoteNextResult = base.copy(
+                mainProcess = base.mainProcess.copy(rootPropagation = "shared:1"),
+            ),
+        ).scan()
+
+        assertEquals(
+            MountZygoteNextNamespaceAssessment.UNVERIFIED,
+            report.zygoteNext.namespaceAssessment,
+        )
+        assertEquals(
+            MountMethodOutcome.SUPPORT,
+            report.methods.single { it.label == "Zygote next mount view" }.outcome,
+        )
+    }
+
+    @Test
+    fun `shared and slave classic root is not the aosp zygote signature`() = runBlocking {
+        val base = readyResult()
+        val report = repository(
+            nativeSnapshot = cleanSnapshot(),
+            zygoteNextResult = base.copy(
+                mainProcess = base.mainProcess.copy(rootPropagation = "shared:2 master:1"),
+            ),
+        ).scan()
+
+        assertEquals(
+            MountZygoteNextNamespaceAssessment.UNVERIFIED,
+            report.zygoteNext.namespaceAssessment,
+        )
+    }
+
+    @Test
+    fun `matching namespace identities are unverified`() = runBlocking {
+        val base = readyResult()
+        val report = repository(
+            nativeSnapshot = cleanSnapshot(),
+            zygoteNextResult = base.copy(
+                isolatedProcess = base.isolatedProcess.copy(mountNamespaceInode = 10L),
+            ),
+        ).scan()
+
+        assertEquals(
+            MountZygoteNextNamespaceAssessment.UNVERIFIED,
+            report.zygoteNext.namespaceAssessment,
+        )
+        assertEquals(
+            MountMethodOutcome.SUPPORT,
+            report.methods.single { it.label == "Zygote next mount view" }.outcome,
+        )
+    }
+
+    @Test
+    fun `root marker remains dangerous when namespace coverage is unverified`() = runBlocking {
+        val base = readyResult(rootMarker())
+        val report = repository(
+            nativeSnapshot = cleanSnapshot(),
+            zygoteNextResult = base.copy(
+                isolatedProcess = base.isolatedProcess.copy(rootPropagation = "master:1"),
+            ),
+        ).scan()
+
+        assertTrue(report.zygoteNext.leakDetected)
+        assertEquals(
+            MountMethodOutcome.DANGER,
             report.methods.single { it.label == "Zygote next mount view" }.outcome,
         )
     }
@@ -138,12 +236,18 @@ class MountZygoteNextRepositoryTest {
                 available = true,
                 mountNamespaceInode = 10,
                 rootPropagation = "master:1",
+                rootMountId = 240,
+                minimumMountId = 220,
+                maximumMountId = 420,
                 mountCount = 100,
             ),
             isolatedProcess = ZygoteNextProcessSnapshot(
                 available = true,
                 mountNamespaceInode = 20,
                 rootPropagation = "shared:1",
+                rootMountId = 24,
+                minimumMountId = 20,
+                maximumMountId = 210,
                 mountCount = 101,
                 markers = markers.toList(),
             ),

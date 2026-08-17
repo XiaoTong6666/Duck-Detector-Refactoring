@@ -39,6 +39,9 @@ class ZygoteNextLocalProbeTest {
         assertEquals("master:1", result.rootPropagation)
         assertEquals(2, result.mountCount)
         assertEquals(1234, result.mountNamespaceInode)
+        assertEquals(24L, result.rootMountId)
+        assertEquals(24L, result.minimumMountId)
+        assertEquals(31L, result.maximumMountId)
         assertEquals(listOf("data/adb"), result.markers.single().labels)
         assertTrue(result.markers.single().dangerous)
     }
@@ -94,5 +97,20 @@ class ZygoteNextLocalProbeTest {
         )
 
         assertTrue(result.markers.isEmpty())
+    }
+
+    @Test
+    fun `malformed mount ids do not contribute to id range or entry count`() {
+        val result = probe.parseMountInfo(
+            lines = listOf(
+                "24 1 0:1 / / rw master:1 - rootfs rootfs rw",
+                "invalid 24 7:2 / /data rw - ext4 /dev/block/dm-1 rw",
+            ),
+        )
+
+        assertEquals(1, result.mountCount)
+        assertEquals(24L, result.rootMountId)
+        assertEquals(24L, result.minimumMountId)
+        assertEquals(24L, result.maximumMountId)
     }
 }

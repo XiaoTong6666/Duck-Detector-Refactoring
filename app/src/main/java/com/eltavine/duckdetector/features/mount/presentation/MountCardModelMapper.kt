@@ -410,17 +410,21 @@ class MountCardModelMapper {
             MountZygoteNextState.PENDING -> "Pending"
             MountZygoteNextState.UNSUPPORTED -> "Requires Android 17"
             MountZygoteNextState.UNAVAILABLE -> "Unavailable"
-            MountZygoteNextState.READY -> if (result.leakDetected) "Root mount" else "Clean"
+            MountZygoteNextState.READY -> when {
+                result.leakDetected -> "Root mount"
+                !result.hasInitNamespaceCoverage -> "Coverage unverified"
+                else -> "Clean"
+            }
         }
         val status = when (result.state) {
             MountZygoteNextState.PENDING,
             MountZygoteNextState.UNSUPPORTED,
             MountZygoteNextState.UNAVAILABLE -> DetectorStatus.info(InfoKind.SUPPORT)
 
-            MountZygoteNextState.READY -> if (result.leakDetected) {
-                DetectorStatus.danger()
-            } else {
-                DetectorStatus.allClear()
+            MountZygoteNextState.READY -> when {
+                result.leakDetected -> DetectorStatus.danger()
+                !result.hasInitNamespaceCoverage -> DetectorStatus.info(InfoKind.SUPPORT)
+                else -> DetectorStatus.allClear()
             }
         }
         val markerDetail = result.dangerousMarkers.joinToString("\n") { marker ->
@@ -429,6 +433,9 @@ class MountCardModelMapper {
         val detail = when {
             markerDetail.isNotBlank() -> markerDetail
             result.state == MountZygoteNextState.UNAVAILABLE -> result.errorDetail
+            result.state == MountZygoteNextState.READY && !result.hasInitNamespaceCoverage ->
+                result.namespaceAssessmentDetail
+
             else -> null
         }
         return MountDetailRowModel(
@@ -436,7 +443,7 @@ class MountCardModelMapper {
             value = value,
             status = status,
             detail = detail,
-            detailMonospace = detail != null,
+            detailMonospace = markerDetail.isNotBlank(),
             hiddenCopyText = buildZygoteNextCopyText(result, value),
         )
     }
@@ -452,12 +459,22 @@ class MountCardModelMapper {
             appendLine("SDK: ${result.sdkInt}")
             appendLine("Main namespace: ${namespaceLabel(result.mainNamespaceInode)}")
             appendLine("Main propagation: ${result.mainPropagation.ifBlank { "Unclassified" }}")
+            appendLine(
+                "Main mount IDs: root=${mountIdLabel(result.mainRootMountId)}, " +
+                    "range=${mountIdRange(result.mainMinimumMountId, result.mainMaximumMountId)}",
+            )
             appendLine("Main mount entries: ${result.mainMountCount}")
             appendLine("Isolated namespace: ${namespaceLabel(result.isolatedNamespaceInode)}")
             appendLine(
                 "Isolated propagation: ${result.isolatedPropagation.ifBlank { "Unclassified" }}",
             )
+            appendLine(
+                "Isolated mount IDs: root=${mountIdLabel(result.isolatedRootMountId)}, " +
+                    "range=${mountIdRange(result.isolatedMinimumMountId, result.isolatedMaximumMountId)}",
+            )
             appendLine("Isolated mount entries: ${result.isolatedMountCount}")
+            appendLine("Namespace assessment: ${result.namespaceAssessment}")
+            appendLine("Init-managed namespace coverage: ${result.hasInitNamespaceCoverage}")
             appendLine("Shared-view contrast: ${result.contrastObserved}")
             appendLine("Root marker leak: ${result.leakDetected}")
             appendLine("Main markers:")
@@ -466,6 +483,14 @@ class MountCardModelMapper {
             appendMarkers(result.isolatedMarkers)
             append("Detail: ${result.errorDetail.ifBlank { "None" }}")
         }
+    }
+
+    private fun mountIdLabel(value: Long): String {
+        return value.takeIf { it > 0L }?.toString() ?: "Unreadable"
+    }
+
+    private fun mountIdRange(minimum: Long, maximum: Long): String {
+        return if (minimum > 0L && maximum >= minimum) "$minimum..$maximum" else "Unreadable"
     }
 
     private fun StringBuilder.appendMarkers(

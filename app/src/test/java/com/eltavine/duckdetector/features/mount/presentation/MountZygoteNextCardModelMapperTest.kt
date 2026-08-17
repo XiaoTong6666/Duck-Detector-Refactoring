@@ -81,7 +81,18 @@ class MountZygoteNextCardModelMapperTest {
 
         assertEquals("Clean", row.value)
         assertEquals(DetectorStatus.allClear(), row.status)
+        assertTrue(row.hiddenCopyText.orEmpty().contains("Namespace assessment: INIT_MANAGED"))
         assertTrue(row.hiddenCopyText.orEmpty().contains("Shared-view contrast: true"))
+    }
+
+    @Test
+    fun `unverified init managed view renders support instead of clean`() {
+        val zygoteNext = readyReport().copy(isolatedRootMountId = 0L)
+        val row = mapper.map(report(zygoteNext)).procMountViewRows[1]
+
+        assertEquals("Coverage unverified", row.value)
+        assertEquals(DetectorStatus.info(InfoKind.SUPPORT), row.status)
+        assertTrue(row.detail.orEmpty().contains("Init-managed namespace coverage is unverified"))
     }
 
     @Test
@@ -141,9 +152,15 @@ class MountZygoteNextCardModelMapperTest {
             sdkInt = 37,
             mainNamespaceInode = 10,
             mainPropagation = "master:1",
+            mainRootMountId = 240,
+            mainMinimumMountId = 220,
+            mainMaximumMountId = 420,
             mainMountCount = 100,
             isolatedNamespaceInode = 20,
             isolatedPropagation = "shared:1",
+            isolatedRootMountId = 24,
+            isolatedMinimumMountId = 20,
+            isolatedMaximumMountId = 210,
             isolatedMountCount = 101,
             isolatedMarkers = markers.toList(),
         )
