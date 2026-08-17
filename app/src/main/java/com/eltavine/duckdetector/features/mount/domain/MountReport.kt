@@ -65,6 +65,63 @@ data class MountMethodResult(
     val detail: String? = null,
 )
 
+enum class MountZygoteNextState {
+    PENDING,
+    UNSUPPORTED,
+    UNAVAILABLE,
+    READY,
+}
+
+data class MountZygoteNextMarker(
+    val labels: List<String>,
+    val mountPoint: String,
+    val mountRoot: String,
+    val fileSystemType: String,
+    val source: String,
+    val rawLine: String,
+) {
+    val dangerous: Boolean
+        get() = labels.any { it != DEBUG_RAMDISK_LABEL }
+
+    companion object {
+        private const val DEBUG_RAMDISK_LABEL = "debug_ramdisk"
+    }
+}
+
+data class MountZygoteNextReport(
+    val state: MountZygoteNextState,
+    val sdkInt: Int,
+    val mainNamespaceInode: Long = 0L,
+    val mainPropagation: String = "",
+    val mainMountCount: Int = 0,
+    val mainMarkers: List<MountZygoteNextMarker> = emptyList(),
+    val isolatedNamespaceInode: Long = 0L,
+    val isolatedPropagation: String = "",
+    val isolatedMountCount: Int = 0,
+    val isolatedMarkers: List<MountZygoteNextMarker> = emptyList(),
+    val errorDetail: String = "",
+) {
+    val dangerousMarkers: List<MountZygoteNextMarker>
+        get() = isolatedMarkers.filter(MountZygoteNextMarker::dangerous)
+
+    val leakDetected: Boolean
+        get() = state == MountZygoteNextState.READY && dangerousMarkers.isNotEmpty()
+
+    val contrastObserved: Boolean
+        get() = state == MountZygoteNextState.READY &&
+                isolatedPropagation.startsWith("shared:") &&
+                !mainPropagation.startsWith("shared:")
+
+    companion object {
+        fun pending(): MountZygoteNextReport {
+            return MountZygoteNextReport(
+                state = MountZygoteNextState.PENDING,
+                sdkInt = 0,
+            )
+        }
+    }
+}
+
 data class MountReport(
     val stage: MountStage,
     val nativeAvailable: Boolean,
@@ -88,6 +145,7 @@ data class MountReport(
     val impacts: List<MountImpact>,
     val methods: List<MountMethodResult>,
     val errorMessage: String? = null,
+    val zygoteNext: MountZygoteNextReport = MountZygoteNextReport.pending(),
     val procMountViewProbeAvailable: Boolean = false,
     val procMountViewDistinctCount: Int = 0,
     val procMountViewExpectedCount: Int = 1,
@@ -117,7 +175,9 @@ data class MountReport(
         get() = findings.filter { it.severity == MountFindingSeverity.WARNING }
 
     val dangerSignalCount: Int
-        get() = dangerFindings.size + if (procMountViewTokenHit) 1 else 0
+        get() = dangerFindings.size +
+                (if (procMountViewTokenHit) 1 else 0) +
+                (if (zygoteNext.leakDetected) 1 else 0)
 
     val warningSignalCount: Int
         get() = warningFindings.size + if (procMountViewDivergent && !procMountViewTokenHit) 1 else 0
