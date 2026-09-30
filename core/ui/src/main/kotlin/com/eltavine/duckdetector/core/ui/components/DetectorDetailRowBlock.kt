@@ -116,7 +116,7 @@ public fun DetectorDetailRowBlock(
             label = {
                 WrapSafeText(
                     text = label,
-                    style = if (LocalUiMode.current == UiMode.Miuix) DuckTypography.PanelSupporting else DuckTypography.Callout,
+                    style = DuckTypography.Callout,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             },
@@ -134,7 +134,7 @@ public fun DetectorDetailRowBlock(
                     WrapSafeText(
                         text = value,
                         modifier = valueModifier,
-                        style = if (LocalUiMode.current == UiMode.Miuix) DuckTypography.PanelBody else DuckTypography.CalloutEmphasized,
+                        style = DuckTypography.CalloutEmphasized,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                 }
