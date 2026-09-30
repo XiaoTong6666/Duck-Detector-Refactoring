@@ -25,9 +25,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -42,10 +40,11 @@ import com.eltavine.duckdetector.core.designsystem.theme.DuckTheme
 import com.eltavine.duckdetector.core.designsystem.theme.DuckTypography
 import com.eltavine.duckdetector.core.ui.components.WrapSafeText
 import com.eltavine.duckdetector.core.ui.openExternalUri
-import io.github.xiaotong6666.uihelper.mode.LocalUiMode
-import io.github.xiaotong6666.uihelper.mode.UiMode
-import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
+import io.github.xiaotong6666.uihelper.adaptive.AdaptiveContent
+import io.github.xiaotong6666.uihelper.adaptive.AdaptiveFilledIconButton
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveOnSurfaceColor
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveValue
+import androidx.compose.ui.graphics.Color
 import com.eltavine.duckdetector.core.ui.R as CoreUiR
 
 /** Standalone dashboard fallback; hosted pages place branding in their native top bars. */
@@ -101,16 +100,17 @@ private fun MaterialAppIcon(modifier: Modifier = Modifier, size: androidx.compos
 /** App-owned top bar mark: preserve Material's tile and use only the duck line art on MIUIX. */
 @Composable
 public fun DashboardTopBarBrandIcon() {
-    if (LocalUiMode.current == UiMode.Miuix) {
-        Icon(
-            painter = painterResource(R.drawable.ic_duck_logo),
-            contentDescription = null,
-            tint = MiuixTheme.colorScheme.onSurface,
-            modifier = Modifier.size(30.dp),
-        )
-    } else {
-        MaterialAppIcon(size = 40.dp)
-    }
+    AdaptiveContent(
+        miuix = {
+            Icon(
+                painter = painterResource(R.drawable.ic_duck_logo),
+                contentDescription = null,
+                tint = adaptiveOnSurfaceColor(),
+                modifier = Modifier.size(30.dp),
+            )
+        },
+        material = { MaterialAppIcon(size = 40.dp) },
+    )
 }
 
 /** Telegram's existing circle/plane glyph without a second background in MIUIX mode. */
@@ -118,28 +118,17 @@ public fun DashboardTopBarBrandIcon() {
 public fun DashboardTelegramAction() {
     val context = LocalContext.current
     val onClick: () -> Unit = { openExternalUri(context, "https://t.me/duck_detector"); Unit }
-    if (LocalUiMode.current == UiMode.Miuix) {
-        MiuixIconButton(onClick = onClick) {
-            Icon(
-                painter = painterResource(CoreUiR.drawable.ic_telegram),
-                contentDescription = stringResource(CoreUiR.string.social_telegram),
-                modifier = Modifier.size(26.dp),
-                tint = MiuixTheme.colorScheme.onSurface,
-            )
-        }
-    } else {
-        FilledIconButton(
-            onClick = onClick,
-            colors = IconButtonDefaults.filledIconButtonColors(
-                containerColor = DuckTheme.palette.groupedSurface,
-                contentColor = MaterialTheme.colorScheme.primary,
-            ),
-        ) {
-            Icon(
-                painter = painterResource(CoreUiR.drawable.ic_telegram),
-                contentDescription = stringResource(CoreUiR.string.social_telegram),
-                modifier = Modifier.size(20.dp),
-            )
-        }
+    AdaptiveFilledIconButton(
+        onClick = onClick,
+        materialContainerColor = DuckTheme.palette.groupedSurface,
+        materialContentColor = MaterialTheme.colorScheme.primary,
+        miuixContainerColor = Color.Transparent,
+        miuixContentColor = adaptiveOnSurfaceColor(),
+    ) {
+        Icon(
+            painter = painterResource(CoreUiR.drawable.ic_telegram),
+            contentDescription = stringResource(CoreUiR.string.social_telegram),
+            modifier = Modifier.size(adaptiveValue(material = 20.dp, miuix = 26.dp)),
+        )
     }
 }

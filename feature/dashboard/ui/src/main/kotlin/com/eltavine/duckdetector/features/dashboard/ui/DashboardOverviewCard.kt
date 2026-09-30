@@ -43,15 +43,11 @@ import androidx.compose.material.icons.rounded.WarningAmber
 import androidx.compose.material3.Icon
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -62,16 +58,15 @@ import com.eltavine.duckdetector.core.evidence.DetectionSeverity
 import com.eltavine.duckdetector.core.ui.LocalAppBuildInfo
 import com.eltavine.duckdetector.core.ui.components.DetectorHairline
 import com.eltavine.duckdetector.core.ui.components.WrapSafeText
-import com.eltavine.duckdetector.core.ui.presentation.StatusAppearance
 import com.eltavine.duckdetector.core.ui.presentation.rememberStatusAppearance
 import com.eltavine.duckdetector.core.ui.presentation.formatBuildTimeUtc
 import com.eltavine.duckdetector.features.dashboard.presentation.model.DashboardOverviewMetricModel
 import com.eltavine.duckdetector.features.dashboard.presentation.model.DashboardOverviewModel
-import io.github.xiaotong6666.uihelper.mode.LocalUiMode
-import io.github.xiaotong6666.uihelper.mode.UiMode
-import io.github.xiaotong6666.uihelper.miuix.primitive.StatusHeroCardMiuix
-import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.basic.VerticalDivider as MiuixVerticalDivider
+import io.github.xiaotong6666.uihelper.adaptive.AdaptiveContent
+import io.github.xiaotong6666.uihelper.adaptive.AdaptiveStatusHeroCard
+import io.github.xiaotong6666.uihelper.adaptive.AdaptiveVerticalDivider
+import io.github.xiaotong6666.uihelper.adaptive.StatusHeroTone
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveValue
 
 @Composable
 internal fun DashboardOverviewCard(
@@ -82,80 +77,37 @@ internal fun DashboardOverviewCard(
     val buildInfo = LocalAppBuildInfo.current
     val versionLabel = "${buildInfo.versionName} (${buildInfo.versionCode})"
     val buildTimeLabel = stringResource(R.string.dashboard_build_time_utc, formatBuildTimeUtc(buildInfo.buildTimeUtc))
-    if (LocalUiMode.current == UiMode.Miuix) {
-        // Reuse the status-first MIUIX hero (also used by FuseHide's UI vocabulary),
-        // with a large decorative severity signal in the lower-right corner.
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            val tone = model.status.severity
-            StatusHeroCardMiuix(
-                title = model.headline,
-                summary = model.summary,
-                icon = when (tone) {
-                    DetectionSeverity.DANGER -> Icons.Rounded.ErrorOutline
-                    DetectionSeverity.WARNING -> Icons.Rounded.WarningAmber
-                    DetectionSeverity.ALL_CLEAR -> Icons.Rounded.CheckCircleOutline
-                    DetectionSeverity.INFO -> Icons.Rounded.Info
-                },
-                containerColor = when (tone) {
-                    DetectionSeverity.DANGER -> MiuixTheme.colorScheme.errorContainer
-                    DetectionSeverity.WARNING, DetectionSeverity.ALL_CLEAR ->
-                        lerp(MiuixTheme.colorScheme.surfaceContainer, appearance.iconTint, 0.15f)
-                    DetectionSeverity.INFO -> MiuixTheme.colorScheme.surfaceContainerHighest
-                },
-                accentColor = if (tone == DetectionSeverity.DANGER) MiuixTheme.colorScheme.error else appearance.iconTint,
-                onClick = onExportReport,
-                metaContent = {
-                    ReportHeroMetadata(
-                        versionLabel = versionLabel,
-                        buildTimeLabel = buildTimeLabel,
-                        contentColor = MiuixTheme.colorScheme.onSurface,
-                    )
-                },
-                actionContent = {
-                    ReportHeroAction(contentColor = MiuixTheme.colorScheme.onSurface)
-                },
-            )
-            DuckPanel(
-                contentPadding = PaddingValues(20.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                OverviewTitle(model = model)
-                DetectorHairline()
-                OverviewMetrics(metrics = model.metrics)
-            }
-        }
-        return
-    }
     val tone = model.status.severity
-    val containerColor = when (tone) {
-        DetectionSeverity.DANGER -> MaterialTheme.colorScheme.errorContainer
-        DetectionSeverity.WARNING -> MaterialTheme.colorScheme.tertiaryContainer
-        DetectionSeverity.ALL_CLEAR -> MaterialTheme.colorScheme.secondaryContainer
-        DetectionSeverity.INFO -> MaterialTheme.colorScheme.surfaceContainerHigh
-    }
-    val contentColor = when (tone) {
-        DetectionSeverity.DANGER -> MaterialTheme.colorScheme.onErrorContainer
-        DetectionSeverity.WARNING -> MaterialTheme.colorScheme.onTertiaryContainer
-        DetectionSeverity.ALL_CLEAR -> MaterialTheme.colorScheme.onSecondaryContainer
-        DetectionSeverity.INFO -> MaterialTheme.colorScheme.onSurface
+    val heroTone = when (tone) {
+        DetectionSeverity.DANGER -> StatusHeroTone.Danger
+        DetectionSeverity.WARNING -> StatusHeroTone.Warning
+        DetectionSeverity.ALL_CLEAR -> StatusHeroTone.Success
+        DetectionSeverity.INFO -> StatusHeroTone.Neutral
     }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Surface(
+        AdaptiveStatusHeroCard(
+            title = model.headline,
+            summary = model.summary,
+            icon = when (tone) {
+                DetectionSeverity.DANGER -> Icons.Rounded.ErrorOutline
+                DetectionSeverity.WARNING -> Icons.Rounded.WarningAmber
+                DetectionSeverity.ALL_CLEAR -> Icons.Rounded.CheckCircleOutline
+                DetectionSeverity.INFO -> Icons.Rounded.Info
+            },
+            tone = heroTone,
+            accentColor = appearance.iconTint,
             onClick = onExportReport,
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.large,
-            color = containerColor,
-            contentColor = contentColor,
-        ) {
-            Column {
-                OverviewHero(model = model, appearance = appearance, contentColor = contentColor)
-                ReportHeroFooter(
+            metaContent = { contentColor ->
+                ReportHeroMetadata(
                     versionLabel = versionLabel,
                     buildTimeLabel = buildTimeLabel,
                     contentColor = contentColor,
                 )
-            }
-        }
+            },
+            actionContent = { contentColor ->
+                ReportHeroAction(contentColor = contentColor)
+            },
+        )
         DuckPanel(
             contentPadding = PaddingValues(20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -164,24 +116,6 @@ internal fun DashboardOverviewCard(
             DetectorHairline()
             OverviewMetrics(metrics = model.metrics)
         }
-    }
-}
-
-/** Build metadata and the export affordance live in separate, full-width rows. */
-@Composable
-private fun ReportHeroFooter(
-    versionLabel: String,
-    buildTimeLabel: String,
-    contentColor: Color,
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        ReportHeroMetadata(
-            versionLabel = versionLabel,
-            buildTimeLabel = buildTimeLabel,
-            contentColor = contentColor,
-            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 12.dp),
-        )
-        ReportHeroAction(contentColor = contentColor)
     }
 }
 
@@ -200,12 +134,13 @@ private fun ReportHeroMetadata(
 
 @Composable
 private fun ReportHeroAction(contentColor: Color) {
-    val isMiuix = LocalUiMode.current == UiMode.Miuix
+    val endDividerPadding = adaptiveValue(material = 20.dp, miuix = 108.dp)
+    val endContentPadding = adaptiveValue(material = 20.dp, miuix = 106.dp)
     Column(modifier = Modifier.fillMaxWidth()) {
         HorizontalDivider(
             // The lower-right illustration occupies the rest of the MIUIX hero.
             // Do not draw a hairline through the glyph.
-            modifier = Modifier.padding(start = 20.dp, end = if (isMiuix) 108.dp else 20.dp),
+            modifier = Modifier.padding(start = 20.dp, end = endDividerPadding),
             color = contentColor.copy(alpha = 0.16f),
             thickness = Dp.Hairline,
         )
@@ -213,7 +148,7 @@ private fun ReportHeroAction(contentColor: Color) {
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 48.dp)
-                .padding(start = 20.dp, end = if (isMiuix) 106.dp else 20.dp, top = 11.dp, bottom = 11.dp),
+                .padding(start = 20.dp, end = endContentPadding, top = 11.dp, bottom = 11.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -221,13 +156,20 @@ private fun ReportHeroAction(contentColor: Color) {
             WrapSafeText(
                 text = stringResource(R.string.dashboard_export_report_hint),
                 modifier = Modifier.weight(1f),
-                style = if (isMiuix) MiuixTheme.textStyles.body2.copy(fontWeight = FontWeight.Medium)
-                    else MaterialTheme.typography.labelLargeEmphasized,
+                style = DuckTypography.ReportAction,
                 color = contentColor,
             )
-            if (!isMiuix) {
-                Icon(Icons.Rounded.ArrowForward, contentDescription = null, modifier = Modifier.size(18.dp), tint = contentColor.copy(alpha = 0.78f))
-            }
+            AdaptiveContent(
+                material = {
+                    Icon(
+                        Icons.Rounded.ArrowForward,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = contentColor.copy(alpha = 0.78f),
+                    )
+                },
+                miuix = {},
+            )
         }
     }
 }
@@ -239,55 +181,11 @@ private fun ReportMetaLine(icon: androidx.compose.ui.graphics.vector.ImageVector
         WrapSafeText(
             text = label,
             modifier = Modifier.weight(1f),
-            style = if (LocalUiMode.current == UiMode.Miuix) MiuixTheme.textStyles.footnote1 else MaterialTheme.typography.bodySmall,
+            style = DuckTypography.ReportMeta,
             color = color,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
-    }
-}
-
-@Composable
-private fun OverviewHero(
-    model: DashboardOverviewModel,
-    appearance: StatusAppearance,
-    contentColor: androidx.compose.ui.graphics.Color,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(start = 20.dp, top = 20.dp, end = 20.dp, bottom = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .size(60.dp)
-                .background(color = contentColor.copy(alpha = 0.12f), shape = CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = appearance.icon,
-                contentDescription = null,
-                tint = contentColor,
-                modifier = Modifier.size(32.dp),
-            )
-        }
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            WrapSafeText(
-                text = model.headline,
-                modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.titleLargeEmphasized,
-                color = contentColor,
-            )
-            WrapSafeText(
-                text = model.summary,
-                modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.bodyMedium,
-                color = contentColor.copy(alpha = 0.80f),
-            )
-        }
     }
 }
 
@@ -332,18 +230,11 @@ private fun OverviewMetrics(
     ) {
         metrics.forEachIndexed { index, metric ->
             if (index > 0) {
-                if (LocalUiMode.current == UiMode.Miuix) {
-                    MiuixVerticalDivider(
-                        modifier = Modifier.fillMaxHeight().padding(vertical = 4.dp),
-                        thickness = Dp.Hairline,
-                    )
-                } else {
-                    VerticalDivider(
-                        modifier = Modifier.fillMaxHeight().padding(vertical = 4.dp),
-                        thickness = Dp.Hairline,
-                        color = DuckTheme.palette.separator,
-                    )
-                }
+                AdaptiveVerticalDivider(
+                    modifier = Modifier.fillMaxHeight().padding(vertical = 4.dp),
+                    thickness = Dp.Hairline,
+                    materialColor = DuckTheme.palette.separator,
+                )
             }
             OverviewMetric(metric = metric, modifier = Modifier.weight(1f))
         }
@@ -363,11 +254,7 @@ private fun OverviewMetric(
     ) {
         WrapSafeText(
             text = metric.value,
-            style = if (LocalUiMode.current == UiMode.Miuix) {
-                MiuixTheme.textStyles.title2.copy(fontFeatureSettings = "tnum", fontWeight = FontWeight.Medium)
-            } else {
-                DuckTypography.Numeral
-            },
+            style = DuckTypography.MetricNumeral,
             color = MaterialTheme.colorScheme.onSurface,
         )
         Row(

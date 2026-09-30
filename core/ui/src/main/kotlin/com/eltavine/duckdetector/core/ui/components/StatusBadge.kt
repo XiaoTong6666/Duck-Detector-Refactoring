@@ -39,10 +39,10 @@ import com.eltavine.duckdetector.core.evidence.DetectorStatus
 import com.eltavine.duckdetector.core.evidence.InfoKind
 import com.eltavine.duckdetector.core.ui.presentation.rememberStatusAppearance
 import io.github.xiaotong6666.uihelper.common.StatusTag
-import io.github.xiaotong6666.uihelper.mode.LocalUiMode
-import io.github.xiaotong6666.uihelper.mode.UiMode
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
-import top.yukonga.miuix.kmp.theme.MiuixTheme
+import io.github.xiaotong6666.uihelper.adaptive.AdaptiveContent
+import io.github.xiaotong6666.uihelper.adaptive.adaptivePrimaryColor
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveErrorColor
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveSecondaryTextColor
 
 /** Uses the same compact MIUIX status tag as FuseHide's process and sync rows. */
 @Composable
@@ -51,13 +51,12 @@ public fun MiuixStatusLabel(
     label: String,
     modifier: Modifier = Modifier,
 ) {
-    val scheme = MiuixTheme.colorScheme
     val appearance = rememberStatusAppearance(status)
     val background = when (status.severity) {
-        DetectionSeverity.DANGER -> scheme.error
+        DetectionSeverity.DANGER -> adaptiveErrorColor()
         DetectionSeverity.WARNING, DetectionSeverity.ALL_CLEAR -> appearance.iconTint
         // A failed probe keeps its critical tint so it cannot pass for supporting information.
-        DetectionSeverity.INFO -> if (status.infoKind == InfoKind.ERROR) appearance.iconTint else scheme.primary
+        DetectionSeverity.INFO -> if (status.infoKind == InfoKind.ERROR) appearance.iconTint else adaptivePrimaryColor()
     }
     // Keep severity-specific fills; every MIUIX status label uses opaque white text.
     val foreground = homeStatusLabelTextColor()
@@ -77,55 +76,57 @@ public fun StatusBadge(
     modifier: Modifier = Modifier,
 ) {
     val appearance = rememberStatusAppearance(status)
-    if (LocalUiMode.current == UiMode.Miuix) {
-        Column(
-            modifier = modifier.widthIn(max = 220.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            MiuixStatusLabel(status = status, label = appearance.label)
-            appearance.metaLabel?.let { label ->
-                MiuixText(
-                    text = label,
-                    style = MiuixTheme.textStyles.footnote1,
-                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                )
+    AdaptiveContent(
+        miuix = {
+            Column(
+                modifier = modifier.widthIn(max = 220.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                MiuixStatusLabel(status = status, label = appearance.label)
+                appearance.metaLabel?.let { label ->
+                    WrapSafeText(
+                        text = label,
+                        style = DuckTypography.PanelCaption,
+                        color = adaptiveSecondaryTextColor(),
+                    )
+                }
             }
-        }
-        return
-    }
-
-    val (containerColor, contentColor) = materialStatusColors(status, MaterialTheme.colorScheme)
-    Column(
-        modifier = modifier
-            .widthIn(max = 220.dp)
-            .background(color = containerColor, shape = MaterialTheme.shapes.medium)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Icon(
-                imageVector = appearance.icon,
-                contentDescription = null,
-                tint = contentColor,
-                modifier = Modifier.size(18.dp),
-            )
-            WrapSafeText(
-                text = appearance.label,
-                style = DuckTypography.CalloutEmphasized,
-                color = contentColor,
-            )
-        }
-        appearance.metaLabel?.let { metaLabel ->
-            WrapSafeText(
-                text = metaLabel,
-                style = DuckTypography.PanelCaption,
-                color = contentColor.copy(alpha = 0.76f),
-            )
-        }
-    }
+        },
+        material = {
+            val (containerColor, contentColor) = materialStatusColors(status, MaterialTheme.colorScheme)
+            Column(
+                modifier = modifier
+                    .widthIn(max = 220.dp)
+                    .background(color = containerColor, shape = MaterialTheme.shapes.medium)
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Icon(
+                        imageVector = appearance.icon,
+                        contentDescription = null,
+                        tint = contentColor,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    WrapSafeText(
+                        text = appearance.label,
+                        style = DuckTypography.CalloutEmphasized,
+                        color = contentColor,
+                    )
+                }
+                appearance.metaLabel?.let { metaLabel ->
+                    WrapSafeText(
+                        text = metaLabel,
+                        style = DuckTypography.PanelCaption,
+                        color = contentColor.copy(alpha = 0.76f),
+                    )
+                }
+            }
+        },
+    )
 }
 
 @Composable
@@ -134,31 +135,51 @@ public fun CompactStatusBadge(
     modifier: Modifier = Modifier,
 ) {
     val appearance = rememberStatusAppearance(status)
-    if (LocalUiMode.current == UiMode.Miuix) {
-        MiuixStatusLabel(status = status, label = appearance.label, modifier = modifier)
-        return
-    }
+    AdaptiveContent(
+        miuix = {
+            MiuixStatusLabel(status = status, label = appearance.label, modifier = modifier)
+        },
+        material = {
+            val (containerColor, contentColor) = materialStatusColors(status, MaterialTheme.colorScheme)
+            Row(
+                modifier = modifier
+                    .background(color = containerColor, shape = MaterialTheme.shapes.extraSmall)
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Icon(
+                    imageVector = appearance.icon,
+                    contentDescription = null,
+                    tint = contentColor,
+                    modifier = Modifier.size(14.dp),
+                )
+                WrapSafeText(
+                    text = appearance.label,
+                    style = MaterialTheme.typography.labelSmallEmphasized,
+                    color = contentColor,
+                )
+            }
+        },
+    )
+}
 
-    val (containerColor, contentColor) = materialStatusColors(status, MaterialTheme.colorScheme)
-    Row(
-        modifier = modifier
-            .background(color = containerColor, shape = MaterialTheme.shapes.extraSmall)
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Icon(
-            imageVector = appearance.icon,
-            contentDescription = null,
-            tint = contentColor,
-            modifier = Modifier.size(14.dp),
-        )
-        WrapSafeText(
-            text = appearance.label,
-            style = MaterialTheme.typography.labelSmallEmphasized,
-            color = contentColor,
-        )
-    }
+@Composable
+public fun AdaptiveSeverityTag(
+    status: DetectorStatus,
+    label: String,
+    modifier: Modifier = Modifier,
+) {
+    AdaptiveContent(
+        miuix = { MiuixStatusLabel(status = status, label = label, modifier = modifier) },
+        material = {
+            MaterialSeverityTag(
+                status = status,
+                label = label,
+                modifier = modifier,
+            )
+        },
+    )
 }
 
 /** KSU-style compact tonal tag, using Material's semantic colors rather than MIUIX fills. */

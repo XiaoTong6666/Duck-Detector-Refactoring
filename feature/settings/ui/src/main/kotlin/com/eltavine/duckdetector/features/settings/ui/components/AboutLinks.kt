@@ -22,13 +22,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Email
 import androidx.compose.material.icons.rounded.Language
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -38,10 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.eltavine.duckdetector.core.ui.R as CoreUiR
 import com.eltavine.duckdetector.core.ui.openExternalUri
 import com.eltavine.duckdetector.features.settings.ui.R
-import io.github.xiaotong6666.uihelper.mode.LocalUiMode
-import io.github.xiaotong6666.uihelper.mode.UiMode
-import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
-import top.yukonga.miuix.kmp.theme.MiuixTheme
+import io.github.xiaotong6666.uihelper.adaptive.AdaptiveFilledIconButton
 
 private const val ABOUT_WEBSITE = "eltavine.com"
 private const val ABOUT_EMAIL = "me@eltavine.com"
@@ -58,21 +51,21 @@ internal fun AboutLinks(modifier: Modifier = Modifier) {
             Icon(
                 imageVector = Icons.Rounded.Language,
                 contentDescription = stringResource(R.string.about_label_website),
-                tint = if (LocalUiMode.current == UiMode.Miuix) aboutMiuixIconColor() else LocalContentColor.current,
+                tint = aboutMiuixIconColor(),
             )
         }
         AboutLinkButton(onClick = { openExternalUri(context, "mailto:$ABOUT_EMAIL") }) {
             Icon(
                 imageVector = Icons.Rounded.Email,
                 contentDescription = stringResource(R.string.about_label_email),
-                tint = if (LocalUiMode.current == UiMode.Miuix) aboutMiuixIconColor() else LocalContentColor.current,
+                tint = aboutMiuixIconColor(),
             )
         }
         AboutLinkButton(onClick = { openExternalUri(context, ABOUT_GITHUB_URL) }) {
             Icon(
                 painter = painterResource(CoreUiR.drawable.ic_github),
                 contentDescription = stringResource(CoreUiR.string.social_github),
-                tint = if (LocalUiMode.current == UiMode.Miuix) aboutMiuixIconColor() else LocalContentColor.current,
+                tint = aboutMiuixIconColor(),
             )
         }
     }
@@ -83,23 +76,8 @@ private fun AboutLinkButton(
     onClick: () -> Unit,
     content: @Composable () -> Unit,
 ) {
-    if (LocalUiMode.current == UiMode.Miuix) {
-        MiuixIconButton(
-            onClick = onClick,
-            backgroundColor = MiuixTheme.colorScheme.surfaceContainerHigh,
-        ) {
-            CompositionLocalProvider(LocalContentColor provides MiuixTheme.colorScheme.onSurface) {
-                content()
-            }
-        }
-        return
-    }
-    FilledIconButton(
+    AdaptiveFilledIconButton(
         onClick = onClick,
-        colors = IconButtonDefaults.filledIconButtonColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        ),
         content = content,
     )
 }

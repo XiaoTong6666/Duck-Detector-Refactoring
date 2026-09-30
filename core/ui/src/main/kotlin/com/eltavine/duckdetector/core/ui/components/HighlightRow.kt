@@ -16,7 +16,6 @@
 
 package com.eltavine.duckdetector.core.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,9 +33,8 @@ import com.eltavine.duckdetector.core.designsystem.theme.DuckTypography
 import com.eltavine.duckdetector.core.designsystem.theme.miuixInsetSurfaceColor
 import com.eltavine.duckdetector.core.ui.model.HighlightItemModel
 import com.eltavine.duckdetector.core.ui.presentation.rememberStatusAppearance
-import io.github.xiaotong6666.uihelper.mode.LocalUiMode
-import io.github.xiaotong6666.uihelper.mode.UiMode
-import top.yukonga.miuix.kmp.squircle.squircleBackground
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveSurfaceBackground
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveValue
 
 @Composable
 public fun HighlightRow(
@@ -48,12 +46,11 @@ public fun HighlightRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .then(
-                if (LocalUiMode.current == UiMode.Miuix) {
-                    Modifier.squircleBackground(miuixInsetSurfaceColor(), 16.dp)
-                } else {
-                    Modifier.background(color = DuckTheme.palette.groupedInset, shape = MaterialTheme.shapes.large)
-                },
+            .adaptiveSurfaceBackground(
+                materialColor = DuckTheme.palette.groupedInset,
+                materialShape = MaterialTheme.shapes.large,
+                miuixColor = miuixInsetSurfaceColor(),
+                miuixCornerRadius = 16.dp,
             )
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.Top,
@@ -74,7 +71,10 @@ public fun HighlightRow(
             WrapSafeText(
                 text = item.title,
                 modifier = Modifier.fillMaxWidth(),
-                style = if (LocalUiMode.current == UiMode.Miuix) DuckTypography.PanelTitle else DuckTypography.CalloutEmphasized,
+                style = adaptiveValue(
+                    material = DuckTypography.CalloutEmphasized,
+                    miuix = DuckTypography.PanelTitle,
+                ),
                 color = MaterialTheme.colorScheme.onSurface,
             )
             WrapSafeText(

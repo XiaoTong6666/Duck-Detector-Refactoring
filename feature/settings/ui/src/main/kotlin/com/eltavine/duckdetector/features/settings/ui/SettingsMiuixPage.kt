@@ -40,9 +40,8 @@ import com.eltavine.duckdetector.features.settings.ui.components.SettingsGroup
 import com.eltavine.duckdetector.features.settings.ui.components.SettingsSection
 import io.github.xiaotong6666.uihelper.adaptive.SettingsDropdownItem
 import io.github.xiaotong6666.uihelper.adaptive.SettingsToggleItem
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveVerticalScrollFeedback
 import io.github.xiaotong6666.uihelper.mode.UiMode
-import top.yukonga.miuix.kmp.utils.overScrollVertical
-import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 
 /** Native MIUIX page: the navigation shell provides the collapsing top bar and bottom bar. */
 @Composable
@@ -60,11 +59,10 @@ internal fun SettingsMiuixPage(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .scrollEndHaptic()
             // Keep the same modifier ordering as KSU / InstallerX: overscroll owns the elastic
             // top-edge gesture first, then the top-bar nested-scroll connection observes the
             // remaining content scroll. This prevents the rebound leg from collapsing the title.
-            .overScrollVertical()
+            .adaptiveVerticalScrollFeedback()
             .then(pageModifier),
         overscrollEffect = null,
         verticalArrangement = Arrangement.spacedBy(6.dp),

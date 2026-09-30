@@ -38,13 +38,11 @@ import com.eltavine.duckdetector.core.designsystem.theme.DuckTypography
 import com.eltavine.duckdetector.core.evidence.DetectionSeverity
 import com.eltavine.duckdetector.core.evidence.DetectorStatus
 import com.eltavine.duckdetector.core.ui.components.DetectorHairline
-import com.eltavine.duckdetector.core.ui.components.MiuixStatusLabel
-import com.eltavine.duckdetector.core.ui.components.MaterialSeverityTag
+import com.eltavine.duckdetector.core.ui.components.AdaptiveSeverityTag
 import com.eltavine.duckdetector.core.ui.components.WrapSafeText
 import com.eltavine.duckdetector.core.ui.presentation.rememberStatusAppearance
 import com.eltavine.duckdetector.features.dashboard.presentation.model.DashboardFindingModel
-import io.github.xiaotong6666.uihelper.mode.LocalUiMode
-import io.github.xiaotong6666.uihelper.mode.UiMode
+import io.github.xiaotong6666.uihelper.adaptive.AdaptiveContent
 
 private val FindingInset = 18.dp
 private const val FINDING_DETAIL_MAX_LINES = 3
@@ -57,7 +55,10 @@ internal fun DashboardFindingsCard(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        if (LocalUiMode.current == UiMode.Material) DashboardFindingsHeader(findings = findings)
+        AdaptiveContent(
+            material = { DashboardFindingsHeader(findings = findings) },
+            miuix = {},
+        )
         DuckPanel {
             findings.forEachIndexed { index, finding ->
                 DashboardFindingRow(finding = finding)
@@ -143,17 +144,13 @@ private fun DashboardFindingRow(
             WrapSafeText(
                 text = finding.detectorTitle,
                 modifier = Modifier.weight(1f),
-                style = if (LocalUiMode.current == UiMode.Miuix) DuckTypography.PanelCaption else DuckTypography.FootnoteEmphasized,
+                style = DuckTypography.FindingEyebrow,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            if (LocalUiMode.current == UiMode.Miuix) {
-                MiuixStatusLabel(status = finding.status, label = findingSeverityLabel(finding))
-            } else {
-                MaterialSeverityTag(
-                    status = finding.status,
-                    label = findingSeverityLabel(finding),
-                )
-            }
+            AdaptiveSeverityTag(
+                status = finding.status,
+                label = findingSeverityLabel(finding),
+            )
         }
         WrapSafeText(
             text = finding.headline,

@@ -32,7 +32,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -43,18 +42,17 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.eltavine.duckdetector.core.designsystem.theme.ShapeTokens
 import com.eltavine.duckdetector.core.designsystem.theme.AdaptiveShapeTokens
+import com.eltavine.duckdetector.core.designsystem.theme.ShapeTokens
 import com.eltavine.duckdetector.core.ui.components.WrapSafeText
 import com.eltavine.duckdetector.core.ui.openExternalUri
 import com.eltavine.duckdetector.features.settings.ui.R
 import com.eltavine.duckdetector.core.ui.R as CoreUiR
+import io.github.xiaotong6666.uihelper.adaptive.AdaptiveIconLabelChip
 import io.github.xiaotong6666.uihelper.mode.LocalUiMode
 import io.github.xiaotong6666.uihelper.mode.UiMode
 import top.yukonga.miuix.kmp.basic.Button as MiuixButton
 import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
-import top.yukonga.miuix.kmp.basic.Card as MiuixCard
-import top.yukonga.miuix.kmp.basic.CardDefaults as MiuixCardDefaults
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -217,39 +215,15 @@ internal fun AuthorDetailsDialog(
 
 @Composable
 private fun ContributionBadge(contribution: AuthorContribution) {
-    if (LocalUiMode.current == UiMode.Miuix) {
-        MiuixCard(
-            cornerRadius = 12.dp,
-            insideMargin = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-            colors = MiuixCardDefaults.defaultColors(color = MiuixTheme.colorScheme.surfaceContainerHighest),
-        ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(contribution.icon, null, tint = contribution.tint, modifier = Modifier.size(18.dp))
-                MiuixText(contribution.label, style = MiuixTheme.textStyles.footnote1)
-            }
-        }
-        return
-    }
-    Surface(
-        shape = ShapeTokens.CornerFull,
-        color = MaterialTheme.colorScheme.surfaceContainerHighest,
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = contribution.icon,
-                contentDescription = null,
-                tint = contribution.tint,
-                modifier = Modifier.size(18.dp),
-            )
-            WrapSafeText(
-                text = contribution.label,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-        }
-    }
+    AdaptiveIconLabelChip(
+        icon = contribution.icon,
+        label = contribution.label,
+        materialShape = ShapeTokens.CornerFull,
+        miuixCornerRadius = 12.dp,
+        iconTint = contribution.tint,
+        iconSize = 18.dp,
+        materialTextStyle = MaterialTheme.typography.labelMedium,
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+        useNativeCardSurface = true,
+    )
 }

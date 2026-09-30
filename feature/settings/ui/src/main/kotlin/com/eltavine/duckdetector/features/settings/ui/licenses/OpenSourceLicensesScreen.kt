@@ -20,19 +20,13 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Verified
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,7 +38,8 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.eltavine.duckdetector.features.settings.ui.R
-import com.eltavine.duckdetector.core.ui.components.WrapSafeText
+import io.github.xiaotong6666.uihelper.adaptive.AdaptiveCircularProgressIndicator
+import io.github.xiaotong6666.uihelper.adaptive.AdaptiveSummaryCard
 import io.github.xiaotong6666.uihelper.chrome.DetailPageHost
 import io.github.xiaotong6666.uihelper.mode.LocalUiMode
 import io.github.xiaotong6666.uihelper.mode.UiMode
@@ -54,11 +49,6 @@ import com.mikepenz.aboutlibraries.ui.compose.m3.chipColors
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import com.mikepenz.aboutlibraries.ui.compose.m3.libraryColors
 import com.mikepenz.aboutlibraries.ui.compose.produceLibraries
-import top.yukonga.miuix.kmp.basic.Card as MiuixCard
-import top.yukonga.miuix.kmp.basic.CircularProgressIndicator as MiuixCircularProgressIndicator
-import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun OpenSourceLicensesScreen(
@@ -89,46 +79,19 @@ fun OpenSourceLicensesScreen(
                 modifier = pageModifier.fillMaxSize().padding(contentPadding).padding(horizontal = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                MiuixCard(
+                AdaptiveSummaryCard(
+                    icon = Icons.Rounded.Verified,
+                    title = stringResource(R.string.licenses_inventory_title),
+                    summary = stringResource(R.string.licenses_inventory_subtitle),
+                    trailingText = libraryCount?.toString() ?: "…",
                     modifier = Modifier.fillMaxWidth(),
-                    insideMargin = PaddingValues(16.dp),
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        MiuixIcon(
-                            imageVector = Icons.Rounded.Verified,
-                            contentDescription = null,
-                            tint = MiuixTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp),
-                        )
-                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                            MiuixText(
-                                text = stringResource(R.string.licenses_inventory_title),
-                                style = MiuixTheme.textStyles.headline1,
-                                color = MiuixTheme.colorScheme.onSurface,
-                            )
-                            MiuixText(
-                                text = stringResource(R.string.licenses_inventory_subtitle),
-                                style = MiuixTheme.textStyles.body2,
-                                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                            )
-                        }
-                        MiuixText(
-                            text = libraryCount?.toString() ?: "…",
-                            style = MiuixTheme.textStyles.headline1,
-                            color = MiuixTheme.colorScheme.primary,
-                        )
-                    }
-                }
+                )
                 if (libraries == null) {
                     Box(
                         modifier = Modifier.fillMaxWidth().weight(1f),
                         contentAlignment = Alignment.Center,
                     ) {
-                        MiuixCircularProgressIndicator()
+                        AdaptiveCircularProgressIndicator()
                     }
                 } else {
                     // AboutLibraries' M3 container paints an unshaped common surface underneath
@@ -180,52 +143,13 @@ fun OpenSourceLicensesScreen(
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                ElevatedCard(
+                AdaptiveSummaryCard(
+                    icon = Icons.Rounded.Verified,
+                    title = stringResource(R.string.licenses_inventory_title),
+                    summary = stringResource(R.string.licenses_inventory_subtitle),
+                    trailingText = libraryCount?.toString() ?: "…",
                     modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.extraLarge,
-                    colors = CardDefaults.elevatedCardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceBright,
-                    ),
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(18.dp),
-                        horizontalArrangement = Arrangement.spacedBy(14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Verified,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(32.dp),
-                        )
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            WrapSafeText(
-                                text = stringResource(R.string.licenses_inventory_title),
-                                style = MaterialTheme.typography.titleMediumEmphasized,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                            WrapSafeText(
-                                text = stringResource(R.string.licenses_inventory_subtitle),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        Surface(
-                            shape = MaterialTheme.shapes.small,
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                        ) {
-                            WrapSafeText(
-                                text = libraryCount?.toString() ?: "…",
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                            )
-                        }
-                    }
-                }
+                )
 
                 LibrariesContainer(
                     libraries = libraries,

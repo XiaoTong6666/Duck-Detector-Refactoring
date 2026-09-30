@@ -20,8 +20,6 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.VisibilityThreshold
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -44,8 +42,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -56,8 +52,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -76,16 +71,14 @@ import com.eltavine.duckdetector.core.evidence.DetectorStatus
 import com.eltavine.duckdetector.core.ui.R
 import com.eltavine.duckdetector.core.ui.presentation.StatusAppearance
 import com.eltavine.duckdetector.core.ui.presentation.rememberStatusAppearance
-import io.github.xiaotong6666.uihelper.mode.LocalUiMode
-import io.github.xiaotong6666.uihelper.mode.UiMode
+import io.github.xiaotong6666.uihelper.adaptive.AdaptiveContent
+import io.github.xiaotong6666.uihelper.adaptive.AdaptiveExpandIcon
+import io.github.xiaotong6666.uihelper.adaptive.AdaptiveIcon
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveSecondaryTextColor
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveSurfaceBackground
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveSurfaceClip
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveValue
 import top.yukonga.miuix.kmp.anim.folmeSpring
-import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
-import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.ExpandLess
-import top.yukonga.miuix.kmp.icon.extended.ExpandMore
-import top.yukonga.miuix.kmp.squircle.squircleBackground
-import top.yukonga.miuix.kmp.squircle.squircleClip
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
  * A detector's card. Collapsed, it shows only what a reader scanning the dashboard needs: the
@@ -120,24 +113,14 @@ public fun DetectorCardFrame(
     )
     val haptics = LocalHapticFeedback.current
     val headerInteraction = remember { MutableInteractionSource() }
-    val miuix = LocalUiMode.current == UiMode.Miuix
-    // M3 has a stable card outline. Its touch feedback is the native ripple only;
-    // a pressed-corner morph felt delayed and changed the outline again on collapse.
-    val chevronRotation = if (miuix) 0f else {
-        val animated by animateFloatAsState(
-            targetValue = if (isExpanded) 180f else 0f,
-            animationSpec = tween(durationMillis = 180),
-            label = "cardChevron",
-        )
-        animated
-    }
+    val useMiuixToggleHaptics = adaptiveValue(material = false, miuix = true)
     val toggleExpandedAction: () -> Unit = {
         val next = !isExpanded
         if (expanded == null) internalExpanded = next
         onExpandedChange?.invoke(next)
     }
     val toggleExpanded: () -> Unit = {
-        if (miuix) {
+        if (useMiuixToggleHaptics) {
             haptics.performHapticFeedback(
                 if (!isExpanded) HapticFeedbackType.ToggleOn else HapticFeedbackType.ToggleOff,
             )
@@ -154,29 +137,25 @@ public fun DetectorCardFrame(
                 .fillMaxWidth()
                 .indication(headerInteraction, LocalIndication.current)
                 .then(
-                    if (!isExpanded) Modifier else if (miuix) {
-                        Modifier
-                            .squircleClip(16.dp)
-                            .clickable(
-                                interactionSource = headerInteraction,
-                                indication = null,
-                                role = Role.Button,
-                                onClickLabel = toggleDescription,
-                                onClick = toggleExpanded,
-                            )
-                    } else {
-                        Modifier
-                            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                            .clickable(
-                                interactionSource = headerInteraction,
-                                indication = null,
-                                role = Role.Button,
-                                onClickLabel = toggleDescription,
-                                onClick = toggleExpanded,
-                            )
-                    },
+                    if (!isExpanded) Modifier else Modifier
+                        .adaptiveSurfaceClip(
+                            materialShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+                            miuixCornerRadius = 16.dp,
+                        )
+                        .clickable(
+                            interactionSource = headerInteraction,
+                            indication = null,
+                            role = Role.Button,
+                            onClickLabel = toggleDescription,
+                            onClick = toggleExpanded,
+                        ),
                 )
-                .padding(start = 18.dp, end = 18.dp, top = 18.dp, bottom = if (miuix) 18.dp else 0.dp),
+                .padding(
+                    start = 18.dp,
+                    end = 18.dp,
+                    top = 18.dp,
+                    bottom = adaptiveValue(material = 0.dp, miuix = 18.dp),
+                ),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Row(
@@ -201,23 +180,8 @@ public fun DetectorCardFrame(
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                 }
-                if (LocalUiMode.current == UiMode.Miuix) {
-                    CompactStatusBadge(status = status)
-                    MiuixIcon(
-                        imageVector = if (isExpanded) MiuixIcons.ExpandLess else MiuixIcons.ExpandMore,
-                        contentDescription = null,
-                        tint = MiuixTheme.colorScheme.onSurfaceVariantActions,
-                        modifier = Modifier.size(20.dp),
-                    )
-                } else {
-                    CompactStatusBadge(status = status)
-                    Icon(
-                        imageVector = Icons.Rounded.ExpandMore,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(24.dp).rotate(chevronRotation),
-                    )
-                }
+                CompactStatusBadge(status = status)
+                AdaptiveExpandIcon(expanded = isExpanded)
             }
 
             WrapSafeText(
@@ -226,10 +190,15 @@ public fun DetectorCardFrame(
                 style = DuckTypography.PanelBody.copy(fontWeight = FontWeight.Medium),
                 color = MaterialTheme.colorScheme.onSurface,
             )
-            if (miuix && !isExpanded) collapsedOverview()
+            AdaptiveContent(
+                miuix = { if (!isExpanded) collapsedOverview() },
+                material = {},
+            )
         }
 
-        if (miuix) AnimatedVisibility(
+        AdaptiveContent(
+            miuix = {
+                AnimatedVisibility(
             visible = isExpanded,
             enter = expandVertically(
                 animationSpec = folmeSpring(
@@ -259,7 +228,7 @@ public fun DetectorCardFrame(
                         text = subtitle,
                         modifier = Modifier.fillMaxWidth(),
                         style = DuckTypography.PanelSupporting,
-                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                        color = adaptiveSecondaryTextColor(),
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -270,14 +239,22 @@ public fun DetectorCardFrame(
                         text = summary,
                         modifier = Modifier.fillMaxWidth(),
                         style = DuckTypography.PanelSupporting,
-                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                        color = adaptiveSecondaryTextColor(),
                     )
                 }
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .squircleBackground(miuixInsetSurfaceColor(), 16.dp)
-                        .squircleClip(16.dp),
+                        .adaptiveSurfaceBackground(
+                            materialColor = Color.Transparent,
+                            materialShape = MaterialTheme.shapes.large,
+                            miuixColor = miuixInsetSurfaceColor(),
+                            miuixCornerRadius = 16.dp,
+                        )
+                        .adaptiveSurfaceClip(
+                            materialShape = MaterialTheme.shapes.large,
+                            miuixCornerRadius = 16.dp,
+                        ),
                     verticalArrangement = Arrangement.spacedBy(0.dp),
                     content = content,
                 )
@@ -285,10 +262,12 @@ public fun DetectorCardFrame(
             }
         }
 
-        // One state/size transition for the mutually exclusive Material overview and details.
-        // Two independent AnimatedVisibility size animations cause the overview to release its
-        // height while the details are still growing, producing a visible two-stage jump.
-        if (!miuix) AnimatedContent(
+            },
+            material = {
+                // One state/size transition for the mutually exclusive Material overview and details.
+                // Two independent AnimatedVisibility size animations cause the overview to release its
+                // height while the details are still growing, producing a visible two-stage jump.
+                AnimatedContent(
             targetState = isExpanded,
             transitionSpec = {
                 (fadeIn(MotionTokens.FadeInOut) togetherWith fadeOut(MotionTokens.FadeInOut))
@@ -331,7 +310,9 @@ public fun DetectorCardFrame(
                     content = collapsedOverview,
                 )
             }
-        }
+                }
+            },
+        )
 
     }
 
@@ -356,23 +337,15 @@ private fun CardGlyph(
     Box(
         modifier = Modifier
             .size(44.dp)
-            .then(
-                if (LocalUiMode.current == UiMode.Miuix) {
-                    Modifier.squircleBackground(miuixInsetSurfaceColor(), 14.dp)
-                } else {
-                    Modifier.background(
-                        color = MaterialTheme.colorScheme.secondaryContainer,
-                        shape = MaterialTheme.shapes.medium,
-                    )
-                },
+            .adaptiveSurfaceBackground(
+                materialColor = MaterialTheme.colorScheme.secondaryContainer,
+                materialShape = MaterialTheme.shapes.medium,
+                miuixColor = miuixInsetSurfaceColor(),
+                miuixCornerRadius = 14.dp,
             ),
         contentAlignment = Alignment.Center,
     ) {
-        if (LocalUiMode.current == UiMode.Miuix) {
-            MiuixIcon(imageVector = icon, contentDescription = null, tint = appearance.iconTint)
-        } else {
-            Icon(imageVector = icon, contentDescription = null, tint = appearance.iconTint)
-        }
+        AdaptiveIcon(imageVector = icon, contentDescription = null, tint = appearance.iconTint)
         if (badgeIcon != null) {
             Box(
                 modifier = Modifier

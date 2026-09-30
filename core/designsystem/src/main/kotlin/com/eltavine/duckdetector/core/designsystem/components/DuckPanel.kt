@@ -28,17 +28,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.eltavine.duckdetector.core.designsystem.theme.DuckTheme
-import io.github.xiaotong6666.uihelper.mode.LocalUiMode
-import io.github.xiaotong6666.uihelper.mode.UiMode
-import top.yukonga.miuix.kmp.basic.Card as MiuixCard
+import io.github.xiaotong6666.uihelper.adaptive.AdaptiveCardSurface
 
 /** The dashboard and detail cards share one surface without changing their content or state. */
 @Composable
@@ -72,32 +68,17 @@ public fun DuckPanel(
         )
         .padding(contentPadding)
 
-    if (LocalUiMode.current == UiMode.Miuix) {
-        MiuixCard(
-            modifier = modifier.fillMaxWidth(),
-            insideMargin = PaddingValues(0.dp),
-        ) {
-            Column(
-                modifier = interactiveContentModifier,
-                verticalArrangement = verticalArrangement,
-                content = content,
-            )
-        }
-    } else {
-        val colors = CardDefaults.cardColors(containerColor = DuckTheme.palette.groupedSurface)
-        // Keep one stable Card composition while clickability changes. Swapping the
-        // clickable/non-clickable Card overload disposes AnimatedVisibility children,
-        // so expanding a detector used to jump straight to its final height.
-        Card(
-            modifier = modifier.fillMaxWidth(),
-            shape = materialShape,
-            colors = colors,
-        ) {
-            Column(
-                modifier = interactiveContentModifier,
-                verticalArrangement = verticalArrangement,
-                content = content,
-            )
-        }
+    // Keep one stable native Card composition while clickability changes. The click target stays
+    // on the inner content so expanding/collapsing children retain their composition identity.
+    AdaptiveCardSurface(
+        modifier = modifier.fillMaxWidth(),
+        materialShape = materialShape,
+        materialContainerColor = DuckTheme.palette.groupedSurface,
+    ) {
+        Column(
+            modifier = interactiveContentModifier,
+            verticalArrangement = verticalArrangement,
+            content = content,
+        )
     }
 }

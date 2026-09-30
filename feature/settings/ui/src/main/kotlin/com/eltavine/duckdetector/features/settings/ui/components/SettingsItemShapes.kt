@@ -18,11 +18,10 @@ package com.eltavine.duckdetector.features.settings.ui.components
 
 import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ListItemShapes
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import io.github.xiaotong6666.uihelper.adaptive.NativeSettingsItemShapes
+import io.github.xiaotong6666.uihelper.adaptive.nativeSettingsSegmentShape
 
 /**
  * Shapes for the [index]th of [count] rows of a settings group. The group's outer corners match the
@@ -31,31 +30,13 @@ import androidx.compose.runtime.remember
  */
 @Composable
 internal fun settingsItemShapes(index: Int, count: Int): ListItemShapes {
-    val shapes = MaterialTheme.shapes
-    return remember(index, count, shapes) {
-        // KSU / InstallerX use the Material large corner for the outside of segmented rows.
-        val outer = shapes.large.topStart
-        fun shape(inner: CornerSize) = segmentShape(index, count, inner = inner, outer = outer)
-        ListItemShapes(
-            shape = shape(shapes.extraSmall.topStart),
-            selectedShape = shape(shapes.large.topStart),
-            pressedShape = shape(shapes.large.topStart),
-            focusedShape = shape(shapes.large.topStart),
-            hoveredShape = shape(shapes.medium.topStart),
-            draggedShape = shape(shapes.large.topStart),
-        )
-    }
+    return NativeSettingsItemShapes(index = index, count = count)
 }
 
+/** Compatibility facade for the existing geometry unit test; implementation lives in uihelper. */
 internal fun segmentShape(
     index: Int,
     count: Int,
     inner: CornerSize,
     outer: CornerSize,
-): CornerBasedShape {
-    val top = if (index == 0) outer else inner
-    val bottom = if (index == count - 1) outer else inner
-    // Match KernelSU / InstallerX's Material segmented circular arcs. Continuous
-    // (squircle) corners belong to MIUIX and should not leak into the M3E skin.
-    return RoundedCornerShape(topStart = top, topEnd = top, bottomEnd = bottom, bottomStart = bottom)
-}
+): CornerBasedShape = nativeSettingsSegmentShape(index, count, inner, outer)

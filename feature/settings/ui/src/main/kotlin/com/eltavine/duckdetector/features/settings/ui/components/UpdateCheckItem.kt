@@ -29,7 +29,6 @@ import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.NewReleases
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.SystemUpdate
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.MaterialTheme
@@ -43,9 +42,8 @@ import com.eltavine.duckdetector.core.designsystem.theme.MotionTokens
 import com.eltavine.duckdetector.core.ui.components.WrapSafeText
 import com.eltavine.duckdetector.features.settings.presentation.model.SettingsUpdateStatus
 import com.eltavine.duckdetector.features.settings.ui.R
-import io.github.xiaotong6666.uihelper.mode.LocalUiMode
-import io.github.xiaotong6666.uihelper.mode.UiMode
-import top.yukonga.miuix.kmp.basic.InfiniteProgressIndicator
+import io.github.xiaotong6666.uihelper.adaptive.AdaptiveInfiniteProgressIndicator
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveValue
 
 private enum class UpdateTrailing { Recheck, Checking, Details }
 
@@ -66,7 +64,7 @@ internal fun UpdateCheckItem(
         SettingsUpdateStatus.CURRENT -> UpdateGlyph(Icons.Rounded.CheckCircle, colorScheme.primary)
         SettingsUpdateStatus.AVAILABLE -> UpdateGlyph(
             Icons.Rounded.NewReleases,
-            if (LocalUiMode.current == UiMode.Miuix) colorScheme.primary else colorScheme.onPrimaryContainer,
+            adaptiveValue(material = colorScheme.onPrimaryContainer, miuix = colorScheme.primary),
         )
         SettingsUpdateStatus.FAILED -> UpdateGlyph(Icons.Rounded.ErrorOutline, colorScheme.error)
     }
@@ -102,7 +100,7 @@ internal fun UpdateCheckItem(
                     Icon(
                         imageVector = target.icon,
                         contentDescription = null,
-                        tint = if (LocalUiMode.current == UiMode.Miuix) aboutMiuixIconColor() else target.tint,
+                        tint = adaptiveValue(material = target.tint, miuix = aboutMiuixIconColor()),
                     )
                 }
             }
@@ -127,11 +125,7 @@ internal fun UpdateCheckItem(
             ) { target ->
                 when (target) {
                     UpdateTrailing.Checking -> {
-                        if (LocalUiMode.current == UiMode.Miuix) {
-                            InfiniteProgressIndicator(size = 22.dp)
-                        } else {
-                            CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.5.dp)
-                        }
+                        AdaptiveInfiniteProgressIndicator(size = 22.dp, materialStrokeWidth = 2.5.dp)
                     }
                     UpdateTrailing.Details -> Icon(
                         imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,

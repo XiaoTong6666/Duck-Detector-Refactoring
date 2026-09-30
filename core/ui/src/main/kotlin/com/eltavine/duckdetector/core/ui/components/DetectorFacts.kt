@@ -16,14 +16,12 @@
 
 package com.eltavine.duckdetector.core.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -37,10 +35,8 @@ import com.eltavine.duckdetector.core.designsystem.theme.DuckTypography
 import com.eltavine.duckdetector.core.designsystem.theme.miuixInsetSurfaceColor
 import com.eltavine.duckdetector.core.evidence.DetectorStatus
 import com.eltavine.duckdetector.core.ui.presentation.rememberStatusAppearance
-import io.github.xiaotong6666.uihelper.mode.LocalUiMode
-import io.github.xiaotong6666.uihelper.mode.UiMode
-import top.yukonga.miuix.kmp.squircle.squircleBackground
-import top.yukonga.miuix.kmp.basic.HorizontalDivider as MiuixHorizontalDivider
+import io.github.xiaotong6666.uihelper.adaptive.AdaptiveHorizontalDivider
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveSurfaceBackground
 
 /** One fact of a card's header: a short label over its value, and the status it reports, if any. */
 @Immutable
@@ -60,15 +56,11 @@ public fun DetectorFactPair(
     Column(
         modifier = modifier
             .fillMaxHeight()
-            .then(
-                if (LocalUiMode.current == UiMode.Miuix) {
-                    Modifier.squircleBackground(miuixInsetSurfaceColor(), 16.dp)
-                } else {
-                    Modifier.background(
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        shape = MaterialTheme.shapes.large,
-                    )
-                },
+            .adaptiveSurfaceBackground(
+                materialColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                materialShape = MaterialTheme.shapes.large,
+                miuixColor = miuixInsetSurfaceColor(),
+                miuixCornerRadius = 16.dp,
             )
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -115,16 +107,9 @@ public fun DetectorHairline(
     modifier: Modifier = Modifier,
     startInset: Dp = 0.dp,
 ) {
-    if (LocalUiMode.current == UiMode.Miuix) {
-        MiuixHorizontalDivider(
-            modifier = modifier.padding(start = startInset),
-            thickness = Dp.Hairline,
-        )
-    } else {
-        HorizontalDivider(
-            modifier = modifier.padding(start = startInset),
-            thickness = Dp.Hairline,
-            color = DuckTheme.palette.separator,
-        )
-    }
+    AdaptiveHorizontalDivider(
+        modifier = modifier.padding(start = startInset),
+        thickness = Dp.Hairline,
+        materialColor = DuckTheme.palette.separator,
+    )
 }

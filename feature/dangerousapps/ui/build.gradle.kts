@@ -25,8 +25,6 @@ android {
 
 dependencies {
     implementation(libs.uihelper)
-    implementation(libs.miuix.ui)
-    implementation(libs.miuix.squircle)
     implementation(project(":core:detector"))
     implementation(project(":core:evidence"))
     api(project(":core:ui"))

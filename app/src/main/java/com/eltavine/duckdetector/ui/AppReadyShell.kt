@@ -31,7 +31,6 @@ import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.outlined.Home as HomeOutline
 import androidx.compose.material.icons.outlined.Settings as SettingsOutline
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -88,12 +87,15 @@ import com.eltavine.duckdetector.ui.shell.AppDestination
 import io.github.xiaotong6666.uihelper.chrome.AdaptiveNavigationShell
 import io.github.xiaotong6666.uihelper.chrome.NavigationShellItem
 import io.github.xiaotong6666.uihelper.chrome.NavigationShellPagerGesturePolicy
+import io.github.xiaotong6666.uihelper.adaptive.AdaptiveCircularProgressIndicator
+import io.github.xiaotong6666.uihelper.adaptive.WrapSafeText
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveBodyStyle
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveOnSurfaceColor
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveSecondaryTextColor
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveTitleStyle
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveValue
 import kotlinx.coroutines.launch
 import io.github.xiaotong6666.uihelper.mode.UiMode
-import io.github.xiaotong6666.uihelper.mode.LocalUiMode
-import top.yukonga.miuix.kmp.basic.CircularProgressIndicator as MiuixCircularProgressIndicator
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 internal fun AppReadyShell(
@@ -356,42 +358,36 @@ internal fun AppReadyShell(
 internal fun StartupBootstrapLoadingScreen(
     modifier: Modifier = Modifier,
 ) {
-    val miuix = LocalUiMode.current == UiMode.Miuix
     Box(
-        modifier = modifier.fillMaxSize().then(
-            if (miuix) Modifier.background(DuckTheme.palette.groupedBackground) else Modifier,
-        ),
+        modifier = modifier
+            .fillMaxSize()
+            .then(
+                adaptiveValue(
+                    material = Modifier,
+                    miuix = Modifier.background(DuckTheme.palette.groupedBackground),
+                ),
+            ),
         contentAlignment = Alignment.Center,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            if (miuix) {
-                MiuixCircularProgressIndicator(size = 48.dp)
-                MiuixText(
-                    text = stringResource(R.string.startup_preparing_title),
-                    style = MiuixTheme.textStyles.title3,
-                    color = MiuixTheme.colorScheme.onSurface,
-                )
-                MiuixText(
-                    text = stringResource(R.string.startup_preparing_detail),
-                    style = MiuixTheme.textStyles.body2,
-                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                )
-            } else {
-                CircularProgressIndicator()
-                Text(
-                    text = stringResource(R.string.startup_preparing_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    text = stringResource(R.string.startup_preparing_detail),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            AdaptiveCircularProgressIndicator(
+                materialSize = 40.dp,
+                miuixSize = 48.dp,
+                materialStrokeWidth = 4.dp,
+            )
+            WrapSafeText(
+                text = stringResource(R.string.startup_preparing_title),
+                style = adaptiveTitleStyle(MaterialTheme.typography.titleMedium),
+                color = adaptiveOnSurfaceColor(),
+            )
+            WrapSafeText(
+                text = stringResource(R.string.startup_preparing_detail),
+                style = adaptiveBodyStyle(MaterialTheme.typography.bodyMedium),
+                color = adaptiveSecondaryTextColor(),
+            )
         }
     }
 }

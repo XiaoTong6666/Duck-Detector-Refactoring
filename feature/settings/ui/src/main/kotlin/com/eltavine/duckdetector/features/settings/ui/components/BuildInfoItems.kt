@@ -26,7 +26,6 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Tag
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.runtime.Composable
@@ -45,8 +44,7 @@ import com.eltavine.duckdetector.core.ui.components.WrapSafeText
 import com.eltavine.duckdetector.core.ui.copyPlainTextToClipboard
 import com.eltavine.duckdetector.core.ui.presentation.formatBuildTimeUtc
 import com.eltavine.duckdetector.features.settings.ui.R
-import io.github.xiaotong6666.uihelper.mode.LocalUiMode
-import io.github.xiaotong6666.uihelper.mode.UiMode
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveValue
 
 @Composable
 internal fun VersionItem(
@@ -110,9 +108,11 @@ internal fun BuildDetailItems(
     ).joinToString(separator = "\n")
     val copyConfirmation = stringResource(R.string.about_copy_toast)
 
-    Column(verticalArrangement = Arrangement.spacedBy(
-        if (LocalUiMode.current == UiMode.Miuix) 0.dp else ListItemDefaults.SegmentedGap,
-    )) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(
+            adaptiveValue(material = androidx.compose.material3.ListItemDefaults.SegmentedGap, miuix = 0.dp),
+        ),
+    ) {
         SettingsItem(
             headline = stringResource(R.string.about_label_build_time),
             shapes = settingsItemShapes(index = firstIndex, count = count),

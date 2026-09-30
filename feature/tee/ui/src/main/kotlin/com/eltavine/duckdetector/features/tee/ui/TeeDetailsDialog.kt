@@ -21,11 +21,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -34,12 +31,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Details
 import androidx.compose.material.icons.rounded.VerifiedUser
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -49,16 +42,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import com.eltavine.duckdetector.core.designsystem.theme.ShapeTokens
 import com.eltavine.duckdetector.core.ui.components.WrapSafeText
-import io.github.xiaotong6666.uihelper.mode.LocalUiMode
-import io.github.xiaotong6666.uihelper.mode.UiMode
-import top.yukonga.miuix.kmp.basic.Card as MiuixCard
-import top.yukonga.miuix.kmp.basic.CardDefaults as MiuixCardDefaults
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
-import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.window.WindowDialog
+import io.github.xiaotong6666.uihelper.adaptive.AdaptiveSurfaceTone
+import io.github.xiaotong6666.uihelper.adaptive.AdaptiveTonalSurface
+import io.github.xiaotong6666.uihelper.adaptive.AdaptiveMetricChip
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveValue
+import io.github.xiaotong6666.uihelper.dialog.AdaptiveDetailsDialog
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -100,15 +90,27 @@ internal fun TeeDetailsDialog(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        TeeDialogMetricChip(
+                        AdaptiveMetricChip(
                             icon = Icons.Rounded.Details,
                             label = "Lines",
                             value = lineCount.toString(),
+                            materialShape = ShapeTokens.CornerLarge,
+                            iconTint = MaterialTheme.colorScheme.primary,
+                            labelStyle = MaterialTheme.typography.labelSmall,
+                            valueStyle = MaterialTheme.typography.labelLarge,
+                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            valueColor = MaterialTheme.colorScheme.onSurface,
                         )
-                        TeeDialogMetricChip(
+                        AdaptiveMetricChip(
                             icon = Icons.Rounded.VerifiedUser,
                             label = "Certificates",
                             value = certificateCount.toString(),
+                            materialShape = ShapeTokens.CornerLarge,
+                            iconTint = MaterialTheme.colorScheme.primary,
+                            labelStyle = MaterialTheme.typography.labelSmall,
+                            valueStyle = MaterialTheme.typography.labelLarge,
+                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            valueColor = MaterialTheme.colorScheme.onSurface,
                         )
                     }
                 }
@@ -200,36 +202,21 @@ internal fun TeeDialogSurface(
     cornerRadius: Dp = 16.dp,
     content: @Composable () -> Unit,
 ) {
-    if (LocalUiMode.current == UiMode.Miuix) {
-        val scheme = MiuixTheme.colorScheme
-        MiuixCard(
-            modifier = modifier,
-            cornerRadius = cornerRadius,
-            insideMargin = PaddingValues(0.dp),
-            colors = MiuixCardDefaults.defaultColors(
-                color = when (tone) {
-                    TeeDialogTone.Low -> scheme.surfaceContainer
-                    TeeDialogTone.High -> scheme.surfaceContainerHigh
-                    TeeDialogTone.Highest -> scheme.surfaceContainerHighest
-                },
-            ),
-        ) { content() }
-    } else {
-        Surface(
-            modifier = modifier,
-            color = when (tone) {
-                TeeDialogTone.Low -> MaterialTheme.colorScheme.surfaceContainerLow
-                TeeDialogTone.High -> MaterialTheme.colorScheme.surfaceContainerHigh
-                TeeDialogTone.Highest -> MaterialTheme.colorScheme.surfaceContainerHighest
-            },
-            shape = when {
-                cornerRadius == 16.dp -> ShapeTokens.CornerExtraLarge
-                tone == TeeDialogTone.Highest -> ShapeTokens.CornerLarge
-                else -> ShapeTokens.CornerLargeIncreased
-            },
-            content = content,
-        )
-    }
+    AdaptiveTonalSurface(
+        tone = when (tone) {
+            TeeDialogTone.Low -> AdaptiveSurfaceTone.Low
+            TeeDialogTone.High -> AdaptiveSurfaceTone.High
+            TeeDialogTone.Highest -> AdaptiveSurfaceTone.Highest
+        },
+        modifier = modifier,
+        materialShape = when {
+            cornerRadius == 16.dp -> ShapeTokens.CornerExtraLarge
+            tone == TeeDialogTone.Highest -> ShapeTokens.CornerLarge
+            else -> ShapeTokens.CornerLargeIncreased
+        },
+        miuixCornerRadius = cornerRadius,
+        content = content,
+    )
 }
 
 @Composable
@@ -242,139 +229,23 @@ internal fun TeeDialogFrame(
     heroContent: @Composable (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    if (LocalUiMode.current == UiMode.Miuix) {
-        WindowDialog(
-            show = show,
-            title = title,
-            summary = subtitle,
-            onDismissRequest = onDismiss,
-            maxWidth = 560.dp,
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth().heightIn(max = 560.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                heroContent?.invoke()
-                Column(
-                    modifier = Modifier.fillMaxWidth().weight(1f, fill = false).verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    content = content,
-                )
-                MiuixTextButton(
-                    text = stringResource(R.string.tee_dialog_close),
-                    onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        }
-        return
-    }
-    if (!show) return
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
+    AdaptiveDetailsDialog(
+        show = show,
+        title = title,
+        summary = subtitle,
+        icon = icon,
+        closeLabel = stringResource(R.string.tee_dialog_close),
+        onDismiss = onDismiss,
+    ) {
+        heroContent?.invoke()
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(max = 720.dp),
-            shape = MaterialTheme.shapes.extraLarge,
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            ),
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        shape = MaterialTheme.shapes.large,
-                    ) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier
-                                .padding(12.dp)
-                                .size(22.dp),
-                        )
-                    }
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
-                    ) {
-                        WrapSafeText(
-                            text = title,
-                            style = MaterialTheme.typography.titleLargeEmphasized,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                        WrapSafeText(
-                            text = subtitle,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-                heroContent?.invoke()
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
-                    content = content,
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                ) {
-                    TextButton(onClick = onDismiss) {
-                        WrapSafeText(
-                            text = stringResource(R.string.tee_dialog_close),
-                            style = MaterialTheme.typography.labelLarge,
-                        )
-                    }
-                }
-            }
-        }
+                .weight(1f, fill = adaptiveValue(material = true, miuix = false))
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(adaptiveValue(material = 14.dp, miuix = 12.dp)),
+            content = content,
+        )
     }
 }
 
-@Composable
-internal fun TeeDialogMetricChip(
-    icon: ImageVector,
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier,
-) {
-    TeeDialogSurface(tone = TeeDialogTone.Highest, modifier = modifier, cornerRadius = 12.dp) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(16.dp),
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                WrapSafeText(
-                    text = label,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                WrapSafeText(
-                    text = value,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-        }
-    }
-}

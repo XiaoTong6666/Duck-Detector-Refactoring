@@ -37,7 +37,6 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.overscroll
 import androidx.compose.foundation.rememberOverscrollEffect
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LoadingIndicator
@@ -70,12 +69,14 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
-import io.github.xiaotong6666.uihelper.mode.LocalUiMode
-import io.github.xiaotong6666.uihelper.mode.UiMode
-import top.yukonga.miuix.kmp.basic.CircularProgressIndicator as MiuixCircularProgressIndicator
-import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.utils.overScrollVertical
-import top.yukonga.miuix.kmp.utils.scrollEndHaptic
+import io.github.xiaotong6666.uihelper.adaptive.AdaptiveCircularProgressIndicator
+import io.github.xiaotong6666.uihelper.adaptive.AdaptiveContent
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveContainerContentColor
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveScrollableOverscrollEffect
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveSecondaryTextColor
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveValue
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveVerticalScrollFeedback
+import io.github.xiaotong6666.uihelper.adaptive.adaptiveViewportOverscroll
 
 @Composable
 fun DashboardScreen(
@@ -86,8 +87,13 @@ fun DashboardScreen(
     scaffoldPadding: PaddingValues? = null,
     pageModifier: Modifier = Modifier,
 ) {
-    val uiMode = LocalUiMode.current
     val materialOverscrollEffect = rememberOverscrollEffect()
+    val hostedHorizontalInset = adaptiveValue(material = 16.dp, miuix = 12.dp)
+    val pageSpacing = adaptiveValue(material = 16.dp, miuix = 12.dp)
+    val showStandaloneMaterialChrome = adaptiveValue(
+        material = scaffoldPadding == null,
+        miuix = false,
+    )
     val layoutDirection = LocalLayoutDirection.current
     val context = LocalContext.current
     val buildInfo = LocalAppBuildInfo.current
@@ -139,28 +145,23 @@ fun DashboardScreen(
             .background(DuckTheme.palette.groupedBackground)
             // Render at the entire page viewport, not at an inset card or scroll item.
             // The LazyColumn below supplies the scroll deltas to the same native effect.
-            .then(if (uiMode == UiMode.Material) Modifier.overscroll(materialOverscrollEffect) else Modifier),
+            .adaptiveViewportOverscroll(materialOverscrollEffect),
     ) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .then(
-                    if (uiMode == UiMode.Miuix) {
-                        // Match native MIUIX/KSU/InstallerX ordering: elastic overscroll is outside
-                        // the top-bar nested-scroll observer, so its rebound cannot collapse chrome.
-                        Modifier.scrollEndHaptic().overScrollVertical().then(pageModifier)
-                    } else {
-                        pageModifier
-                    },
-                ),
-            overscrollEffect = if (uiMode == UiMode.Miuix) null else materialOverscrollEffect,
-            verticalArrangement = Arrangement.spacedBy(if (uiMode == UiMode.Miuix) 12.dp else 16.dp),
+                // uihelper preserves the native MIUIX ordering: elastic overscroll remains outside
+                // the top-bar nested-scroll observer so its rebound cannot collapse chrome.
+                .adaptiveVerticalScrollFeedback()
+                .then(pageModifier),
+            overscrollEffect = adaptiveScrollableOverscrollEffect(materialOverscrollEffect),
+            verticalArrangement = Arrangement.spacedBy(pageSpacing),
             contentPadding = if (scaffoldPadding != null) {
                 // MIUIX owns the top bar and navigation bar. Their insets must not be re-applied.
                 PaddingValues(
-                    start = scaffoldPadding.calculateStartPadding(layoutDirection) + if (uiMode == UiMode.Miuix) 12.dp else 16.dp,
+                    start = scaffoldPadding.calculateStartPadding(layoutDirection) + hostedHorizontalInset,
                     top = scaffoldPadding.calculateTopPadding() + 12.dp,
-                    end = scaffoldPadding.calculateEndPadding(layoutDirection) + if (uiMode == UiMode.Miuix) 12.dp else 16.dp,
+                    end = scaffoldPadding.calculateEndPadding(layoutDirection) + hostedHorizontalInset,
                     bottom = scaffoldPadding.calculateBottomPadding() + 16.dp,
                 )
             } else {
@@ -171,7 +172,7 @@ fun DashboardScreen(
         ) {
             // Hosted pages put brand actions in the real app bar. Keep the original
             // inline brand header only for standalone/dashboard preview hosts.
-            if (uiMode == UiMode.Material && scaffoldPadding == null) {
+            if (showStandaloneMaterialChrome) {
                 item { BrandHeader() }
             }
             item {
@@ -193,7 +194,7 @@ fun DashboardScreen(
             }
         }
 
-        if (uiMode == UiMode.Material && scaffoldPadding == null) {
+        if (showStandaloneMaterialChrome) {
             StatusBarProtection(modifier = Modifier.align(Alignment.TopCenter))
         }
     }
@@ -226,7 +227,6 @@ private fun DashboardSummarySection(
 private fun DashboardLoadingOverlay(
     modifier: Modifier = Modifier,
 ) {
-    val miuix = LocalUiMode.current == UiMode.Miuix
     DuckPanel(
         modifier = modifier,
         contentPadding = PaddingValues(start = 28.dp, end = 28.dp, top = 44.dp, bottom = 44.dp),
@@ -236,25 +236,24 @@ private fun DashboardLoadingOverlay(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            if (miuix) {
-                // Native MIUIX indeterminate progress: grey track and moving accent arc.
-                MiuixCircularProgressIndicator(
-                    size = 48.dp,
-                )
-            } else {
-                LoadingIndicator(modifier = Modifier.size(56.dp))
-            }
+            AdaptiveContent(
+                miuix = {
+                    // Native MIUIX indeterminate progress: grey track and moving accent arc.
+                    AdaptiveCircularProgressIndicator(size = 48.dp)
+                },
+                material = { LoadingIndicator(modifier = Modifier.size(56.dp)) },
+            )
             WrapSafeText(
                 text = stringResource(R.string.dashboard_loading_title),
                 modifier = Modifier.padding(top = 6.dp),
-                style = if (miuix) MiuixTheme.textStyles.title3 else DuckTypography.PanelTitle,
-                color = if (miuix) MiuixTheme.colorScheme.onSurfaceContainer else MaterialTheme.colorScheme.onSurface,
+                style = DuckTypography.LoadingTitle,
+                color = adaptiveContainerContentColor(),
                 textAlign = TextAlign.Center,
             )
             WrapSafeText(
                 text = stringResource(R.string.dashboard_loading_summary),
-                style = if (miuix) MiuixTheme.textStyles.body2 else DuckTypography.PanelSupporting,
-                color = if (miuix) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant,
+                style = DuckTypography.LoadingSupporting,
+                color = adaptiveSecondaryTextColor(),
                 textAlign = TextAlign.Center,
             )
         }
