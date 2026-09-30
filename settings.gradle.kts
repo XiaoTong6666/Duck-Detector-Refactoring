@@ -31,6 +31,11 @@ pluginManagement {
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
+// An uninitialized submodule is an empty directory: the version query below would then count this
+// repository's commits, and includeBuild would fail without saying why.
+if (!file("uihelper/settings.gradle.kts").isFile) {
+    throw GradleException("The uihelper submodule is not checked out. Run: git submodule update --init --recursive")
+}
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
