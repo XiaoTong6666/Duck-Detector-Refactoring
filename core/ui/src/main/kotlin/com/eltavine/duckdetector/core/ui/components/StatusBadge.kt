@@ -56,7 +56,8 @@ public fun MiuixStatusLabel(
     val background = when (status.severity) {
         DetectionSeverity.DANGER -> scheme.error
         DetectionSeverity.WARNING, DetectionSeverity.ALL_CLEAR -> appearance.iconTint
-        DetectionSeverity.INFO -> scheme.primary
+        // A failed probe keeps its critical tint so it cannot pass for supporting information.
+        DetectionSeverity.INFO -> if (status.infoKind == InfoKind.ERROR) appearance.iconTint else scheme.primary
     }
     // Keep severity-specific fills; every MIUIX status label uses opaque white text.
     val foreground = homeStatusLabelTextColor()
@@ -163,11 +164,11 @@ public fun CompactStatusBadge(
 /** KSU-style compact tonal tag, using Material's semantic colors rather than MIUIX fills. */
 @Composable
 public fun MaterialSeverityTag(
-    severity: DetectionSeverity,
+    status: DetectorStatus,
     label: String,
     modifier: Modifier = Modifier,
 ) {
-    val (containerColor, contentColor) = materialStatusColors(severity, MaterialTheme.colorScheme)
+    val (containerColor, contentColor) = materialStatusColors(status, MaterialTheme.colorScheme)
     Box(
         modifier = modifier
             .background(containerColor, MaterialTheme.shapes.extraSmall)

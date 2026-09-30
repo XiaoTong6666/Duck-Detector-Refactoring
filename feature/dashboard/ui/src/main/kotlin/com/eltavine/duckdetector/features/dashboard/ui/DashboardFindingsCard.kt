@@ -150,7 +150,7 @@ private fun DashboardFindingRow(
                 MiuixStatusLabel(status = finding.status, label = findingSeverityLabel(finding))
             } else {
                 MaterialSeverityTag(
-                    severity = finding.status.severity,
+                    status = finding.status,
                     label = findingSeverityLabel(finding),
                 )
             }

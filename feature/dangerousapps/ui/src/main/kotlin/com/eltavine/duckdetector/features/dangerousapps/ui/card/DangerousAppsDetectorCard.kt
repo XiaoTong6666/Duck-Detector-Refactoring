@@ -42,6 +42,7 @@ import com.eltavine.duckdetector.core.ui.components.DetectorCardFrame
 import com.eltavine.duckdetector.core.ui.components.DetectorFact
 import com.eltavine.duckdetector.core.ui.components.DetectorFactPair
 import com.eltavine.duckdetector.core.ui.components.DetectorSectionFrame
+import com.eltavine.duckdetector.core.ui.components.toSectionSeverity
 import com.eltavine.duckdetector.core.ui.model.ContextItemModel
 import com.eltavine.duckdetector.features.dangerousapps.presentation.model.DangerousAppsCardModel
 import com.eltavine.duckdetector.features.dangerousapps.presentation.model.DangerousAppsHeaderFact
@@ -91,7 +92,7 @@ internal fun DangerousAppsDetectorCard(
         DetectorSectionFrame(
             title = "Packages",
             icon = Icons.Rounded.Shield,
-            severity = model.packageSectionSeverity,
+            severity = model.packageSectionSeverity?.toSectionSeverity(),
         ) {
             DangerousAppsPackageSection(model = model)
         }

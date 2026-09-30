@@ -56,7 +56,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntSize
 import com.eltavine.duckdetector.core.designsystem.theme.DuckTheme
 import com.eltavine.duckdetector.core.designsystem.theme.MotionTokens
-import com.eltavine.duckdetector.core.evidence.DetectionSeverity
 import com.eltavine.duckdetector.core.ui.R
 import io.github.xiaotong6666.uihelper.adaptive.rememberExpandableSectionState
 import io.github.xiaotong6666.uihelper.adaptive.ExpandableSectionBody
@@ -82,7 +81,7 @@ public fun DetectorSectionFrame(
     title: String,
     icon: ImageVector,
     modifier: Modifier = Modifier,
-    severity: DetectionSeverity? = null,
+    severity: SectionSeverity? = null,
     stateKey: String? = null,
     showDivider: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
@@ -122,18 +121,16 @@ public fun DetectorSectionFrame(
                     style = MiuixTheme.textStyles.headline1,
                     color = MiuixTheme.colorScheme.onSurface,
                 )
-                val accent: Color? = when (severity) {
-                    DetectionSeverity.DANGER -> MiuixTheme.colorScheme.error
-                    DetectionSeverity.WARNING -> DuckTheme.palette.caution
-                    DetectionSeverity.INFO, DetectionSeverity.ALL_CLEAR, null -> null
-                }
-                if (accent != null) {
+                if (severity != null) {
+                    val accent = when (severity) {
+                        SectionSeverity.HIGH -> MiuixTheme.colorScheme.error
+                        SectionSeverity.MEDIUM -> DuckTheme.palette.caution
+                        SectionSeverity.PROBE_ERROR -> DuckTheme.palette.critical
+                    }
                     // A genuine translucent tint, unlike the opaque errorContainer. Keep the
                     // same compact square shape as the homepage High label.
                     StatusTag(
-                        label = stringResource(
-                            if (severity == DetectionSeverity.DANGER) R.string.severity_high else R.string.severity_medium,
-                        ),
+                        label = sectionSeverityLabel(severity),
                         backgroundColor = accent.copy(alpha = 0.16f),
                         contentColor = accent,
                     )
@@ -190,12 +187,10 @@ public fun DetectorSectionFrame(
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
-                if (severity == DetectionSeverity.DANGER || severity == DetectionSeverity.WARNING) {
+                if (severity != null) {
                     MaterialSeverityTag(
-                        severity = severity,
-                        label = stringResource(
-                            if (severity == DetectionSeverity.DANGER) R.string.severity_high else R.string.severity_medium,
-                        ),
+                        status = severity.representativeStatus(),
+                        label = sectionSeverityLabel(severity),
                     )
                 }
                 Icon(
@@ -228,3 +223,12 @@ public fun DetectorSectionFrame(
         }
     }
 }
+
+@Composable
+private fun sectionSeverityLabel(severity: SectionSeverity): String = stringResource(
+    when (severity) {
+        SectionSeverity.HIGH -> R.string.severity_high
+        SectionSeverity.MEDIUM -> R.string.severity_medium
+        SectionSeverity.PROBE_ERROR -> R.string.status_info_error
+    },
+)
