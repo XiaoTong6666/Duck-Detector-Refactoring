@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.Search
@@ -32,7 +33,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import com.eltavine.duckdetector.core.ui.components.ContextLine
 import com.eltavine.duckdetector.core.ui.components.DetectorActionButton
 import com.eltavine.duckdetector.core.ui.components.DetectorCardFrame
@@ -44,6 +47,7 @@ import com.eltavine.duckdetector.features.dangerousapps.presentation.model.Dange
 import com.eltavine.duckdetector.features.dangerousapps.presentation.model.DangerousAppsHeaderFact
 import com.eltavine.duckdetector.features.dangerousapps.presentation.model.DangerousAppsHeaderFactModel
 import com.eltavine.duckdetector.features.dangerousapps.ui.DangerousAppsTargetsDialog
+import com.eltavine.duckdetector.features.dangerousapps.ui.R
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -53,12 +57,11 @@ internal fun DangerousAppsDetectorCard(
 ) {
     var showTargetsDialog by rememberSaveable { mutableStateOf(false) }
 
-    if (showTargetsDialog) {
-        DangerousAppsTargetsDialog(
-            targets = model.targetApps,
-            onDismiss = { showTargetsDialog = false },
-        )
-    }
+    DangerousAppsTargetsDialog(
+        show = showTargetsDialog,
+        targets = model.targetApps,
+        onDismiss = { showTargetsDialog = false },
+    )
 
     DetectorCardFrame(
         title = model.title,
@@ -73,7 +76,7 @@ internal fun DangerousAppsDetectorCard(
         },
         footerActions = {
             DetectorActionButton(
-                label = "View target apps (${model.targetApps.size})",
+                label = stringResource(R.string.target_app_list_view, model.targetApps.size),
                 icon = Icons.Rounded.Apps,
                 onClick = { showTargetsDialog = true },
             )
@@ -88,6 +91,7 @@ internal fun DangerousAppsDetectorCard(
         DetectorSectionFrame(
             title = "Packages",
             icon = Icons.Rounded.Shield,
+            severity = model.packageSectionSeverity,
         ) {
             DangerousAppsPackageSection(model = model)
         }
@@ -95,6 +99,7 @@ internal fun DangerousAppsDetectorCard(
         DetectorSectionFrame(
             title = "Context",
             icon = Icons.Rounded.Search,
+            showDivider = false,
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 model.context.forEach { contextItem ->
@@ -115,7 +120,7 @@ private fun DangerousAppsOverview(
     val hidden = model.headerFacts.firstOrNull { it.fact == DangerousAppsHeaderFact.HIDDEN } ?: return
 
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.Top,
     ) {

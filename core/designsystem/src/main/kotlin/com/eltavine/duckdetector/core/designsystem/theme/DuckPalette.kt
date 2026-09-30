@@ -79,3 +79,17 @@ internal fun duckPalette(scheme: ColorScheme, dark: Boolean): DuckPalette = if (
         neutral = Color(0xFF8E8E93),
     )
 }
+
+/** M3E layers from KSU / InstallerX: tonal page, bright grouped items, high inset facts. */
+internal fun expressiveDuckPalette(scheme: ColorScheme, dark: Boolean): DuckPalette = DuckPalette(
+    groupedBackground = scheme.surfaceContainer,
+    groupedSurface = scheme.surfaceBright,
+    groupedInset = scheme.surfaceContainerHigh,
+    separator = scheme.outlineVariant.copy(alpha = if (dark) 0.55f else 0.7f),
+    // Material keeps the same status hierarchy but derives accents from the active M3 scheme
+    // (including Monet), matching KSU / InstallerX. MIUIX still uses [duckPalette] unchanged.
+    positive = scheme.secondary,
+    caution = scheme.tertiary,
+    critical = scheme.error,
+    neutral = scheme.onSurfaceVariant,
+)

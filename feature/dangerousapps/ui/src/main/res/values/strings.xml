@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="target_app_list_title">Target app list</string>
+    <string name="target_app_list_summary">Legacy dangerous-app inventory currently used by this detector.</string>
+    <string name="target_app_list_targets">Targets</string>
+    <string name="target_app_list_categories">Categories</string>
+    <string name="target_app_list_close">Close</string>
+    <string name="target_app_list_view">View target apps (%1$d)</string>
+</resources>

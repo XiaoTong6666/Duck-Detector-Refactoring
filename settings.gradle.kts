@@ -38,6 +38,18 @@ dependencyResolutionManagement {
         mavenCentral()
         maven(url = "https://jitpack.io")
     }
+    versionCatalogs {
+        create("libs") {
+            // Gradle already imports gradle/libs.versions.toml for the default catalog.
+            // Match the checked-out submodule's Maven publication version automatically.
+            val uihelperVersion = providers.exec {
+                workingDir = file("uihelper")
+                commandLine("git", "rev-list", "--count", "HEAD")
+            }.standardOutput.asText.map { it.trim() }
+            library("uihelper", "io.github.xiaotong6666", "uihelper")
+                .version(uihelperVersion.get())
+        }
+    }
 }
 
 rootProject.name = "Duck Detector"
@@ -61,3 +73,7 @@ includeModules("sdk", depth = 1)
 includeModules("feature", depth = 2)
 includeModules("capability", depth = 2)
 includeModules("core", depth = 1)
+
+// Keep the UI framework as a Git submodule and an independent Gradle build. Its own version
+// catalog is authoritative; including it as a regular project would merge Duck's catalog into it.
+includeBuild("uihelper")

@@ -1,0 +1,10 @@
+<resources>
+    <string name="dashboard_export_report_hint">Tap to export full report</string>
+    <string name="dashboard_build_time_utc">Build (UTC) · %1$s</string>
+    <string name="dashboard_loading_title">Running local checks</string>
+    <string name="dashboard_loading_summary">Dashboard summary will unlock when the detector cards finish collecting evidence.</string>
+    <string name="dashboard_severity_high">High</string>
+    <string name="dashboard_severity_medium">Medium</string>
+    <string name="dashboard_severity_check">Check</string>
+    <string name="dashboard_severity_clear">Clear</string>
+</resources>
