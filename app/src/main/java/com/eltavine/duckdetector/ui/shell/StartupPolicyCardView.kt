@@ -31,7 +31,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
+import com.eltavine.duckdetector.core.ui.components.DuckIcon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -46,6 +46,14 @@ import com.eltavine.duckdetector.core.designsystem.theme.DuckTypography
 import com.eltavine.duckdetector.core.designsystem.theme.MotionTokens
 import com.eltavine.duckdetector.core.designsystem.theme.ShapeTokens
 import com.eltavine.duckdetector.core.ui.components.WrapSafeText
+import io.github.xiaotong6666.uihelper.adaptive.AdaptiveContent
+import top.yukonga.miuix.kmp.basic.BasicComponent
+import top.yukonga.miuix.kmp.basic.Button as MiuixButton
+import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
+import top.yukonga.miuix.kmp.basic.Card as MiuixCard
+import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 private val IconTileShape = ContinuousCornerShape(11.dp)
 
@@ -53,12 +61,59 @@ private val IconTileShape = ContinuousCornerShape(11.dp)
 internal fun StartupPolicyCard(
     card: StartupPolicyCardUi,
 ) {
+    AdaptiveContent(
+        miuix = { StartupPolicyCardMiuix(card) },
+        material = { StartupPolicyCardMaterial(card) },
+    )
+}
+
+@Composable
+private fun StartupPolicyCardMiuix(card: StartupPolicyCardUi) {
+    MiuixCard(
+        modifier = Modifier.fillMaxWidth(),
+        insideMargin = PaddingValues(0.dp),
+    ) {
+        BasicComponent(
+            title = card.title,
+            summary = card.headline,
+            startAction = {
+                DuckIcon(
+                    imageVector = card.icon,
+                    contentDescription = null,
+                    tint = MiuixTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(end = 12.dp).size(22.dp),
+                )
+            },
+            endActions = {
+                MiuixText(
+                    text = card.statusLabel,
+                    style = MiuixTheme.textStyles.body2,
+                    color = if (card.requiresAction) {
+                        MiuixTheme.colorScheme.onSurface
+                    } else {
+                        MiuixTheme.colorScheme.onSurfaceVariantActions
+                    },
+                )
+            },
+        )
+        MiuixText(
+            text = card.detail,
+            modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
+            style = MiuixTheme.textStyles.body2,
+            color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+        )
+        PolicyActionsMiuix(card)
+    }
+}
+
+@Composable
+private fun StartupPolicyCardMaterial(card: StartupPolicyCardUi) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(
                 color = DuckTheme.palette.groupedSurface,
-                shape = ShapeTokens.CornerExtraLargeIncreased,
+                shape = MaterialTheme.shapes.large,
             )
             .animateContentSize(MotionTokens.smoothSpring())
             .padding(18.dp),
@@ -72,10 +127,10 @@ internal fun StartupPolicyCard(
             Box(
                 modifier = Modifier
                     .size(40.dp)
-                    .background(color = DuckTheme.palette.groupedInset, shape = IconTileShape),
+                    .background(color = DuckTheme.palette.groupedInset, shape = MaterialTheme.shapes.medium),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(
+                DuckIcon(
                     imageVector = card.icon,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurface,
@@ -110,6 +165,56 @@ internal fun StartupPolicyCard(
         }
 
         PolicyActions(card = card)
+    }
+}
+
+@Composable
+private fun PolicyActionsMiuix(card: StartupPolicyCardUi) {
+    val primary = card.primaryActionLabel?.let { label ->
+        card.onPrimaryAction?.let { onClick -> PolicyAction(label, onClick) }
+    }
+    val secondary = card.secondaryActionLabel?.let { label ->
+        card.onSecondaryAction?.let { onClick -> PolicyAction(label, onClick) }
+    }
+    if (primary == null && secondary == null) return
+
+    if (card.requiresAction) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            primary?.let { action ->
+                MiuixButton(
+                    onClick = action.onClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = MiuixButtonDefaults.buttonColorsPrimary(),
+                ) {
+                    MiuixText(text = action.label, style = MiuixTheme.textStyles.button)
+                }
+            }
+            secondary?.let { action ->
+                MiuixTextButton(
+                    text = action.label,
+                    onClick = action.onClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = MiuixButtonDefaults.textButtonColorsPrimary(),
+                )
+            }
+        }
+    } else {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            listOfNotNull(secondary, primary).forEach { action ->
+                MiuixButton(
+                    onClick = action.onClick,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    MiuixText(text = action.label, style = MiuixTheme.textStyles.button)
+                }
+            }
+        }
     }
 }
 
