@@ -35,7 +35,7 @@ namespace duckdetector::nativeroot {
     };
 
     // Creates an inotify instance and adds the app's own /data/app/<pkg>-<hash> directory so the
-    // KernelSU throne hunt (search_manager -> filp_open + iterate_dir) shows up as an
+    // The manager-discovery traversal (search_manager -> filp_open + iterate_dir) shows up as an
     // IN_OPEN/IN_ACCESS on the directory inode. Runs in the app_zygote context, so the returned
     // descriptor survives into the isolated child.
     ThroneHuntWatchResult install_throne_hunt_watch(const std::string &package_directory);

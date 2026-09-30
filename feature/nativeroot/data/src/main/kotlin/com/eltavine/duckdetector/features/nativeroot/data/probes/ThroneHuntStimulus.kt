@@ -117,7 +117,8 @@ class ThroneHuntStimulus(
             }
 
             // A silent no-op is the one failure this probe cannot afford, because it looks exactly
-            // like "no KernelSU". Read the group back and refuse to call the round clean otherwise.
+            // like a false negative for the target mechanism. Read the group back and refuse to call
+            // the round clean otherwise.
             val confirmedResult = binderClient.getMimeGroup(packageName, MIME_GROUP)
             if (!confirmedResult.isSuccess) {
                 return ThroneHuntStimulusOutcome(

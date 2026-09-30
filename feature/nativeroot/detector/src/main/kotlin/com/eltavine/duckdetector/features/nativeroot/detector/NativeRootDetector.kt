@@ -32,9 +32,9 @@ import com.eltavine.duckdetector.features.nativeroot.presentation.model.NativeRo
 import com.eltavine.duckdetector.features.nativeroot.presentation.toDetectorReport
 
 /**
- * Native Root: looks for kernel-level root such as KernelSU, KernelPatch and SuSFS through
- * native probes, process and cgroup leaks, mount namespace drift, manager fingerprints,
- * temporary root artifacts and the KernelSU throne-hunt stimulus.
+ * Native Root looks for kernel-level privilege and concealment mechanisms through native probes,
+ * process and cgroup leaks, mount namespace drift, manager fingerprints, temporary root artifacts,
+ * and a manager-discovery traversal stimulus.
  *
  * Collected by [NativeRootRepository], judged by `NativeRootReport.toDetectorStatus()` in the
  * domain layer, and described by [NativeRootCardModelMapper].
@@ -52,7 +52,7 @@ public object NativeRootDetector : Detector<NativeRootReport, NativeRootCardMode
     override fun export(model: NativeRootCardModel): DetectorReport = model.toDetectorReport()
 
     /**
-     * KernelSU's pkg_observer reacts to a /data/system/packages.list rewrite by running
+     * The target package observer reacts to a /data/system/packages.list rewrite by running
      * track_throne -> search_manager("/data/app", 2), which opens and iterates every package
      * directory inode. Watching this package's own directory from app_zygote is what makes that
      * kernel-side traversal observable, so the watch is installed there rather than in the child.

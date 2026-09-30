@@ -25,8 +25,8 @@ import kotlinx.coroutines.delay
 
 // Runs one full oracle round: validates the inherited app_zygote watch, drains whatever the watch
 // collected before the stimulus, applies the zero-permission packages.list rewrite, waits out the
-// Settings coalescing window, then consumes the event stream to see what the KernelSU throne hunt
-// did to our package directory in between.
+// Settings coalescing window, then consumes the event stream to see what the manager-discovery
+// traversal did to our package directory in between.
 class KernelSuThroneHuntRound(
     context: Context? = null,
     private val carrierManager: ThroneHuntCarrierManager = ThroneHuntCarrierManager(

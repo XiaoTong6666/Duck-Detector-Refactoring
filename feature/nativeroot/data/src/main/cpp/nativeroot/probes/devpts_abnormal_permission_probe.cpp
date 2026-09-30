@@ -127,9 +127,9 @@ namespace duckdetector::nativeroot {
             inspect_pty_path(path_buf, result, false);
         }
 
-        // KernelSU devpts hooks can stamp the newly allocated PTY as u:object_r:ksu_file:s0.
+        // Root-manager devpts hooks can stamp the newly allocated PTY with a privileged file context.
         // Mostly, this path is useless
-        // Unless KernelSU Forks remove ksu_is_allow_uid check
+        // A fork may remove the UID allow-list check, so keep the context observation independent.
         // But them even reintroduce devpts hook, no one can guarantee they won't do that.
         // Just in case to try detect
         const int master_fd = posix_openpt(O_RDWR | O_NOCTTY);

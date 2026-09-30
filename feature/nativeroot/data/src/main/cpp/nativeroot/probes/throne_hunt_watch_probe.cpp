@@ -27,7 +27,7 @@
 namespace duckdetector::nativeroot {
     namespace {
 
-        // KernelSU's manager/pkg_observer.c watches /data/system for FS_CREATE|FS_MOVE on
+        // The target manager's package observer watches /data/system for FS_CREATE|FS_MOVE on
         // "packages.list" and calls track_throne(false). track_throne then runs
         // search_manager("/data/app", 2), whose my_actor does filp_open(dirpath, O_RDONLY |
         // O_NOFOLLOW) followed by iterate_dir() on every package directory inode.

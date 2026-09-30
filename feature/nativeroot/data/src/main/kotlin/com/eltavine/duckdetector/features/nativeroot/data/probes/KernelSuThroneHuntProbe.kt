@@ -43,13 +43,13 @@ data class KernelSuThroneHuntProbeResult(
         get() = directoryOpenCount + directoryAccessCount
 }
 
-// KernelSU's pkg_observer watches /data/system for a "packages.list" FS_CREATE|FS_MOVE and then
+// The target package observer watches /data/system for a "packages.list" FS_CREATE|FS_MOVE and then
 // runs track_throne -> search_manager("/data/app", 2). search_manager does filp_open() plus
 // iterate_dir() on every package directory inode, so an inotify watch placed on our own package
 // directory observes a directory IN_OPEN/IN_ACCESS that no ordinary app activity produces.
 //
 // The watch is installed during app_zygote preload and the packages.list rewrite is driven by
-// KernelSuThroneHuntRound from the main process. Reading the stream consumes it, so this probe only
+// the main-process stimulus round. Reading the stream consumes it, so this probe only
 // turns the counts the round already collected into findings.
 class KernelSuThroneHuntProbe {
 

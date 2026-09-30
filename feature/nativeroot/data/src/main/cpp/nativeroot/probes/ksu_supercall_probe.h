@@ -26,4 +26,4 @@ namespace duckdetector::nativeroot {
 
 }  // namespace duckdetector::nativeroot
 
-#endif  // DUCKDETECTOR_NATIVEROOT_PROBES_KSU_SUPERCALL_PROBE_H
+#endif  // header guard

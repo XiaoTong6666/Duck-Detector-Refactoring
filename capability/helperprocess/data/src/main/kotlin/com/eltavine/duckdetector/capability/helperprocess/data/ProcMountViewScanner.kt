@@ -29,7 +29,7 @@ import java.io.File
  * isolated observer 比较规范化后的 mountinfo；同一设备出现不同视图，说明 mount 可能只对
  * 部分进程隐藏。共享传播组允许两个基线视图，因此 expected 与 observed 分开保存。
  * Direct tokens are structured evidence, avoiding later family guesses from display text.
- * 直接 token 单独记录，避免上层从展示文本反推 Magisk/KernelSU 家族。
+ * 直接记录 token，避免上层从展示文本反推具体实现家族。
  * https://android.googlesource.com/platform/system/core/+/refs/heads/main/init/mount_namespace.cpp
  *
  * This class is intentionally free of Android framework dependencies so it can run inside the

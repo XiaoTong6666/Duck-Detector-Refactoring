@@ -24,7 +24,7 @@ enum class SelinuxOracle(val label: String) {
     POLICYLOAD_SEQNO("App-zygote seqno oracle"),
 }
 
-/** The context validity oracle's reading of the two KSU-specific contexts; [label] is the status it is shown with. */
+/** The context-validity oracle's reading of the two root-specific contexts; [label] is the status shown for it. */
 enum class SelinuxContextValidityVerdict(val label: String) {
     CLEAN("00"),
     KSU_PRESENT("11"),
