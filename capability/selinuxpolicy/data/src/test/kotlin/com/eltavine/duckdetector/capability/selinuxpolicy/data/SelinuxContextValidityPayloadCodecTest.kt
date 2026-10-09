@@ -26,6 +26,25 @@ class SelinuxContextValidityPayloadCodecTest {
     private val bridge = SelinuxContextValidityBridge()
 
     @Test
+    fun `app zygote observations survive carrier payload without changing oracle bits`() {
+        val notes = listOf(
+            "AppZygote attr/current ctime: delta=-100ns (diagnostic; not a tampering verdict)",
+            "AppZygote /mnt/obb: tmpfs label; directory listable (0 entries; review only)",
+        )
+        val original = SelinuxContextValiditySnapshot(
+            available = true,
+            carrierMatchesExpected = true,
+            oracleControlsPassed = false,
+            notes = notes,
+        )
+        val parsed = bridge.parse(SelinuxContextValidityPayloadCodec.encode(original))
+
+        assertEquals(notes, parsed.notes)
+        assertTrue(parsed.carrierMatchesExpected)
+        assertTrue(!parsed.oracleControlsPassed)
+    }
+
+    @Test
     fun `encode round trips through parser`() {
         val snapshot = SelinuxContextValiditySnapshot(
             available = true,

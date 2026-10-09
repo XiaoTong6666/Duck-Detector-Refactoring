@@ -29,6 +29,7 @@ public class SelinuxContextValidityPreload {
     private val statusPageProbe = SelinuxStatusPageProbe()
     private val procAttrCurrentProbe = SelinuxProcAttrCurrentProbe()
     private val policyloadSeqnoProbe = SelinuxPolicyloadSeqnoProbe()
+    private val appZygoteMountPermissionProbe = AppZygoteMountPermissionProbe()
 
     /**
      * Captures the carrier evidence in the app zygote. [trace] is called before each step, so an
@@ -41,9 +42,21 @@ public class SelinuxContextValidityPreload {
     ) {
         // Kept outside the try: a finished experiment's kernel side effects outlive a later failure.
         var sidtab = SelinuxSidtabSnapshot()
+        var appZygoteMount = AppZygoteMountSnapshot()
         val payload = try {
             beforeCollection()
             val currentUid = Os.getuid()
+            trace("selinux: app zygote mount permission observations")
+            appZygoteMount = if (currentUid == appInfo.uid) {
+                runCatching { appZygoteMountPermissionProbe.inspect() }.getOrElse {
+                    AppZygoteMountSnapshot(
+                        attempted = true,
+                        failureReason = "App Zygote mount observation failed: ${it.javaClass.simpleName}",
+                    )
+                }
+            } else {
+                AppZygoteMountSnapshot(failureReason = "App Zygote carrier UID mismatch")
+            }
             // Before anything that lets libselinux map the status page: on a kernel that breaks that
             // node, the first access check kills this carrier.
             trace("selinux: status page probe")
@@ -79,9 +92,21 @@ public class SelinuxContextValidityPreload {
                     checkSelinuxAccess(source, target, targetClass, permission)
                 },
             )
-            SelinuxContextValidityPayloadCodec.encode(snapshot)
+            SelinuxContextValidityPayloadCodec.encode(
+                snapshot.copy(
+                    appZygoteMount = appZygoteMount.copy(
+                        carrierVerified = currentUid == appInfo.uid &&
+                            snapshot.carrierMatchesExpected &&
+                            snapshot.pidContextMatchesCurrent == true &&
+                            snapshot.procSelfContextMatchesCurrent == true,
+                    ),
+                ),
+            )
         } catch (throwable: Throwable) {
-            fallbackPayload(throwable.message ?: "SELinux app zygote preload failed.", sidtab)
+            SelinuxContextValidityPayloadCodec.encode(
+                fallbackSnapshot(throwable.message ?: "SELinux app zygote preload failed.")
+                    .copy(sidtab = sidtab, appZygoteMount = appZygoteMount),
+            )
         } finally {
             // The access checks above leave libselinux's AVC netlink socket open. Before Android 12,
             // AppZygoteInit does not exempt what doPreload opened, so the next fork of this app zygote

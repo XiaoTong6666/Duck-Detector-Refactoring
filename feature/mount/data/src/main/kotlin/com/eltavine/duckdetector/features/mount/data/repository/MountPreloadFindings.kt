@@ -72,11 +72,27 @@ internal fun buildPreloadFindings(result: EarlyMountPreloadResult): List<MountFi
     }
 
     return buildList {
+        if (!result.mntStringsDetected && result.mntStringsStatus != "not_attempted") {
+            add(
+                MountFinding(
+                    id = "early_preload_mnt_strings_status",
+                    label = "Historical TLS mount observation",
+                    value = result.mntStringsStatus,
+                    group = MountFindingGroup.ARTIFACTS,
+                    severity = MountFindingSeverity.INFO,
+                    detail = buildString {
+                        append("A historical Bionic mntent TLS sample is not a root verdict. ")
+                        append("status=${result.mntStringsStatus}; errno=${result.mntStringsErrno}.")
+                    },
+                    origin = MountFindingOrigin.STARTUP_PRELOAD,
+                ),
+            )
+        }
         if (result.mntStringsDetected) {
             add(
                 MountFinding(
                     id = "early_preload_mnt_strings",
-                    label = "mntent strings residue",
+                    label = "Historical mntent TLS residue",
                     value = result.mntStringsSource.ifBlank {
                         result.mntStringsTarget.ifBlank { "Detected" }
                     },
@@ -91,6 +107,31 @@ internal fun buildPreloadFindings(result: EarlyMountPreloadResult): List<MountFi
                             result.mntStringsTarget.takeIf { it.isNotBlank() }
                                 ?.let { "target=$it" },
                             result.mntStringsFs.takeIf { it.isNotBlank() }?.let { "fs=$it" },
+                            "status=${result.mntStringsStatus}",
+                            "errno=${result.mntStringsErrno}",
+                        ),
+                    ),
+                    detailMonospace = true,
+                    origin = MountFindingOrigin.STARTUP_PRELOAD,
+                ),
+            )
+        }
+        if (result.liveMountDetected) {
+            add(
+                MountFinding(
+                    id = "early_preload_live_mount",
+                    label = "Live mount evidence",
+                    value = result.liveMountSource.ifBlank { "Visible early mount" },
+                    group = MountFindingGroup.ARTIFACTS,
+                    severity = MountFindingSeverity.DANGER,
+                    detail = preloadSignalDetail(
+                        result = result,
+                        signal = EarlyMountPreloadSignal.LIVE_MOUNT,
+                        extras = listOf(
+                            "Captured during NativeActivity preload, not historical TLS residue",
+                            "source=${result.liveMountSource}",
+                            "target=${result.liveMountTarget}",
+                            "fs=${result.liveMountFs}",
                         ),
                     ),
                     detailMonospace = true,

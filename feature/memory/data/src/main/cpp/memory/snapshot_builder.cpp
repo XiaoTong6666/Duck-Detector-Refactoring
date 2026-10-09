@@ -21,6 +21,7 @@
 #include "memory/detectors/fd_detector.h"
 #include "memory/detectors/function_hook_detector.h"
 #include "memory/detectors/linker_detector.h"
+#include "memory/detectors/legacy_runtime_detector.h"
 #include "memory/detectors/maps_anomaly_detector.h"
 #include "memory/detectors/signal_detector.h"
 #include "memory/detectors/system_copy_detector.h"
@@ -45,6 +46,8 @@ namespace duckdetector::memory {
         snapshot.signal = detect_signal_anomalies(maps);
         snapshot.vdso = detect_vdso_anomalies(maps);
         snapshot.linker = detect_linker_anomalies(maps);
+        const auto legacy = inspect_legacy_runtime_state();
+        snapshot.linker.findings.insert(snapshot.linker.findings.end(), legacy.begin(), legacy.end());
         return snapshot;
     }
 

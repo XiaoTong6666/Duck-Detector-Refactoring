@@ -30,6 +30,44 @@ class MemoryRepositoryTest {
     private val repository = MemoryRepository()
 
     @Test
+    fun `legacy mapped system inode finding produces review instead of clean method`() {
+        val methods = repository.buildMethods(
+            MemoryNativeSnapshot(
+                available = true,
+                findings = listOf(
+                    MemoryNativeFinding(
+                        section = "MAPS", category = "SMAPS",
+                        label = "Executable system mapping inode differs",
+                        severity = "MEDIUM", detail = "/system/lib64/libc.so",
+                    ),
+                ),
+            ),
+        )
+        val maps = methods.first { it.label == "maps + smaps" }
+        assertEquals("Review", maps.summary)
+        assertEquals(MemoryMethodOutcome.REVIEW, maps.outcome)
+    }
+
+    @Test
+    fun `native bridge state observation is not a hook verdict`() {
+        val methods = repository.buildMethods(
+            MemoryNativeSnapshot(
+                available = true,
+                findings = listOf(
+                    MemoryNativeFinding(
+                        section = "LINKER", category = "NATIVE_BRIDGE",
+                        label = "Android NativeBridge runtime state",
+                        severity = "LOW", detail = "Available=true",
+                    ),
+                ),
+            ),
+        )
+        val loader = methods.first { it.label == "Loader visibility" }
+        assertEquals("Review", loader.summary)
+        assertEquals(MemoryMethodOutcome.REVIEW, loader.outcome)
+    }
+
+    @Test
     fun `entry prologue is unsupported on ABIs without its instruction patterns`() {
         val methods = repository.buildMethods(
             MemoryNativeSnapshot(available = true, hookChecksRan = true, entryChecksSupported = false),

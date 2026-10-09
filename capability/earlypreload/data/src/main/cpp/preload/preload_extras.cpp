@@ -93,6 +93,9 @@ namespace duckdetector::preload {
         );
         put_boolean_extra(env, intent, intentClass, "early_futile_hide", result.futileHideDetected);
         put_boolean_extra(env, intent, intentClass, "early_mnt_strings", result.mntStringsDetected);
+        put_boolean_extra(env, intent, intentClass, "early_live_mount", result.liveMountDetected);
+        put_string_extra(env, intent, intentClass, "early_mnt_strings_status", result.mntStringsStatus);
+        put_long_extra(env, intent, intentClass, "early_mnt_strings_errno", result.mntStringsErrno);
         put_boolean_extra(env, intent, intentClass, "early_mount_id_gap",
                           result.mountIdGapDetected);
         put_boolean_extra(env, intent, intentClass, "early_minor_dev_gap",
@@ -108,6 +111,9 @@ namespace duckdetector::preload {
         put_string_extra(env, intent, intentClass, "early_mnt_strings_target",
                          result.mntStringsTarget);
         put_string_extra(env, intent, intentClass, "early_mnt_strings_fs", result.mntStringsFs);
+        put_string_extra(env, intent, intentClass, "early_live_mount_source", result.liveMountSource);
+        put_string_extra(env, intent, intentClass, "early_live_mount_target", result.liveMountTarget);
+        put_string_extra(env, intent, intentClass, "early_live_mount_fs", result.liveMountFs);
     }
 
     void attach_virtualization_preload_extras(

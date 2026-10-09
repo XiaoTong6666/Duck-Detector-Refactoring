@@ -23,6 +23,7 @@
 #include "nativeroot/common/codec.h"
 #include "nativeroot/probes/kernel_probe.h"
 #include "nativeroot/probes/kernelpatch_nr_supercall_latency_probe.h"
+#include "nativeroot/probes/statx_timing_probe.h"
 #include "nativeroot/probes/kernelpatch_superkey_probe.h"
 #include "nativeroot/probes/devpts_abnormal_permission_probe.h"
 #include "nativeroot/probes/permission_boundary_probe.h"
@@ -63,6 +64,7 @@ namespace duckdetector::nativeroot {
         const ProbeResult self_process_ioc_probe = run_self_process_ioc_probe();
         const ProbeResult ksu_supercall_probe = run_ksu_supercall_probe();
         const ProbeResult kernelpatch_supercall_latency_probe = run_kernelpatch_supercall_latency_check();
+        const ProbeResult statx_timing_probe = run_statx_fstatat_timing_observation();
         const ProbeResult kernelpatch_superkey_probe = run_kernelpatch_superkey_check();
         const ProbeResult devpts_abnormal_permission_probe = run_devpts_permission_check();
         const ProbeResult permission_boundary_probe = run_permission_boundary_check();
@@ -134,6 +136,7 @@ namespace duckdetector::nativeroot {
         append_probe_findings(snapshot, self_process_ioc_probe, dedupe);
         append_probe_findings(snapshot, ksu_supercall_probe, dedupe);
         append_probe_findings(snapshot, kernelpatch_supercall_latency_probe, dedupe);
+        append_probe_findings(snapshot, statx_timing_probe, dedupe);
         append_probe_findings(snapshot, kernelpatch_superkey_probe, dedupe);
         append_probe_findings(snapshot, devpts_abnormal_permission_probe, dedupe);
         append_probe_findings(snapshot, permission_boundary_probe, dedupe);

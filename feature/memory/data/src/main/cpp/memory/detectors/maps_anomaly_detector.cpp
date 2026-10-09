@@ -18,6 +18,7 @@
 #include "memory/detectors/maps_anomaly_detector.h"
 
 #include "memory/common/maps_reader.h"
+#include "memory/detectors/legacy_map_identity_detector.h"
 
 #include <sstream>
 
@@ -108,6 +109,10 @@ namespace duckdetector::memory {
                 );
             }
         }
+
+        const auto legacyFindings = inspect_legacy_map_identities(maps);
+        signals.findings.insert(
+                signals.findings.end(), legacyFindings.begin(), legacyFindings.end());
 
         return signals;
     }

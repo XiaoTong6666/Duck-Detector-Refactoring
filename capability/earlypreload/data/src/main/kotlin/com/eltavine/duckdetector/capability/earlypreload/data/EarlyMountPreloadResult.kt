@@ -32,6 +32,7 @@ public enum class EarlyMountPreloadSignal(
 ) {
     FUTILE_HIDE("FUTILE_HIDE", "FutileHide"),
     MNT_STRINGS("MNT_STRINGS", "MntStrings"),
+    LIVE_MOUNT("LIVE_MOUNT", "Live mount evidence"),
     MOUNT_ID_GAP("MOUNT_ID_GAP", "MountIdGap"),
     MINOR_DEV_GAP("MINOR_DEV_GAP", "MinorDevGap"),
     PEER_GROUP_GAP("PEER_GROUP_GAP", "PeerGroupGap"),
@@ -45,6 +46,9 @@ public data class EarlyMountPreloadCapturedExtras(
     val contextValid: Boolean = true,
     val futileHideDetected: Boolean = false,
     val mntStringsDetected: Boolean = false,
+    val liveMountDetected: Boolean = false,
+    val mntStringsStatus: String = "not_attempted",
+    val mntStringsErrno: Int = 0,
     val mountIdGapDetected: Boolean = false,
     val minorDevGapDetected: Boolean = false,
     val peerGroupGapDetected: Boolean = false,
@@ -53,6 +57,9 @@ public data class EarlyMountPreloadCapturedExtras(
     val mntStringsSource: String = "",
     val mntStringsTarget: String = "",
     val mntStringsFs: String = "",
+    val liveMountSource: String = "",
+    val liveMountTarget: String = "",
+    val liveMountFs: String = "",
 )
 
 public data class EarlyMountPreloadResult(
@@ -62,6 +69,9 @@ public data class EarlyMountPreloadResult(
     val details: String = "",
     val futileHideDetected: Boolean = false,
     val mntStringsDetected: Boolean = false,
+    val liveMountDetected: Boolean = false,
+    val mntStringsStatus: String = "not_attempted",
+    val mntStringsErrno: Int = 0,
     val mountIdGapDetected: Boolean = false,
     val minorDevGapDetected: Boolean = false,
     val peerGroupGapDetected: Boolean = false,
@@ -70,6 +80,9 @@ public data class EarlyMountPreloadResult(
     val mntStringsSource: String = "",
     val mntStringsTarget: String = "",
     val mntStringsFs: String = "",
+    val liveMountSource: String = "",
+    val liveMountTarget: String = "",
+    val liveMountFs: String = "",
     val findings: List<String> = emptyList(),
     val isContextValid: Boolean = false,
     val source: EarlyMountPreloadSource = EarlyMountPreloadSource.NONE,
@@ -84,6 +97,9 @@ public data class EarlyMountPreloadResult(
             }
             if (mntStringsDetected) {
                 add(EarlyMountPreloadSignal.MNT_STRINGS)
+            }
+            if (liveMountDetected) {
+                add(EarlyMountPreloadSignal.LIVE_MOUNT)
             }
             if (mountIdGapDetected) {
                 add(EarlyMountPreloadSignal.MOUNT_ID_GAP)
@@ -100,7 +116,7 @@ public data class EarlyMountPreloadResult(
         get() = activeSignals.size
 
     val hasDangerSignal: Boolean
-        get() = futileHideDetected || mntStringsDetected || mountIdGapDetected
+        get() = futileHideDetected || mntStringsDetected || liveMountDetected || mountIdGapDetected
 
     val hasWarningSignal: Boolean
         get() = minorDevGapDetected || peerGroupGapDetected
@@ -150,6 +166,9 @@ public data class EarlyMountPreloadResult(
         public const val KEY_CONTEXT_VALID: String = "early_preload_context_valid"
         public const val KEY_FUTILE_HIDE: String = "early_futile_hide"
         public const val KEY_MNT_STRINGS: String = "early_mnt_strings"
+        public const val KEY_LIVE_MOUNT: String = "early_live_mount"
+        public const val KEY_MNT_STRINGS_STATUS: String = "early_mnt_strings_status"
+        public const val KEY_MNT_STRINGS_ERRNO: String = "early_mnt_strings_errno"
         public const val KEY_MOUNT_ID_GAP: String = "early_mount_id_gap"
         public const val KEY_MINOR_DEV_GAP: String = "early_minor_dev_gap"
         public const val KEY_PEER_GROUP_GAP: String = "early_peer_group_gap"
@@ -158,6 +177,9 @@ public data class EarlyMountPreloadResult(
         public const val KEY_MNT_STRINGS_SOURCE: String = "early_mnt_strings_source"
         public const val KEY_MNT_STRINGS_TARGET: String = "early_mnt_strings_target"
         public const val KEY_MNT_STRINGS_FS: String = "early_mnt_strings_fs"
+        public const val KEY_LIVE_MOUNT_SOURCE: String = "early_live_mount_source"
+        public const val KEY_LIVE_MOUNT_TARGET: String = "early_live_mount_target"
+        public const val KEY_LIVE_MOUNT_FS: String = "early_live_mount_fs"
 
         public fun empty(source: EarlyMountPreloadSource = EarlyMountPreloadSource.NONE): EarlyMountPreloadResult {
             return EarlyMountPreloadResult(source = source)
@@ -195,6 +217,9 @@ public data class EarlyMountPreloadResult(
                     },
                     futileHideDetected = bundle.getBoolean(KEY_FUTILE_HIDE, false),
                     mntStringsDetected = bundle.getBoolean(KEY_MNT_STRINGS, false),
+                    liveMountDetected = bundle.getBoolean(KEY_LIVE_MOUNT, false),
+                    mntStringsStatus = bundle.getString(KEY_MNT_STRINGS_STATUS) ?: "not_attempted",
+                    mntStringsErrno = bundle.getLong(KEY_MNT_STRINGS_ERRNO, 0L).toInt(),
                     mountIdGapDetected = bundle.getBoolean(KEY_MOUNT_ID_GAP, false),
                     minorDevGapDetected = bundle.getBoolean(KEY_MINOR_DEV_GAP, false),
                     peerGroupGapDetected = bundle.getBoolean(KEY_PEER_GROUP_GAP, false),
@@ -203,6 +228,9 @@ public data class EarlyMountPreloadResult(
                     mntStringsSource = bundle.getString(KEY_MNT_STRINGS_SOURCE).orEmpty(),
                     mntStringsTarget = bundle.getString(KEY_MNT_STRINGS_TARGET).orEmpty(),
                     mntStringsFs = bundle.getString(KEY_MNT_STRINGS_FS).orEmpty(),
+                    liveMountSource = bundle.getString(KEY_LIVE_MOUNT_SOURCE).orEmpty(),
+                    liveMountTarget = bundle.getString(KEY_LIVE_MOUNT_TARGET).orEmpty(),
+                    liveMountFs = bundle.getString(KEY_LIVE_MOUNT_FS).orEmpty(),
                 ),
             )
         }
@@ -215,6 +243,9 @@ public data class EarlyMountPreloadResult(
                 details = extras.details,
                 futileHideDetected = extras.futileHideDetected,
                 mntStringsDetected = extras.mntStringsDetected,
+                liveMountDetected = extras.liveMountDetected,
+                mntStringsStatus = extras.mntStringsStatus,
+                mntStringsErrno = extras.mntStringsErrno,
                 mountIdGapDetected = extras.mountIdGapDetected,
                 minorDevGapDetected = extras.minorDevGapDetected,
                 peerGroupGapDetected = extras.peerGroupGapDetected,
@@ -223,6 +254,9 @@ public data class EarlyMountPreloadResult(
                 mntStringsSource = extras.mntStringsSource,
                 mntStringsTarget = extras.mntStringsTarget,
                 mntStringsFs = extras.mntStringsFs,
+                liveMountSource = extras.liveMountSource,
+                liveMountTarget = extras.liveMountTarget,
+                liveMountFs = extras.liveMountFs,
                 isContextValid = extras.contextValid,
                 source = EarlyMountPreloadSource.INTENT,
             ).normalize()
@@ -252,6 +286,9 @@ public data class EarlyMountPreloadResult(
                     },
                     futileHideDetected = values.boolean(KEY_FUTILE_HIDE),
                     mntStringsDetected = values.boolean(KEY_MNT_STRINGS),
+                    liveMountDetected = values.boolean(KEY_LIVE_MOUNT),
+                    mntStringsStatus = values.string(KEY_MNT_STRINGS_STATUS).ifBlank { "not_attempted" },
+                    mntStringsErrno = values.long(KEY_MNT_STRINGS_ERRNO).toInt(),
                     mountIdGapDetected = values.boolean(KEY_MOUNT_ID_GAP),
                     minorDevGapDetected = values.boolean(KEY_MINOR_DEV_GAP),
                     peerGroupGapDetected = values.boolean(KEY_PEER_GROUP_GAP),
@@ -260,6 +297,9 @@ public data class EarlyMountPreloadResult(
                     mntStringsSource = values.string(KEY_MNT_STRINGS_SOURCE),
                     mntStringsTarget = values.string(KEY_MNT_STRINGS_TARGET),
                     mntStringsFs = values.string(KEY_MNT_STRINGS_FS),
+                    liveMountSource = values.string(KEY_LIVE_MOUNT_SOURCE),
+                    liveMountTarget = values.string(KEY_LIVE_MOUNT_TARGET),
+                    liveMountFs = values.string(KEY_LIVE_MOUNT_FS),
                 ),
             )
         }

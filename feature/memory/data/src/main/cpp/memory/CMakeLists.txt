@@ -4,6 +4,8 @@ duckdetector_native_unit(duckdetector_memory
     common/page_access.cpp
     detectors/function_hook_detector.cpp
     detectors/maps_anomaly_detector.cpp
+    detectors/legacy_map_identity_detector.cpp
+    detectors/legacy_runtime_detector.cpp
     detectors/system_copy_comparison.cpp
     detectors/system_copy_detector.cpp
     detectors/fd_detector.cpp

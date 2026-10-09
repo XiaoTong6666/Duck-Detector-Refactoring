@@ -23,6 +23,8 @@ internal object SelinuxContextValidityPayloadCodec {
 
     fun encode(snapshot: SelinuxContextValiditySnapshot): String {
         return buildString {
+            append("APP_ZYGOTE_MOUNT=")
+                .append(escapeValue(AppZygoteMountPayloadCodec.encode(snapshot.appZygoteMount))).append('\n')
             append("SIDTAB_SNAPSHOT=").append(escapeValue(SelinuxSidtabPayloadCodec.encode(snapshot.sidtab))).append('\n')
             append("AVAILABLE=").append(if (snapshot.available) '1' else '0').append('\n')
             append("PROBE_ATTEMPTED=").append(if (snapshot.probeAttempted) '1' else '0')

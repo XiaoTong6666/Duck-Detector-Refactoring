@@ -40,6 +40,9 @@ public open class EarlyMountPreloadBridge {
                 details = nativeGetDetails(),
                 futileHideDetected = nativeWasFutileHideDetected(),
                 mntStringsDetected = nativeWasMntStringsDetected(),
+                liveMountDetected = nativeWasLiveMountDetected(),
+                mntStringsStatus = nativeGetMntStringsStatus(),
+                mntStringsErrno = nativeGetMntStringsErrno(),
                 mountIdGapDetected = nativeWasMountIdGapDetected(),
                 minorDevGapDetected = nativeWasMinorDevGapDetected(),
                 peerGroupGapDetected = nativeWasPeerGroupGapDetected(),
@@ -48,6 +51,9 @@ public open class EarlyMountPreloadBridge {
                 mntStringsSource = nativeGetMntStringsSource(),
                 mntStringsTarget = nativeGetMntStringsTarget(),
                 mntStringsFs = nativeGetMntStringsFs(),
+                liveMountSource = nativeGetLiveMountSource(),
+                liveMountTarget = nativeGetLiveMountTarget(),
+                liveMountFs = nativeGetLiveMountFs(),
                 findings = nativeGetFindings().toList(),
                 isContextValid = nativeIsPreloadContextValid(),
                 source = EarlyMountPreloadSource.NATIVE,
@@ -78,6 +84,12 @@ public open class EarlyMountPreloadBridge {
 
     private external fun nativeWasMntStringsDetected(): Boolean
 
+    private external fun nativeWasLiveMountDetected(): Boolean
+
+    private external fun nativeGetMntStringsStatus(): String
+
+    private external fun nativeGetMntStringsErrno(): Int
+
     private external fun nativeWasPeerGroupGapDetected(): Boolean
 
     private external fun nativeGetDetectionMethod(): String
@@ -95,6 +107,10 @@ public open class EarlyMountPreloadBridge {
     private external fun nativeGetMntStringsTarget(): String
 
     private external fun nativeGetMntStringsFs(): String
+
+    private external fun nativeGetLiveMountSource(): String
+    private external fun nativeGetLiveMountTarget(): String
+    private external fun nativeGetLiveMountFs(): String
 
     private external fun nativeReset()
 

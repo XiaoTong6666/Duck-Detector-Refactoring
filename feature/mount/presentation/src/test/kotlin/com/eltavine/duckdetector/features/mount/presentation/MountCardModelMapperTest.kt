@@ -84,7 +84,7 @@ class MountCardModelMapperTest {
                 findings = listOf(
                     MountFinding(
                         id = "early_preload_mnt_strings",
-                        label = "mntent strings residue",
+                        label = "Historical mntent TLS residue",
                         value = "/data/adb/modules",
                         group = MountFindingGroup.ARTIFACTS,
                         severity = MountFindingSeverity.DANGER,
@@ -115,7 +115,7 @@ class MountCardModelMapperTest {
             ),
         )
 
-        assertTrue(model.artifactRows.any { it.label == "mntent strings residue" })
+        assertTrue(model.artifactRows.any { it.label == "Historical mntent TLS residue" })
         assertTrue(model.consistencyRows.any { it.label == "Futile hide" })
         assertTrue(model.methodRows.any { it.label == "Startup preload" && it.value == "2 hit(s)" })
         assertTrue(model.scanRows.any { it.label == "Startup preload" && it.value == "Detected" })

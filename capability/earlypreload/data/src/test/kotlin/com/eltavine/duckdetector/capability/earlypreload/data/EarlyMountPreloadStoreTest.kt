@@ -92,6 +92,39 @@ class EarlyMountPreloadStoreTest {
         assertTrue(selected.findings.isEmpty())
     }
 
+    @Test
+    fun `raw TLS read failure remains distinct from no root detection`() {
+        val failed = EarlyMountPreloadResult(
+            hasRun = true, mntStringsStatus = "unavailable_read", mntStringsErrno = 1,
+            mntStringsDetected = false, liveMountDetected = false,
+        ).normalize()
+        assertFalse(failed.mntStringsDetected)
+        assertEquals("unavailable_read", failed.mntStringsStatus)
+        assertEquals(1, failed.mntStringsErrno)
+        assertFalse(failed.hasDangerSignal)
+    }
+
+    @Test
+    fun `live mount and historical TLS are distinct signals in intent transport`() {
+        EarlyMountPreloadStore.replaceBridgeForTesting(FakePreloadBridge(EarlyMountPreloadResult.empty()))
+        EarlyMountPreloadStore.capture(mapOf(
+            EarlyMountPreloadResult.KEY_HAS_RUN to true,
+            EarlyMountPreloadResult.KEY_LIVE_MOUNT to true,
+            EarlyMountPreloadResult.KEY_LIVE_MOUNT_SOURCE to "magisk",
+            EarlyMountPreloadResult.KEY_LIVE_MOUNT_TARGET to "/data/adb/modules",
+            EarlyMountPreloadResult.KEY_LIVE_MOUNT_FS to "tmpfs",
+            EarlyMountPreloadResult.KEY_MNT_STRINGS to false,
+            EarlyMountPreloadResult.KEY_MNT_STRINGS_STATUS to "present_in_current_mounts",
+        ))
+        val selected = EarlyMountPreloadStore.currentResult()
+        assertTrue(selected.liveMountDetected)
+        assertFalse(selected.mntStringsDetected)
+        assertEquals("present_in_current_mounts", selected.mntStringsStatus)
+        assertEquals("magisk", selected.liveMountSource)
+        assertEquals("/data/adb/modules", selected.liveMountTarget)
+        assertEquals(1, selected.findingCount)
+    }
+
     private class FakePreloadBridge(
         private val result: EarlyMountPreloadResult,
     ) : EarlyMountPreloadBridge() {

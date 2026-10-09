@@ -100,6 +100,7 @@ class SelinuxRepository(
         val carrierResult = contextValidityProbe.interpret(carrierSnapshot)
         val contextValidityResult = carrierResult
         methods += buildContextValidityMethod(contextValidityResult)
+        methods += buildAppZygoteMountMethod(carrierSnapshot.appZygoteMount)
         methods += buildPolicyloadSeqnoMethod(contextValidityResult)
         methods += buildProcAttrCurrentMethod(carrierResult, EvidenceSource.DEDICATED_CARRIER)
         methods += buildDirtyPolicyMethods(carrierSnapshot)

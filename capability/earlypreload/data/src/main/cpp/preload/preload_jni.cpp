@@ -82,6 +82,48 @@ Java_com_eltavine_duckdetector_capability_earlypreload_data_EarlyMountPreloadBri
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
+Java_com_eltavine_duckdetector_capability_earlypreload_data_EarlyMountPreloadBridge_nativeWasLiveMountDetected(
+        JNIEnv *, jobject) {
+    const auto *r = duckdetector::preload::get_stored_result();
+    return r != nullptr && r->liveMountDetected;
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_eltavine_duckdetector_capability_earlypreload_data_EarlyMountPreloadBridge_nativeGetLiveMountSource(
+        JNIEnv *env, jobject) {
+    const auto *r = duckdetector::preload::get_stored_result();
+    return env->NewStringUTF(r != nullptr ? r->liveMountSource.c_str() : "");
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_eltavine_duckdetector_capability_earlypreload_data_EarlyMountPreloadBridge_nativeGetLiveMountTarget(
+        JNIEnv *env, jobject) {
+    const auto *r = duckdetector::preload::get_stored_result();
+    return env->NewStringUTF(r != nullptr ? r->liveMountTarget.c_str() : "");
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_eltavine_duckdetector_capability_earlypreload_data_EarlyMountPreloadBridge_nativeGetLiveMountFs(
+        JNIEnv *env, jobject) {
+    const auto *r = duckdetector::preload::get_stored_result();
+    return env->NewStringUTF(r != nullptr ? r->liveMountFs.c_str() : "");
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_eltavine_duckdetector_capability_earlypreload_data_EarlyMountPreloadBridge_nativeGetMntStringsStatus(
+        JNIEnv *env, jobject) {
+    const auto *r = duckdetector::preload::get_stored_result();
+    return env->NewStringUTF(r != nullptr ? r->mntStringsStatus.c_str() : "not_attempted");
+}
+
+extern "C" JNIEXPORT jint JNICALL
+Java_com_eltavine_duckdetector_capability_earlypreload_data_EarlyMountPreloadBridge_nativeGetMntStringsErrno(
+        JNIEnv *, jobject) {
+    const auto *r = duckdetector::preload::get_stored_result();
+    return r != nullptr ? r->mntStringsErrno : 0;
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
 Java_com_eltavine_duckdetector_capability_earlypreload_data_EarlyMountPreloadBridge_nativeWasPeerGroupGapDetected(
         JNIEnv *,
         jobject
