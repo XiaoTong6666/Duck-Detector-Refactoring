@@ -30,12 +30,18 @@ namespace duckdetector::preload {
         bool peerGroupGapDetected = false;
         bool mountIdGapDetected = false;
         bool mntStringsDetected = false;
+        bool liveMountDetected = false;
+        std::string mntStringsStatus = "not_attempted";
+        int mntStringsErrno = 0;
 
         std::int64_t nsMntCtimeDeltaNs = 0;
         std::int64_t mountInfoCtimeDeltaNs = 0;
         std::string mntStringsSource;
         std::string mntStringsTarget;
         std::string mntStringsFs;
+        std::string liveMountSource;
+        std::string liveMountTarget;
+        std::string liveMountFs;
 
         std::vector<std::string> findings;
 

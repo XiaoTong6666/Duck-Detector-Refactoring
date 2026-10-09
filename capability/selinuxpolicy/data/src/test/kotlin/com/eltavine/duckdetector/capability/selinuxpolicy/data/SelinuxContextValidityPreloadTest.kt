@@ -64,6 +64,24 @@ class SelinuxContextValidityPreloadTest {
     }
 
     @Test
+    fun `fallback payload retains early App Zygote mount observations`() {
+        val collected = AppZygoteMountSnapshot(
+            attempted = true,
+            available = true,
+            paths = listOf(AppZygoteMountPath(
+                path = "/mnt", attempted = true, available = true,
+            )),
+        )
+        val snapshot = SelinuxContextValidityBridge().parse(
+            SelinuxContextValidityPreload().fallbackPayload(
+                "later preload step failed", appZygoteMount = collected,
+            ),
+        )
+        assertEquals(collected, snapshot.appZygoteMount)
+        assertEquals("later preload step failed", snapshot.failureReason)
+    }
+
+    @Test
     fun `augment preload snapshot restores DirtySepolicy style attr and rule probes`() {
         val snapshot = SelinuxContextValidityAugmentation.augmentPreloadSnapshot(
             baseSnapshot = SelinuxContextValiditySnapshot(

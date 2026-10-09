@@ -32,6 +32,7 @@ public class SelinuxContextValidityPreload {
     private val avcLookupProbe = SelinuxAvcLookupProbe()
     private val policyloadSeqnoProbe = SelinuxPolicyloadSeqnoProbe()
     private val dirtySepolicyRawProbe = SelinuxDirtySepolicyRawProbe()
+    private val appZygoteMountPermissionProbe = AppZygoteMountPermissionProbe()
 
     /**
      * Captures the carrier evidence in the app zygote. [trace] is called before each step, so an
@@ -48,9 +49,21 @@ public class SelinuxContextValidityPreload {
         var procAttrResults: List<SelinuxProcAttrCurrentResult>? = null
         var avcLookup = SelinuxAvcLookupSnapshot()
         var dirtySepolicyRaw = SelinuxDirtySepolicyRawSnapshot()
+        var appZygoteMount = AppZygoteMountSnapshot()
         val payload = try {
             beforeCollection()
             val currentUid = Os.getuid()
+            trace("selinux: app zygote mount permission observations")
+            appZygoteMount = if (currentUid == appInfo.uid) {
+                runCatching { appZygoteMountPermissionProbe.inspect() }.getOrElse {
+                    AppZygoteMountSnapshot(
+                        attempted = true,
+                        failureReason = "App Zygote mount observation failed: ${it.javaClass.simpleName}",
+                    )
+                }
+            } else {
+                AppZygoteMountSnapshot(failureReason = "App Zygote carrier UID mismatch")
+            }
             // Before anything that lets libselinux map the status page: on a kernel that breaks that
             // node, the first access check kills this carrier.
             trace("selinux: status page probe")
@@ -106,7 +119,14 @@ public class SelinuxContextValidityPreload {
                 },
             )
             trace("selinux: direct raw access rule replay")
-            val withRaw = collectDirtySepolicyRawSafely(snapshot) {
+            val withRaw = collectDirtySepolicyRawSafely(snapshot.copy(
+                appZygoteMount = appZygoteMount.copy(
+                    carrierVerified = currentUid == appInfo.uid &&
+                        snapshot.carrierMatchesExpected &&
+                        snapshot.pidContextMatchesCurrent == true &&
+                        snapshot.procSelfContextMatchesCurrent == true,
+                ),
+            )) {
                 dirtySepolicyRawProbe.inspect(
                     snapshot, Build.TYPE == "user",
                     statusHeader = (statusPage as? SelinuxStatusPageResult.Intact)?.header,
@@ -123,6 +143,7 @@ public class SelinuxContextValidityPreload {
                 procAttrResults,
                 avcLookup,
                 dirtySepolicyRaw,
+                appZygoteMount,
             )
         } finally {
             // The access checks above leave libselinux's AVC netlink socket open. Before Android 12,
@@ -280,6 +301,7 @@ public class SelinuxContextValidityPreload {
         procAttrResults: List<SelinuxProcAttrCurrentResult>? = null,
         avcLookup: SelinuxAvcLookupSnapshot = SelinuxAvcLookupSnapshot(),
         dirtySepolicyRaw: SelinuxDirtySepolicyRawSnapshot = SelinuxDirtySepolicyRawSnapshot(),
+        appZygoteMount: AppZygoteMountSnapshot = AppZygoteMountSnapshot(),
     ): String {
         return SelinuxContextValidityPayloadCodec.encode(fallbackSnapshot(reason).copy(
             sidtab = sidtab,
@@ -288,6 +310,7 @@ public class SelinuxContextValidityPreload {
             procAttrCurrentResults = procAttrResults.orEmpty(),
             avcLookup = avcLookup,
             dirtySepolicyRaw = dirtySepolicyRaw,
+            appZygoteMount = appZygoteMount,
         ))
     }
 

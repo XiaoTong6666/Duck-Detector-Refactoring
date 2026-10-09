@@ -1,4 +1,5 @@
 duckdetector_native_unit(duckdetector_selinuxpolicy
+    app_zygote_directory_probe.cpp
     context_validity_checks.cpp
     context_validity_probe.cpp
     context_validity_symbols.cpp

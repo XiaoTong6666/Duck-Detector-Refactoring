@@ -56,4 +56,20 @@ class EarlyMountPreloadResultTest {
         assertFalse(warning.hasWarningSignal)
         assertTrue(warning.findings.all { it.endsWith("|INFO") })
     }
+
+    @Test
+    fun `live mounts are danger independently of historical TLS and informational mount gaps`() {
+        val live = EarlyMountPreloadResult(
+            hasRun = true,
+            liveMountDetected = true,
+            mountIdGapDetected = true,
+            futileHideDetected = true,
+        ).normalize()
+        assertTrue(live.hasDangerSignal)
+        assertFalse(live.mntStringsDetected)
+        assertFalse(live.hasWarningSignal)
+        assertTrue(live.findings.contains("LIVE_MOUNT|Live mount evidence|DANGER"))
+        assertTrue(live.findings.contains("MOUNT_ID_GAP|MountIdGap|INFO"))
+        assertTrue(live.findings.contains("FUTILE_HIDE|FutileHide|INFO"))
+    }
 }

@@ -101,6 +101,16 @@ class MemoryRepository(
     }
 
     internal fun buildMethods(snapshot: MemoryNativeSnapshot): List<MemoryMethodResult> {
+        val legacyMapsReview = snapshot.findings.any {
+            it.label == "Framework JAR mapped inode differs" ||
+                it.label == "Executable system mapping inode differs" ||
+                it.label == "ART ODEX inlining option observed" ||
+                it.label.contains("cache view identity differs")
+        }
+        val legacyRuntimeReview = snapshot.findings.any {
+            it.label == "Android NativeBridge runtime state" ||
+                it.label == "Process is being traced"
+        }
         return listOf(
             MemoryMethodResult(
                 method = MemoryMethod.GOT_PLT_RESOLUTION,
@@ -138,13 +148,13 @@ class MemoryRepository(
                 summary = when {
                     snapshot.writableExec || snapshot.anonymousExec || snapshot.sharedDirtyExec ||
                             snapshot.systemCopyModified -> "Anomaly"
-                    snapshot.swappedExec || snapshot.systemCopyUnverified -> "Review"
+                    snapshot.swappedExec || snapshot.systemCopyUnverified || legacyMapsReview -> "Review"
                     else -> "Clean"
                 },
                 outcome = when {
                     snapshot.writableExec || snapshot.anonymousExec || snapshot.sharedDirtyExec ||
                             snapshot.systemCopyModified -> MemoryMethodOutcome.DETECTED
-                    snapshot.swappedExec || snapshot.systemCopyUnverified -> MemoryMethodOutcome.REVIEW
+                    snapshot.swappedExec || snapshot.systemCopyUnverified || legacyMapsReview -> MemoryMethodOutcome.REVIEW
                     else -> MemoryMethodOutcome.CLEAN
                 },
                 detail = "Scans non-ART executable mappings for writable or anonymous code, shared-dirty system code and swapped pages, and compares each privately copied page of system code with its file.",
@@ -181,12 +191,12 @@ class MemoryRepository(
                 method = MemoryMethod.LOADER_VISIBILITY,
                 summary = when {
                     snapshot.hiddenModule || snapshot.deletedLibrary -> "Mismatch"
-                    snapshot.mapsOnlyModule || snapshot.vdsoRemapped || snapshot.vdsoUnusualBase -> "Review"
+                    snapshot.mapsOnlyModule || snapshot.vdsoRemapped || snapshot.vdsoUnusualBase || legacyRuntimeReview -> "Review"
                     else -> "Clean"
                 },
                 outcome = when {
                     snapshot.hiddenModule || snapshot.deletedLibrary -> MemoryMethodOutcome.DETECTED
-                    snapshot.mapsOnlyModule || snapshot.vdsoRemapped || snapshot.vdsoUnusualBase -> MemoryMethodOutcome.REVIEW
+                    snapshot.mapsOnlyModule || snapshot.vdsoRemapped || snapshot.vdsoUnusualBase || legacyRuntimeReview -> MemoryMethodOutcome.REVIEW
                     else -> MemoryMethodOutcome.CLEAN
                 },
                 detail = if (snapshot.vdsoChecksRan) {
