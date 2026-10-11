@@ -20,6 +20,7 @@ package com.eltavine.duckdetector.features.selinux.presentation
 import com.eltavine.duckdetector.features.selinux.domain.SelinuxAvcLookupCollection
 import com.eltavine.duckdetector.features.selinux.domain.SelinuxAvcLookupProfile
 import com.eltavine.duckdetector.features.selinux.domain.SelinuxAvcLookupReading
+import com.eltavine.duckdetector.features.selinux.domain.SelinuxAppZygoteTimingVerdict
 import com.eltavine.duckdetector.features.selinux.domain.SelinuxCheckResult
 import com.eltavine.duckdetector.features.selinux.presentation.model.SelinuxDetailRowModel
 import java.util.Locale
@@ -27,6 +28,30 @@ import java.util.Locale
 internal const val AVC_EXTRA_LOOKUP_IMPACT =
     "Rejected app_zygote attr/current writes repeatedly cost an extra AVC lookup. The per-CPU counter is shared " +
         "and does not show which code queried it; this is supporting evidence, not tool identification or root proof."
+
+internal fun appZygoteTimingRow(result: SelinuxCheckResult): SelinuxDetailRowModel {
+    val reading = requireNotNull(result.avcLookup)
+    val verdict = reading.timingVerdict
+    return SelinuxDetailRowModel(
+        label = result.method,
+        value = verdict.label,
+        status = when (verdict) {
+            SelinuxAppZygoteTimingVerdict.POSITIVE -> com.eltavine.duckdetector.core.evidence.DetectorStatus.danger()
+            else -> com.eltavine.duckdetector.core.evidence.DetectorStatus.info(
+                com.eltavine.duckdetector.core.evidence.InfoKind.SUPPORT
+            )
+        },
+        detail = "A=invalid type, B=same-length newline prefix; both must return EINVAL. " +
+            "512 AB/BA pairs, 32 warmups; CLOCK_MONOTONIC_RAW; median of paired A−B > 0 ns is the candidate " +
+            "boundary, requiring at least 12/16 positive block medians and a majority of A-slower pairs. " +
+            "CPU migrations invalidate classification. One preload carrier is not an independent-device baseline.\n" +
+            "Observed: paired A−B=${reading.medianDeltaNs} ns; A=${reading.medianANs} ns, " +
+            "B=${reading.medianBNs} ns; A slower=${reading.aSlower}/${reading.pairs}; " +
+            "blocks positive/negative/zero=${reading.positiveBlocks}/${reading.negativeBlocks}/${reading.zeroBlocks}; " +
+            "CPU migrations=${reading.cpuMigrations}; collection=${reading.collection.label}. " +
+            "Positive timing is a conditional SELinux Hide side-channel, not proof of a specific root tool.",
+    )
+}
 
 internal fun avcLookupRow(result: SelinuxCheckResult): SelinuxDetailRowModel {
     val reading = requireNotNull(result.avcLookup)
@@ -50,7 +75,8 @@ internal fun avcLookupRow(result: SelinuxCheckResult): SelinuxDetailRowModel {
             reading.rateB?.let { append("; B rate=${String.format(Locale.ROOT, "%.3f", it)}") }
             append(".\nTiming over ${reading.pairs} pairs: median A=${reading.medianANs} ns, ")
             append("B=${reading.medianBNs} ns, paired A−B=${reading.medianDeltaNs} ns. ")
-            append("The stock handler already converts A and skips B, so timing is not interpreted.")
+            append("The separate App Zygote timing row interprets a validated 512-pair sample; " +
+                "the AVC profile still uses counts only.")
             details.failureReason?.let { append("\n$it") }
         },
     )

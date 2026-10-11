@@ -36,6 +36,19 @@ class SelinuxAvcLookupPayloadTest {
         assertEquals(collected, SelinuxContextValidityBridge().parse(retained).avcLookup)
     }
 
+    @Test fun `512 paired timing evidence survives the retained native payload`() {
+        val complete = collected.copy(
+            pairs = 512, medianANs = 1093, medianBNs = 937, medianDeltaNs = 156,
+            aSlower = 422, positiveBlocks = 16, negativeBlocks = 0, zeroBlocks = 0, cpuMigrations = 0,
+        )
+        val encoded = SelinuxAvcLookupPayloadCodec.encode(complete)
+        assertTrue(encoded.contains("PAIRS=512"))
+        assertTrue(encoded.contains("POSITIVE_BLOCKS=16"))
+        assertEquals(complete, SelinuxAvcLookupPayloadCodec.decode(encoded))
+        val retained = SelinuxContextValidityPayloadCodec.encode(SelinuxContextValiditySnapshot(avcLookup = complete))
+        assertEquals(complete, SelinuxContextValidityBridge().parse(retained).avcLookup)
+    }
+
     @Test fun `every outcome keeps its step errno and child record through a round trip`() {
         val zeros = List(4) { 0L }
         listOf(

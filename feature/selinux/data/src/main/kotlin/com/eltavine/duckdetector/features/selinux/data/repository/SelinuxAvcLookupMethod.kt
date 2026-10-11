@@ -23,6 +23,7 @@ import com.eltavine.duckdetector.capability.selinuxpolicy.data.SelinuxAvcLookupS
 import com.eltavine.duckdetector.features.selinux.domain.SelinuxAvcLookupCollection
 import com.eltavine.duckdetector.features.selinux.domain.SelinuxAvcLookupCollectionDetails
 import com.eltavine.duckdetector.features.selinux.domain.SelinuxAvcLookupReading
+import com.eltavine.duckdetector.features.selinux.domain.SelinuxAppZygoteTimingVerdict
 import com.eltavine.duckdetector.features.selinux.domain.SelinuxCheckResult
 import com.eltavine.duckdetector.features.selinux.domain.SelinuxOracle
 
@@ -45,6 +46,11 @@ internal fun buildAvcLookupMethod(snapshot: SelinuxAvcLookupSnapshot): SelinuxCh
         medianANs = snapshot.medianANs,
         medianBNs = snapshot.medianBNs,
         medianDeltaNs = snapshot.medianDeltaNs,
+        cpuMigrations = snapshot.cpuMigrations,
+        aSlower = snapshot.aSlower,
+        positiveBlocks = snapshot.positiveBlocks,
+        negativeBlocks = snapshot.negativeBlocks,
+        zeroBlocks = snapshot.zeroBlocks,
         details = SelinuxAvcLookupCollectionDetails(
             step = snapshot.step?.name,
             errno = snapshot.errno,
@@ -68,6 +74,20 @@ internal fun buildAvcLookupMethod(snapshot: SelinuxAvcLookupSnapshot): SelinuxCh
         isSecure = null,
         permissionDenied = reading.collection == SelinuxAvcLookupCollection.PERMISSION_LIMITED,
         oracle = SelinuxOracle.APP_ZYGOTE_AVC_LOOKUPS,
+        avcLookup = reading,
+    )
+}
+
+/** Independent UI row for the timing interpretation of the same preload sample, not a second oracle. */
+internal fun buildAppZygoteTimingMethod(snapshot: SelinuxAvcLookupSnapshot): SelinuxCheckResult {
+    val reading = requireNotNull(buildAvcLookupMethod(snapshot).avcLookup)
+    val verdict = reading.timingVerdict
+    return SelinuxCheckResult(
+        method = SelinuxOracle.APP_ZYGOTE_ATTR_TIMING.label,
+        status = verdict.label,
+        isSecure = if (verdict == SelinuxAppZygoteTimingVerdict.POSITIVE) false else null,
+        permissionDenied = reading.collection == SelinuxAvcLookupCollection.PERMISSION_LIMITED,
+        oracle = SelinuxOracle.APP_ZYGOTE_ATTR_TIMING,
         avcLookup = reading,
     )
 }

@@ -37,8 +37,13 @@ using duckdetector::common::ChildEnd;
 static std::string mode;
 static uint32_t counters[kCpuLimit];
 static int pinned;
-static unsigned writes, identity_reads, stats_reads;
+static unsigned writes, identity_reads, stats_reads, cpu_reads, clock_reads;
 static uint64_t clock_ns;
+// Deterministic scheduling for injected host tests; production uses the real sched_getcpu().
+extern "C" int sched_getcpu(void) noexcept {
+    ++cpu_reads;
+    return mode == "timing_migrated" && (cpu_reads % 2) == 0 ? 3 : 2;
+}
 // Android 15 levelFrom=user assigns these categories to the primary user.
 static const char kCarrierLevel[] = "u:r:app_zygote:s0:c512,c768";
 static bool sparse() { return mode == "sparse"; }
@@ -109,7 +114,15 @@ WriteOutcome write_payload(int fd, const char *payload) {
     const bool a = !strcmp(payload, kPayloadA);
     assert(fd == 42 && (a || !strcmp(payload, kPayloadB)));
     ++writes;
-    clock_ns += a ? 300 : 200;
+    // Every 32-pair block has sixteen negative and sixteen positive differences.
+    // A lower median is negative; the upper median and midpoint average are positive.
+    if (mode == "median_boundary" && writes >= 3 + 2 * kWarmup &&
+        writes < 3 + 2 * (kWarmup + kPairs)) {
+        const unsigned pair = (writes - 3) / 2 - kWarmup;
+        clock_ns += a ? (pair % kBlockPairs < kBlockPairs / 2 ? 199 : 300) : 200;
+    } else {
+        clock_ns += a ? 300 : 200;
+    }
     if (mode == "no_setcurrent") return {EACCES, -1};
     if (mode == "control_success" && writes == 1) return {0, static_cast<int64_t>(kPayloadLength)};
     if (mode == "control_b_eperm" && writes == 2) return {EPERM, -1};
@@ -120,6 +133,7 @@ WriteOutcome write_payload(int fd, const char *payload) {
 }
 void close_attr(int fd) { assert(fd == 42); }
 int now_ns(uint64_t &value) {
+    ++clock_reads;
     if (mode == "clock_failed") return EINVAL;
     value = ++clock_ns;
     return 0;
@@ -164,7 +178,7 @@ static void reset(const char *test) {
     // Counters start just below the 32-bit wrap, so every batch delta needs modular arithmetic.
     std::fill(std::begin(counters), std::end(counters), 0xFFFFF000u);
     pinned = -1;
-    writes = identity_reads = stats_reads = 0;
+    writes = identity_reads = stats_reads = cpu_reads = clock_reads = 0;
     clock_ns = 1000;
 }
 static void parsers() {
@@ -199,22 +213,34 @@ static void expect(const char *test, State state, Step step, int error) {
     reset(test);
     const Result result = collect();
     const Report &report = result.report;
-    assert(report.state == state && report.step == step && report.error == error);
+    if (report.state != state || report.step != step || report.error != error) {
+        fprintf(stderr, "test=%s state=%d expected=%d step=%d expected=%d error=%d expected=%d pairs=%u migrations=%u\n",
+                test, (int)report.state, (int)state, (int)report.step, (int)step,
+                report.error, error, report.pairs, report.cpu_migrations);
+        abort();
+    }
     const bool counted = state == State::kCollected;
     const uint32_t a = mode == "two_two" ? 8198 : 4102, b = mode == "one_two" || mode == "two_two" ? 8198 : 4102;
     if (counted || report.identity_changed) {
         assert(report.rounds == kRounds && report.pairs == kPairs && writes == 2 + 2 * (kWarmup + kPairs) + 2 * kRounds * kWrites);
         assert(report.cpu == (sparse() ? 4 : 2) && report.cpu_row == 2 && report.cpu_rows == (sparse() ? 4u : 8u));
         assert(report.possible_cpus == report.cpu_rows && stats_reads == 1 + 4 * kRounds);
+        // Each write needs its own start and end clock reads.
+        assert(clock_reads == 4 * (kWarmup + kPairs));
         for (unsigned round = 0; round < kRounds; ++round) assert(report.batch_a[round] == a && report.batch_b[round] == b);
-        assert(report.median_a_ns == 301 && report.median_b_ns == 201 && report.median_delta_ns == 100);
+        if (mode == "median_boundary") {
+            assert(report.median_a_ns == 200 && report.median_b_ns == 201 && report.median_delta_ns == -1);
+            assert(report.negative_blocks == 16 && report.positive_blocks == 0 && report.a_slower == 256);
+        } else {
+            assert(report.median_a_ns == 301 && report.median_b_ns == 201 && report.median_delta_ns == 100);
+        }
     }
     if (counted) assert(report.unexpected == Payload::kNone && !report.identity_changed && identity_reads == 2);
     if (state == State::kTimingOnly) assert(report.pairs == kPairs && report.unexpected == Payload::kNone);
 }
 int main() {
     parsers();
-    for (const char *test : {"stock", "one_two", "two_two", "sparse", "carrier_plain", "carrier_secondary", "carrier_all"}) expect(test, State::kCollected, Step::kFinished, 0);
+    for (const char *test : {"stock", "one_two", "two_two", "sparse", "carrier_plain", "carrier_secondary", "carrier_all", "median_boundary"}) expect(test, State::kCollected, Step::kFinished, 0);
     expect("wrong_uid", State::kUnsupported, Step::kCarrier, 0);
     for (const char *test : {"wrong_domain", "domain_prefix", "wrong_role", "level_prefix", "empty_categories", "bad_categories"}) {
         expect(test, State::kUnsupported, Step::kCarrier, 0);
@@ -234,6 +260,8 @@ int main() {
     assert(writes == 1 && accepted.unexpected == Payload::kA && accepted.unexpected_bytes == kPayloadLength);
     expect("control_b_eperm", State::kPermissionLimited, Step::kControls, EPERM);
     expect("timing_eintr", State::kInconclusive, Step::kTiming, EINTR);
+    expect("timing_migrated", State::kInconclusive, Step::kTiming, EAGAIN);
+    assert(writes == 2 + 2 * (kWarmup + kPairs));
     expect("clock_failed", State::kInconclusive, Step::kTiming, EINVAL);
     expect("counting_short", State::kInconclusive, Step::kCounting, 0);
     reset("counting_short");
@@ -265,7 +293,7 @@ int main() {
     };
     const std::string one_two = payload("one_two");
     assert(one_two.starts_with("SCHEMA=1\nSTATE=COLLECTED\nSTEP=FINISHED\nERRNO=0\nUNEXPECTED_PAYLOAD=NONE\n"));
-    for (const char *line : {"\nCPU=2\nCPU_ROW=2\nCPU_ROWS=8\nPOSSIBLE_CPUS=8\nPAIRS=128\nROUNDS=4\nWRITES=4096\n",
+    for (const char *line : {"\nCPU=2\nCPU_ROW=2\nCPU_ROWS=8\nPOSSIBLE_CPUS=8\nPAIRS=512\nCPU_MIGRATIONS=0\nA_SLOWER=512\nPOSITIVE_BLOCKS=16\nNEGATIVE_BLOCKS=0\nZERO_BLOCKS=0\nROUNDS=4\nWRITES=4096\n",
             "\nBATCH_A=4102,4102,4102,4102\nBATCH_B=8198,8198,8198,8198\n",
             "\nMEDIAN_A_NS=301\nMEDIAN_B_NS=201\nMEDIAN_DELTA_NS=100\n",
             "\nCHILD_END=EXITED\nCHILD_EXIT=0\nCHILD_SIGNAL=0\nCHILD_ERRNO=0\n"}) {

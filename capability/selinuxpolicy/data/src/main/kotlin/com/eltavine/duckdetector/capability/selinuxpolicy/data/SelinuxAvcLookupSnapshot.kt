@@ -52,6 +52,11 @@ public data class SelinuxAvcLookupSnapshot(
     val cpuRows: Int = 0,
     val possibleCpus: Int = 0,
     val pairs: Int = 0,
+    val cpuMigrations: Int = 0,
+    val aSlower: Int = 0,
+    val positiveBlocks: Int = 0,
+    val negativeBlocks: Int = 0,
+    val zeroBlocks: Int = 0,
     val rounds: Int = 0,
     val writesPerBatch: Int = 0,
     val batchesA: List<Long> = emptyList(),
@@ -69,6 +74,6 @@ public data class SelinuxAvcLookupSnapshot(
         /** Must match kRounds, kWrites and kPairs in avc_lookup_probe.h. */
         public const val ROUNDS: Int = 4
         public const val WRITES_PER_BATCH: Int = 4096
-        public const val PAIRS: Int = 128
+        public const val PAIRS: Int = 512
     }
 }

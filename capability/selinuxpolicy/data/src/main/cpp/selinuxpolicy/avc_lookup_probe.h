@@ -24,7 +24,9 @@ namespace duckdetector::selinux::avc_lookup {
                   same_tail(kPayloadA + 1, kPayloadB + 1));
     constexpr unsigned kPayloadLength = sizeof(kPayloadA) - 1;
     constexpr unsigned kWarmup = 32;
-    constexpr unsigned kPairs = 128;
+    // Collect 512 paired timing samples after warm-up.
+    constexpr unsigned kPairs = 512;
+    constexpr unsigned kBlockPairs = 32;
     constexpr unsigned kRounds = 4;
     constexpr unsigned kWrites = 4096;
     // Largest CPU number plus one, and most cache_stats rows, the parsers accept.
@@ -52,6 +54,11 @@ namespace duckdetector::selinux::avc_lookup {
         unsigned cpu_rows = 0;
         unsigned possible_cpus = 0;
         unsigned pairs = 0;
+        unsigned cpu_migrations = 0;
+        unsigned a_slower = 0;
+        unsigned positive_blocks = 0;
+        unsigned negative_blocks = 0;
+        unsigned zero_blocks = 0;
         unsigned rounds = 0;
         std::array<uint32_t, kRounds> batch_a{};
         std::array<uint32_t, kRounds> batch_b{};

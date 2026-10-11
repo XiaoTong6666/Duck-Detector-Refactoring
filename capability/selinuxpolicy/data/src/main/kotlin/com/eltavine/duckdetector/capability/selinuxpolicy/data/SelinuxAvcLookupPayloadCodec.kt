@@ -73,6 +73,11 @@ internal object SelinuxAvcLookupPayloadCodec {
             cpuRows = number("CPU_ROWS", 0, 0L..256L).toInt(),
             possibleCpus = number("POSSIBLE_CPUS", 0, 0L..256L).toInt(),
             pairs = number("PAIRS", 0, 0L..PAIRS).toInt(),
+            cpuMigrations = number("CPU_MIGRATIONS", 0, 0L..PAIRS).toInt(),
+            aSlower = number("A_SLOWER", 0, 0L..PAIRS).toInt(),
+            positiveBlocks = number("POSITIVE_BLOCKS", 0, 0L..(PAIRS / 32)).toInt(),
+            negativeBlocks = number("NEGATIVE_BLOCKS", 0, 0L..(PAIRS / 32)).toInt(),
+            zeroBlocks = number("ZERO_BLOCKS", 0, 0L..(PAIRS / 32)).toInt(),
             rounds = number("ROUNDS", 0, 0L..ROUNDS).toInt(),
             writesPerBatch = number("WRITES", 0, 0L..WRITES_PER_BATCH).toInt(),
             batchesA = batches("BATCH_A"),
@@ -107,6 +112,11 @@ internal object SelinuxAvcLookupPayloadCodec {
         entry("CPU_ROWS", snapshot.cpuRows)
         entry("POSSIBLE_CPUS", snapshot.possibleCpus)
         entry("PAIRS", snapshot.pairs)
+        entry("CPU_MIGRATIONS", snapshot.cpuMigrations)
+        entry("A_SLOWER", snapshot.aSlower)
+        entry("POSITIVE_BLOCKS", snapshot.positiveBlocks)
+        entry("NEGATIVE_BLOCKS", snapshot.negativeBlocks)
+        entry("ZERO_BLOCKS", snapshot.zeroBlocks)
         entry("ROUNDS", snapshot.rounds)
         entry("WRITES", snapshot.writesPerBatch)
         entry("BATCH_A", snapshot.batchesA.takeIf { it.isNotEmpty() }?.joinToString(","))
@@ -123,8 +133,10 @@ internal object SelinuxAvcLookupPayloadCodec {
 
     // Only collected counts and completed timing are interpreted, so only those records must be whole.
     private fun SelinuxAvcLookupSnapshot.consistent(): Boolean {
+        // Legacy 128-pair preload payloads stay readable but are never timing-positive.
         val cleanChild = childEnd == SelinuxAvcLookupChildEnd.EXITED && childExitStatus == 0 && childSignal == 0 &&
-            unexpectedPayload == SelinuxAvcLookupPayload.NONE && !identityChanged && pairs == PAIRS
+            unexpectedPayload == SelinuxAvcLookupPayload.NONE && !identityChanged && pairs in setOf(128, PAIRS) &&
+            aSlower <= pairs && positiveBlocks + negativeBlocks + zeroBlocks <= pairs / 32
         return when (state) {
             SelinuxAvcLookupState.COLLECTED -> cleanChild && step == SelinuxAvcLookupStep.FINISHED && errno == 0 &&
                 rounds == ROUNDS && writesPerBatch == WRITES_PER_BATCH &&

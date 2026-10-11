@@ -78,6 +78,11 @@ namespace {
             << "\nIDENTITY_CHANGED=" << (report.identity_changed ? 1 : 0)
             << "\nCPU=" << report.cpu << "\nCPU_ROW=" << report.cpu_row << "\nCPU_ROWS=" << report.cpu_rows
             << "\nPOSSIBLE_CPUS=" << report.possible_cpus << "\nPAIRS=" << report.pairs
+            << "\nCPU_MIGRATIONS=" << report.cpu_migrations
+            << "\nA_SLOWER=" << report.a_slower
+            << "\nPOSITIVE_BLOCKS=" << report.positive_blocks
+            << "\nNEGATIVE_BLOCKS=" << report.negative_blocks
+            << "\nZERO_BLOCKS=" << report.zero_blocks
             << "\nROUNDS=" << report.rounds << "\nWRITES=" << kWrites
             << "\nBATCH_A=" << join(report.batch_a) << "\nBATCH_B=" << join(report.batch_b)
             << "\nMEDIAN_A_NS=" << report.median_a_ns << "\nMEDIAN_B_NS=" << report.median_b_ns

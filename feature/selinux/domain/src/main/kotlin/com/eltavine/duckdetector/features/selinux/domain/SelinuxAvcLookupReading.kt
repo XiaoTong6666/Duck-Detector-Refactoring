@@ -38,6 +38,13 @@ enum class SelinuxAvcLookupCollection(val label: String) {
     INCONCLUSIVE("Inconclusive"),
 }
 
+enum class SelinuxAppZygoteTimingVerdict(val label: String) {
+    POSITIVE("Positive A−B timing asymmetry"),
+    NEGATIVE("Negative A−B timing asymmetry"),
+    INCONCLUSIVE("Timing direction inconclusive"),
+    UNAVAILABLE("Timing unavailable"),
+}
+
 data class SelinuxAvcLookupCollectionDetails(
     val step: String?,
     val errno: Int,
@@ -66,7 +73,34 @@ data class SelinuxAvcLookupReading(
     val medianBNs: Long,
     val medianDeltaNs: Long,
     val details: SelinuxAvcLookupCollectionDetails,
+    val cpuMigrations: Int = 0,
+    val aSlower: Int = 0,
+    val positiveBlocks: Int = 0,
+    val negativeBlocks: Int = 0,
+    val zeroBlocks: Int = 0,
 ) {
+    /**
+     * Sign boundary is 0 ns, NOT the obsolete ordinary-app +400 ns threshold.
+     * Only the 512-pair, 16-block, zero-migration experiment is eligible.
+     * One app_zygote carrier can supply one candidate, not independent-device proof.
+     * Stock/OEM timing is not architecturally guaranteed to be negative.
+     */
+    val timingVerdict: SelinuxAppZygoteTimingVerdict
+        get() {
+            if (collection != SelinuxAvcLookupCollection.COLLECTED &&
+                collection != SelinuxAvcLookupCollection.TIMING_ONLY)
+                return SelinuxAppZygoteTimingVerdict.UNAVAILABLE
+            if (pairs != 512 || cpuMigrations != 0 || aSlower > pairs ||
+                positiveBlocks + negativeBlocks + zeroBlocks != 16)
+                return SelinuxAppZygoteTimingVerdict.INCONCLUSIVE
+            return when {
+                medianDeltaNs > 0 && positiveBlocks >= 12 && aSlower > pairs / 2 ->
+                    SelinuxAppZygoteTimingVerdict.POSITIVE
+                medianDeltaNs < 0 && negativeBlocks >= 12 && aSlower < pairs / 2 ->
+                    SelinuxAppZygoteTimingVerdict.NEGATIVE
+                else -> SelinuxAppZygoteTimingVerdict.INCONCLUSIVE
+            }
+        }
     /** Only collected counts are classified; timing is shown but never classified. */
     val profile: SelinuxAvcLookupProfile?
         get() {

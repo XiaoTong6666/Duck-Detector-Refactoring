@@ -4,6 +4,7 @@
 #include "selinuxpolicy/avc_lookup_probe.h"
 #include <cerrno>
 #include <cstring>
+#include <sched.h>
 #include <unistd.h>
 
 namespace duckdetector::selinux::avc_lookup {
@@ -82,9 +83,10 @@ namespace duckdetector::selinux::avc_lookup {
             }
         };
 
-        void sort(std::array<int64_t, kPairs> &values) {
+        template<size_t N>
+        void sort(std::array<int64_t, N> &values, const unsigned count) {
             // Insertion sort: the child may not allocate or call library code that is not async-signal-safe.
-            for (unsigned i = 1; i < kPairs; ++i) {
+            for (unsigned i = 1; i < count; ++i) {
                 const int64_t value = values[i];
                 unsigned j = i;
                 for (; j > 0 && values[j - 1] > value; --j) values[j] = values[j - 1];
@@ -95,34 +97,72 @@ namespace duckdetector::selinux::avc_lookup {
         bool time_pairs(Session &session) {
             auto &report = session.report;
             std::array<int64_t, kPairs> a{}, b{}, delta{};
-            for (unsigned i = 0; i < kWarmup + kPairs; ++i) {
-                const bool a_first = (i & 1u) == 0;
-                uint64_t start = 0, middle = 0, end = 0;
-                int error = now_ns(start);
-                if (!session.issue(a_first ? Payload::kA : Payload::kB)) return false;
-                if (!error) error = now_ns(middle);
-                if (!session.issue(a_first ? Payload::kB : Payload::kA)) return false;
-                if (!error) error = now_ns(end);
-                if (error || middle < start || end < middle) {
-                    report.error = error ? error : ERANGE;
+            // Read the clock on both sides of each write independently.
+            // Reusing the first write's end timestamp as the second write's start would
+            // include inter-trial userspace overhead only in the second duration.
+            const auto timed_issue = [&session, &report](const Payload payload, int64_t &duration) {
+                uint64_t start = 0, end = 0;
+                if (const int error = now_ns(start)) {
+                    report.error = error;
                     report.state = State::kInconclusive;
                     return false;
                 }
+                if (!session.issue(payload)) return false;
+                if (const int error = now_ns(end)) {
+                    report.error = error;
+                    report.state = State::kInconclusive;
+                    return false;
+                }
+                if (end < start) {
+                    report.error = ERANGE;
+                    report.state = State::kInconclusive;
+                    return false;
+                }
+                duration = static_cast<int64_t>(end - start);
+                return true;
+            };
+            for (unsigned i = 0; i < kWarmup + kPairs; ++i) {
+                const bool a_first = (i & 1u) == 0;
+                const int cpu_before = sched_getcpu();
+                int64_t first = 0, second = 0;
+                if (!timed_issue(a_first ? Payload::kA : Payload::kB, first) ||
+                    !timed_issue(a_first ? Payload::kB : Payload::kA, second)) return false;
                 if (i < kWarmup) continue;
-                const auto first = static_cast<int64_t>(middle - start);
-                const auto second = static_cast<int64_t>(end - middle);
-                const unsigned pair = i - kWarmup;
+                if (cpu_before < 0 || cpu_before != sched_getcpu()) {
+                    ++report.cpu_migrations;
+                    continue;
+                }
+                const unsigned pair = report.pairs;
                 a[pair] = a_first ? first : second;
                 b[pair] = a_first ? second : first;
                 delta[pair] = a[pair] - b[pair];
+                if (delta[pair] > 0) ++report.a_slower;
                 ++report.pairs;
             }
-            sort(a);
-            sort(b);
-            sort(delta);
-            report.median_a_ns = a[kPairs / 2];
-            report.median_b_ns = b[kPairs / 2];
-            report.median_delta_ns = delta[kPairs / 2];
+            // Keep block order: overall medians are not the difference of A and B medians.
+            for (unsigned offset = 0; offset + kBlockPairs <= report.pairs; offset += kBlockPairs) {
+                std::array<int64_t, kBlockPairs> block{};
+                for (unsigned j = 0; j < kBlockPairs; ++j) block[j] = delta[offset + j];
+                sort(block, kBlockPairs);
+                // Use the lower-middle sorted sample for even-sized blocks.
+                const int64_t median = block[(kBlockPairs - 1) / 2];
+                if (median > 0) ++report.positive_blocks;
+                else if (median < 0) ++report.negative_blocks;
+                else ++report.zero_blocks;
+            }
+            if (report.pairs != kPairs) {
+                // CPU migration contaminates a nanosecond-scale sign test; keep only
+                // the timing data for diagnostics, never promote it to a finding.
+                report.state = State::kInconclusive;
+                report.error = EAGAIN;
+                return false;
+            }
+            sort(a, report.pairs);
+            sort(b, report.pairs);
+            sort(delta, report.pairs);
+            report.median_a_ns = a[(kPairs - 1) / 2];
+            report.median_b_ns = b[(kPairs - 1) / 2];
+            report.median_delta_ns = delta[(kPairs - 1) / 2];
             return true;
         }
 
